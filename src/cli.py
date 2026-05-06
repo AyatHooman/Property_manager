@@ -9,75 +9,67 @@ from rich.panel import Panel
 from rich import box
 from typing import Optional
 
-from src.api_client import DomainAPIClient
+from src import scraper
 from src import database as db
 
 app = typer.Typer(
     name="property-manager",
-    help="🏠 Australian Property Manager — powered by the Domain API",
+    help="🏠 Australian Property Manager — powered by domain.com.au",
     add_completion=False,
 )
 console = Console()
-
-
-def get_client() -> DomainAPIClient:
-    try:
-        return DomainAPIClient()
-    except ValueError as e:
-        console.print(f"[bold red]❌ Setup Error:[/bold red] {e}")
-        raise typer.Exit(1)
 
 
 # ── Search ─────────────────────────────────────────────────────────────────────
 
 @app.command()
 def search(
-    suburb: str = typer.Argument(..., help="Suburb name (e.g. Surry Hills)"),
-    state: str = typer.Argument(..., help="State abbreviation (e.g. NSW)"),
+    suburb: str = typer.Argument(..., help="Suburb name (e.g. Richmond)"),
+    state: str = typer.Argument(..., help="State abbreviation (e.g. VIC)"),
+    postcode: str = typer.Option("", "--postcode", "-p", help="Postcode (optional, improves accuracy)"),
     listing_type: str = typer.Option("Sale", "--type", "-t", help="Sale or Rent"),
     min_price: Optional[int] = typer.Option(None, "--min-price", help="Minimum price"),
     max_price: Optional[int] = typer.Option(None, "--max-price", help="Maximum price"),
     min_beds: Optional[int] = typer.Option(None, "--min-beds", help="Minimum bedrooms"),
-    max_beds: Optional[int] = typer.Option(None, "--max-beds", help="Maximum bedrooms"),
-    page_size: int = typer.Option(20, "--limit", "-n", help="Number of results"),
+    page: int = typer.Option(1, "--page", help="Page number"),
 ):
-    """Search for property listings in a suburb."""
+    """Search for property listings on domain.com.au."""
     db.init_db()
-    client = get_client()
 
     console.print(
         Panel(
-            f"[bold cyan]Searching {listing_type} listings in [yellow]{suburb}, {state}[/yellow][/bold cyan]",
+            f"[bold cyan]Searching [yellow]{listing_type}[/yellow] listings in [yellow]{suburb}, {state}[/yellow] — domain.com.au[/bold cyan]",
             expand=False,
         )
     )
 
-    try:
-        listings = client.search_listings(
-            suburb=suburb,
-            state=state.upper(),
-            listing_type=listing_type,
-            min_price=min_price,
-            max_price=max_price,
-            min_beds=min_beds,
-            max_beds=max_beds,
-            page_size=page_size,
-        )
-    except Exception as e:
-        console.print(f"[red]API error: {e}[/red]")
-        raise typer.Exit(1)
+    with console.status("[bold green]Fetching listings..."):
+        try:
+            listings = scraper.search_listings(
+                suburb=suburb,
+                state=state.upper(),
+                postcode=postcode,
+                listing_type=listing_type,
+                min_price=min_price,
+                max_price=max_price,
+                min_beds=min_beds,
+                page=page,
+            )
+        except Exception as e:
+            console.print(f"[red]Scrape error: {e}[/red]")
+            raise typer.Exit(1)
 
     db.log_search(f"{listing_type} in {suburb}, {state}")
 
     if not listings:
-        console.print("[yellow]No listings found.[/yellow]")
+        console.print("[yellow]No listings found. Try adding a postcode with --postcode[/yellow]")
         return
 
     table = Table(box=box.ROUNDED, show_lines=True)
-    table.add_column("ID", style="dim", width=10)
-    table.add_column("Address", style="bold")
-    table.add_column("Price", style="green")
-    table.add_column("Type")
+    table.add_column("ID", style="dim", width=12)
+    table.add_column("Address", style="bold", min_width=25)
+    table.add_column("Price", style="green", min_width=15)
+    table.add_column("Type", min_width=10)
     table.add_column("Beds", justify="center")
     table.add_column("Baths", justify="center")
     table.add_column("Cars", justify="center")
@@ -94,49 +86,10 @@ def search(
         )
 
     console.print(table)
-    console.print(f"[dim]Found {len(listings)} listings. Use [bold]save <ID>[/bold] to bookmark one.[/dim]")
-
-
-# ── Suburb Performance ─────────────────────────────────────────────────────────
-
-@app.command()
-def suburb(
-    suburb_name: str = typer.Argument(..., help="Suburb name"),
-    state: str = typer.Argument(..., help="State abbreviation (e.g. NSW)"),
-    postcode: str = typer.Argument(..., help="Postcode"),
-    property_category: str = typer.Option("house", "--category", "-c", help="house, unit, or land"),
-    bedrooms: int = typer.Option(3, "--beds", "-b", help="Number of bedrooms"),
-):
-    """Show suburb performance statistics."""
-    db.init_db()
-    client = get_client()
-
-    try:
-        profile = client.get_suburb_performance(
-            suburb=suburb_name,
-            state=state.upper(),
-            postcode=postcode,
-            property_category=property_category,
-            bedrooms=bedrooms,
-        )
-    except Exception as e:
-        console.print(f"[red]API error: {e}[/red]")
-        raise typer.Exit(1)
-
-    def fmt_price(v):
-        return f"${v:,.0f}" if v else "N/A"
-
-    table = Table(title=f"📊 {suburb_name}, {state} — {property_category.capitalize()} ({bedrooms} bed)", box=box.SIMPLE_HEAD)
-    table.add_column("Metric", style="bold")
-    table.add_column("Value", style="cyan")
-
-    table.add_row("Median Sale Price", fmt_price(profile.median_sale_price))
-    table.add_row("Median Rent Price", fmt_price(profile.median_rent_price))
-    table.add_row("Days on Market", str(profile.days_on_market or "N/A"))
-    table.add_row("Properties Sold", str(profile.properties_sold or "N/A"))
-    table.add_row("Auction Clearance", str(profile.auction_clearance_rate or "N/A"))
-
-    console.print(table)
+    console.print(
+        f"[dim]Found {len(listings)} listings. "
+        f"Use [bold]--page 2[/bold] for more results.[/dim]"
+    )
 
 
 # ── Sales Results ──────────────────────────────────────────────────────────────
@@ -145,17 +98,17 @@ def suburb(
 def sales(
     suburb_name: str = typer.Argument(..., help="Suburb name"),
     state: str = typer.Argument(..., help="State abbreviation"),
-    postcode: str = typer.Argument(..., help="Postcode"),
+    postcode: str = typer.Option("", "--postcode", "-p", help="Postcode (optional)"),
 ):
-    """Show recent sales results for a suburb."""
+    """Show recent sold properties for a suburb."""
     db.init_db()
-    client = get_client()
 
-    try:
-        results = client.get_sales_results(suburb_name, state.upper(), postcode)
-    except Exception as e:
-        console.print(f"[red]API error: {e}[/red]")
-        raise typer.Exit(1)
+    with console.status("[bold green]Fetching sold listings..."):
+        try:
+            results = scraper.get_sales_results(suburb_name, state.upper(), postcode)
+        except Exception as e:
+            console.print(f"[red]Scrape error: {e}[/red]")
+            raise typer.Exit(1)
 
     if not results:
         console.print("[yellow]No sales results found.[/yellow]")
@@ -183,32 +136,13 @@ def sales(
 # ── Save / View Saved ──────────────────────────────────────────────────────────
 
 @app.command()
-def save(listing_id: int = typer.Argument(..., help="Listing ID to save")):
-    """Save a listing by ID (fetch details and bookmark it)."""
-    db.init_db()
-    client = get_client()
-
-    try:
-        listing = client.get_listing(listing_id)
-    except Exception as e:
-        console.print(f"[red]Could not fetch listing {listing_id}: {e}[/red]")
-        raise typer.Exit(1)
-
-    saved = db.save_listing(listing)
-    if saved:
-        console.print(f"[green]✅ Saved:[/green] {listing.address} ({listing.price})")
-    else:
-        console.print(f"[yellow]Already saved listing {listing_id}.[/yellow]")
-
-
-@app.command()
 def saved():
     """View all saved listings."""
     db.init_db()
     listings = db.get_saved_listings()
 
     if not listings:
-        console.print("[yellow]No saved listings yet. Use [bold]save <ID>[/bold] to bookmark one.[/yellow]")
+        console.print("[yellow]No saved listings yet.[/yellow]")
         return
 
     table = Table(title="⭐ Saved Listings", box=box.ROUNDED, show_lines=True)
@@ -261,21 +195,37 @@ def history():
 # ── Suggest ────────────────────────────────────────────────────────────────────
 
 @app.command()
-def suggest(query: str = typer.Argument(..., help="Suburb name to look up")):
-    """Autocomplete a suburb name using the Domain API."""
-    client = get_client()
-    try:
-        results = client.suggest_suburbs(query)
-    except Exception as e:
-        console.print(f"[red]Error: {e}[/red]")
-        raise typer.Exit(1)
+def suggest(query: str = typer.Argument(..., help="Suburb name to autocomplete")):
+    """Autocomplete a suburb name."""
+    with console.status("Looking up suburbs..."):
+        results = scraper.suggest_suburbs(query)
 
     if not results:
         console.print("[yellow]No suggestions found.[/yellow]")
         return
 
     for item in results[:10]:
-        console.print(f"  [cyan]•[/cyan] {item.get('suggestion', item)}")
+        if isinstance(item, dict):
+            display = item.get("suggestion") or item.get("label") or item.get("name") or str(item)
+        else:
+            display = str(item)
+        console.print(f"  [cyan]•[/cyan] {display}")
+
+
+# ── Open in browser ────────────────────────────────────────────────────────────
+
+@app.command()
+def browse(
+    suburb: str = typer.Argument(..., help="Suburb name"),
+    state: str = typer.Argument(..., help="State abbreviation"),
+    listing_type: str = typer.Option("sale", "--type", "-t", help="sale or rent"),
+):
+    """Open domain.com.au search in your browser."""
+    import webbrowser
+    slug = suburb.lower().replace(" ", "-") + "-" + state.lower()
+    url = f"https://www.domain.com.au/{listing_type}/{slug}/"
+    webbrowser.open(url)
+    console.print(f"[green]Opened:[/green] {url}")
 
 
 if __name__ == "__main__":

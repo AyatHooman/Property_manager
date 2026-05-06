@@ -34,7 +34,6 @@ class DomainAuth:
             TOKEN_URL,
             data={
                 "grant_type": "client_credentials",
-                "scope": "api_listings_read api_agencies_read api_suburbPerformance_read",
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
             },

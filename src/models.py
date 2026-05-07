@@ -35,11 +35,14 @@ class SaleResult:
     state: str
     postcode: str
     price: Optional[int]
+    price_display: Optional[str]
     sold_date: Optional[str]
     property_type: str
     bedrooms: Optional[int]
     bathrooms: Optional[int]
     land_area: Optional[float]
+    distance_km: Optional[float] = None
+    url: Optional[str] = None
 
 
 @dataclass

@@ -92,6 +92,86 @@ def search(
     )
 
 
+# ── Nearby Sales ───────────────────────────────────────────────────────────────
+
+@app.command()
+def nearby_sales(
+    listing_id: int = typer.Argument(..., help="Listing ID to search around (from search results)"),
+    radius: float = typer.Option(5.0, "--radius", "-r", help="Search radius in km (default 5)"),
+    months: int = typer.Option(6, "--months", "-m", help="How many months back to search (default 6)"),
+    pages: int = typer.Option(3, "--pages", help="Number of result pages to fetch (default 3)"),
+    url: Optional[str] = typer.Option(None, "--url", help="Full domain.com.au listing URL (e.g. https://www.domain.com.au/18-765-malvern-road-toorak-vic-3142-2020795806)"),
+):
+    """Find sold properties within a radius of a given listing, filtered by timeframe."""
+    db.init_db()
+
+    console.print(
+        Panel(
+            f"[bold cyan]Finding sold properties within [yellow]{radius}km[/yellow] "
+            f"of listing [yellow]{listing_id}[/yellow] — last [yellow]{months} months[/yellow][/bold cyan]",
+            expand=False,
+        )
+    )
+
+    with console.status("[bold green]Locating property..."):
+        location = scraper.get_listing_location(listing_id, listing_url=url)
+
+    if not location:
+        console.print(f"[red]Could not find lat/lng for listing {listing_id}.[/red]")
+        console.print("[dim]Tip: provide the full URL with [bold]--url https://www.domain.com.au/address-suburb-state-postcode-{listing_id}[/bold][/dim]")
+        raise typer.Exit(1)
+
+    lat, lng, address, suburb_val, state_val, postcode_val = location
+    console.print(f"[green]📍 Reference property:[/green] {address}")
+    console.print(f"[dim]Coordinates: {lat:.5f}, {lng:.5f} — searching {radius}km radius in {suburb_val}[/dim]\n")
+
+    with console.status(f"[bold green]Scraping sold listings ({pages} pages)..."):
+        try:
+            results = scraper.get_nearby_sales(
+                lat, lng,
+                radius_km=radius,
+                months=months,
+                pages=pages,
+                suburb=suburb_val,
+                state=state_val,
+                postcode=postcode_val,
+            )
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+            raise typer.Exit(1)
+
+    if not results:
+        console.print(f"[yellow]No sold properties found within {radius}km in the last {months} months.[/yellow]")
+        return
+
+    table = Table(
+        title=f"🏷️  {len(results)} Sold Properties within {radius}km — Last {months} months",
+        box=box.ROUNDED,
+        show_lines=True,
+    )
+    table.add_column("Address", style="bold", min_width=28)
+    table.add_column("Price", style="green", min_width=14)
+    table.add_column("Sold Date", min_width=11)
+    table.add_column("Type", min_width=10)
+    table.add_column("Beds", justify="center")
+    table.add_column("Dist (km)", justify="right", style="cyan")
+
+    for r in results:
+        table.add_row(
+            r.address or "—",
+            r.price_display or (f"${r.price:,.0f}" if r.price else "Undisclosed"),
+            r.sold_date[:10] if r.sold_date else "—",
+            r.property_type or "—",
+            str(r.bedrooms or "—"),
+            f"{r.distance_km:.2f}" if r.distance_km is not None else "—",
+        )
+
+    console.print(table)
+    console.print(
+        f"[dim]Tip: use [bold]--radius 2[/bold] for tighter area or [bold]--months 3[/bold] for recent only.[/dim]"
+    )
+
+
 # ── Sales Results ──────────────────────────────────────────────────────────────
 
 @app.command()

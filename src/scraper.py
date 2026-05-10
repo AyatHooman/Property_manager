@@ -17,19 +17,40 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 def _get_driver() -> webdriver.Chrome:
+    import os
     options = Options()
+    # Use portable Chrome 148 (64-bit) bundled in the project to avoid system Chrome 110 crashes
+    _base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _chrome_bin = os.path.join(_base, "chrome-portable", "chrome-win64", "chrome.exe")
+    _driver_bin = os.path.join(_base, "chrome-portable", "chromedriver-win64", "chromedriver.exe")
+    if os.path.exists(_chrome_bin):
+        options.binary_location = _chrome_bin
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-background-timer-throttling")
+    options.add_argument("--disable-renderer-backgrounding")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--window-size=1280,800")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument(
         "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
     )
-    service = Service(ChromeDriverManager().install())
+    if os.path.exists(_driver_bin):
+        service = Service(_driver_bin)
+    else:
+        service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
+    driver.set_page_load_timeout(30)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
@@ -46,6 +67,19 @@ def _fetch_page(url: str) -> str:
     """Fetch a page using Selenium Chrome to bypass bot protection."""
     html, _ = _fetch_page_with_url(url)
     return html
+
+
+def _fetch_page_with_driver(driver: webdriver.Chrome, url: str) -> str:
+    """Fetch a page using an existing driver instance (no open/close overhead).
+    
+    Returns empty string on crash so the caller can skip the page gracefully.
+    """
+    try:
+        driver.get(url)
+        time.sleep(3)
+        return driver.page_source
+    except Exception:
+        return ""
 
 
 def _fetch_page_with_url(url: str) -> Tuple[str, str]:
@@ -320,29 +354,33 @@ def get_nearby_sales(
     if not slug:
         return []
 
-    for page in range(1, pages + 1):
-        url = f"https://www.domain.com.au/sold-listings/{slug}/?page={page}"
-        html = _fetch_page(url)
-        raw = _extract_json_listings(html)
-        if not raw:
-            break
+    driver = _get_driver()
+    try:
+        for page in range(1, pages + 1):
+            url = f"https://www.domain.com.au/sold-listings/{slug}/?page={page}"
+            html = _fetch_page_with_driver(driver, url)
+            raw = _extract_json_listings(html)
+            if not raw:
+                break
 
-        for item in raw:
-            result = _parse_sale_nearby(item, lat, lng)
-            if result is None:
-                continue
-            # Drop properties outside radius
-            if result.distance_km is not None and result.distance_km > radius_km:
-                continue
-            # Filter by sold date
-            if result.sold_date:
-                try:
-                    sold_dt = datetime.strptime(result.sold_date[:10], "%Y-%m-%d")
-                    if sold_dt < cutoff:
-                        continue
-                except ValueError:
-                    pass
-            all_results.append(result)
+            for item in raw:
+                result = _parse_sale_nearby(item, lat, lng)
+                if result is None:
+                    continue
+                # Drop properties outside radius
+                if result.distance_km is not None and result.distance_km > radius_km:
+                    continue
+                # Filter by sold date
+                if result.sold_date:
+                    try:
+                        sold_dt = datetime.strptime(result.sold_date[:10], "%Y-%m-%d")
+                        if sold_dt < cutoff:
+                            continue
+                    except ValueError:
+                        pass
+                all_results.append(result)
+    finally:
+        driver.quit()
 
     # Sort by distance
     all_results.sort(key=lambda r: r.distance_km if r.distance_km is not None else 999)

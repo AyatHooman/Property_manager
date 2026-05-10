@@ -8,3 +8,12 @@ venv/
 *.egg-info/
 dist/
 build/
+
+# Portable Chrome (181MB - download separately)
+chrome-portable/
+
+# Debug / scratch
+debug.log
+test_*.py
+check.py
+fix_encoding.py

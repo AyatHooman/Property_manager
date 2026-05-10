@@ -145,4 +145,4 @@ def _state_abbr(state_full: str) -> str:
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000, threaded=False)
+    app.run(debug=False, port=5000, threaded=True, use_reloader=False)

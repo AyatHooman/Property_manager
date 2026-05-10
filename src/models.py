@@ -41,8 +41,13 @@ class SaleResult:
     bedrooms: Optional[int]
     bathrooms: Optional[int]
     land_area: Optional[float]
+    carspaces: Optional[int] = None
     distance_km: Optional[float] = None
     url: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    pool: Optional[bool] = None       # None = unknown, True/False = known
+    storeys: Optional[int] = None     # None = unknown, 1 or 2
 
 
 @dataclass

@@ -250,6 +250,20 @@
     #ref-banner .ref-address { font-size: 15px; font-weight: 600; margin-top: 4px; }
     #ref-banner .ref-coords { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
+    #estimate-banner {
+      display: none;
+      background: linear-gradient(135deg, #1e3a5f, #2a4a7f);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 16px;
+    }
+    #estimate-banner.visible { display: block; }
+    .est-label { font-size: 13px; color: #b8d4ff; font-weight: 600; margin-bottom: 6px; }
+    .est-median { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+    .est-range { font-size: 14px; color: #d0e2ff; margin-top: 4px; }
+    .adj-val { color: #6ee7b7 !important; cursor: help; border-bottom: 1px dashed #6ee7b740; }
+
     /* ── Results ── */
     #results-section { display: none; }
     #results-section.visible { display: block; }
@@ -329,6 +343,11 @@
       padding: 2px 7px;
       font-size: 12px;
       margin-right: 4px;
+    }
+    .sub-muted {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
     }
     .empty-state {
       text-align: center;
@@ -421,6 +440,44 @@
       </div>
     </div>
 
+    <!-- Reference property specs (for adjusted-price CMA) -->
+    <div style="margin-top: 24px; padding: 16px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);">
+      <label class="field-label" style="font-size:14px; color:var(--accent); margin-bottom:10px; display:block;">🎯 Reference property (auto-filled from your search address; tweak if needed)</label>
+      <div id="ref-fetch-msg" class="sub-muted" style="margin-bottom:10px; min-height:16px;"></div>
+      <div class="filters" style="margin-top:0;">
+        <div><label class="field-label">Beds</label>      <input type="number" id="ref-beds"  class="field-select" min="0" max="15" value="4" /></div>
+        <div><label class="field-label">Baths</label>     <input type="number" id="ref-baths" class="field-select" min="0" max="15" value="2" /></div>
+        <div><label class="field-label">Cars</label>      <input type="number" id="ref-cars"  class="field-select" min="0" max="10" value="2" /></div>
+        <div><label class="field-label">Land m²</label>   <input type="number" id="ref-land"  class="field-select" min="0" step="10" value="500" /></div>
+        <div><label class="field-label">Pool</label>
+          <select id="ref-pool" class="field-select">
+            <option value="">Unknown</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div><label class="field-label">Storeys</label>
+          <select id="ref-storeys" class="field-select">
+            <option value="">Unknown</option>
+            <option value="1">Single</option>
+            <option value="2">Double</option>
+          </select>
+        </div>
+      </div>
+      <details style="margin-top:14px;">
+        <summary style="cursor:pointer; color:var(--muted); font-size:13px;">⚙️ Adjustment rates (advanced)</summary>
+        <div class="filters" style="margin-top:12px;">
+          <div><label class="field-label">Growth %/month</label> <input type="number" id="adj-growth" class="field-select" step="0.1" value="0.4" /></div>
+          <div><label class="field-label">$ per bed</label>      <input type="number" id="adj-bed"    class="field-select" step="1000" value="35000" /></div>
+          <div><label class="field-label">$ per bath</label>     <input type="number" id="adj-bath"   class="field-select" step="1000" value="20000" /></div>
+          <div><label class="field-label">$ per car</label>      <input type="number" id="adj-car"    class="field-select" step="1000" value="15000" /></div>
+          <div><label class="field-label">$ per m² land</label>  <input type="number" id="adj-land"   class="field-select" step="50" value="800" /></div>
+          <div><label class="field-label">$ pool premium</label> <input type="number" id="adj-pool"   class="field-select" step="5000" value="30000" /></div>
+          <div><label class="field-label">$ extra storey</label> <input type="number" id="adj-storey" class="field-select" step="5000" value="25000" /></div>
+        </div>
+      </details>
+    </div>
+
     <button class="btn-search" id="search-btn" disabled>
       Search Nearby Sold Properties
     </button>
@@ -439,6 +496,13 @@
     <div class="ref-coords" id="ref-coords"></div>
   </div>
 
+  <!-- Estimated value (CMA result) -->
+  <div id="estimate-banner">
+    <div class="est-label">🎯 Estimated value (from <span id="est-n">0</span> adjusted comps)</div>
+    <div class="est-median" id="est-median">—</div>
+    <div class="est-range">Likely range: <span id="est-range">—</span></div>
+  </div>
+
   <!-- Results -->
   <div id="results-section">
     <div class="results-header">
@@ -451,6 +515,9 @@
           <option value="distance">Distance</option>
           <option value="date">Sold Date</option>
           <option value="price">Price</option>
+          <option value="adj">Adjusted Price</option>
+          <option value="pool">Pool</option>
+          <option value="storeys">Storeys</option>
         </select>
       </div>
     </div>
@@ -461,10 +528,15 @@
           <tr>
             <th data-col="address">Address <span class="sort-arrow">↕</span></th>
             <th data-col="price">Price <span class="sort-arrow">↕</span></th>
+            <th data-col="adj">Adj. Price <span class="sort-arrow">↕</span></th>
             <th data-col="date">Sold Date <span class="sort-arrow">↕</span></th>
             <th data-col="type">Type <span class="sort-arrow">↕</span></th>
             <th data-col="beds">Beds <span class="sort-arrow">↕</span></th>
             <th data-col="baths">Baths <span class="sort-arrow">↕</span></th>
+            <th data-col="cars">Cars <span class="sort-arrow">↕</span></th>
+            <th data-col="land">Land (m²) <span class="sort-arrow">↕</span></th>
+            <th data-col="pool">Pool <span class="sort-arrow">↕</span></th>
+            <th data-col="storeys">Storey <span class="sort-arrow">↕</span></th>
             <th data-col="dist">Dist (km) <span class="sort-arrow">↕</span></th>
           </tr>
         </thead>
@@ -634,6 +706,11 @@ async function runSearch() {
     if (data.status === 'searching') {
       setStatus('loading', `🔍 Searching sold listings near ${data.address || suburb}…`);
       showRefBanner(data.address || address, data.lat, data.lng);
+      document.getElementById('ref-fetch-msg').textContent = '⏳ Auto-fetching reference property specs from Domain…';
+    }
+
+    if (data.status === 'ref_specs') {
+      applyRefSpecs(data.ref || {});
     }
 
     if (data.status === 'done') {
@@ -675,7 +752,7 @@ function renderResults() {
   document.getElementById('result-count').textContent = allResults.length;
 
   if (!allResults.length) {
-    tbody.innerHTML = `<tr><td colspan="7">
+    tbody.innerHTML = `<tr><td colspan="12">
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
         <p>No sold properties found. Try increasing the radius or months.</p>
@@ -686,7 +763,9 @@ function renderResults() {
   }
 
   const sorted = sortResults([...allResults]);
-  tbody.innerHTML = sorted.map(r => {
+  const rates = readAdjustmentRates();
+  tbody.innerHTML = sorted.map((r, i) => {
+    const origIdx = allResults.indexOf(r);
     const priceHtml = r.price_num
       ? `<span class="price-val">$${r.price_num.toLocaleString()}</span>`
       : `<span class="price-withheld">${r.price || 'Undisclosed'}</span>`;
@@ -696,29 +775,242 @@ function renderResults() {
     const addrHtml = r.url
       ? `<a href="${r.url}" target="_blank">${r.address}</a>`
       : r.address;
-    return `<tr>
+    const ago = soldAgo(r.sold_date);
+    const dateHtml = r.sold_date
+      ? `${r.sold_date}${ago ? `<div class="sub-muted">${ago}</div>` : ''}`
+      : '—';
+    const landHtml = r.land_area ? `${Math.round(r.land_area).toLocaleString()}` : '—';
+    const poolHtml = r.pool === true ? '<span class="feat-pill">🏊 Yes</span>'
+                   : r.pool === false ? '<span class="sub-muted">No</span>'
+                   : `<span class="sub-muted" data-extras-cell="pool" data-row="${origIdx}">…</span>`;
+    const storeyHtml = r.storeys === 2 ? '<span class="feat-pill">2️⃣</span>'
+                     : r.storeys === 1 ? '<span class="feat-pill">1️⃣</span>'
+                     : `<span class="sub-muted" data-extras-cell="storeys" data-row="${origIdx}">…</span>`;
+    const adj = computeAdjusted(r, rates);
+    const adjHtml = adj.value != null
+      ? `<span class="price-val adj-val" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
+      : '—';
+    return `<tr data-row="${origIdx}">
       <td class="td-address">${addrHtml}</td>
       <td>${priceHtml}</td>
-      <td>${r.sold_date || '—'}</td>
+      <td>${adjHtml}</td>
+      <td>${dateHtml}</td>
       <td><span class="tag-type">${r.type || '—'}</span></td>
       <td>${r.beds != null ? '<span class="feat-pill">🛏 ' + r.beds + '</span>' : '—'}</td>
       <td>${r.baths != null ? '<span class="feat-pill">🚿 ' + r.baths + '</span>' : '—'}</td>
+      <td>${r.cars != null ? '<span class="feat-pill">🚗 ' + r.cars + '</span>' : '—'}</td>
+      <td>${landHtml}</td>
+      <td>${poolHtml}</td>
+      <td>${storeyHtml}</td>
       <td>${distHtml}</td>
     </tr>`;
   }).join('');
+
+  renderEstimate(sorted, rates);
+  scheduleLazyExtras();
 
   section.classList.add('visible');
 }
 
 function sortResults(arr) {
   const col = document.getElementById('sort-by').value;
+  const rates = readAdjustmentRates();
   return arr.sort((a, b) => {
     let va, vb;
     if (col === 'distance') { va = a.distance_km ?? 999; vb = b.distance_km ?? 999; }
     else if (col === 'date')  { va = a.sold_date || ''; vb = b.sold_date || ''; return vb.localeCompare(va); }
     else if (col === 'price') { va = a.price_num ?? -1; vb = b.price_num ?? -1; }
+    else if (col === 'land')  { va = a.land_area ?? -1; vb = b.land_area ?? -1; return vb - va; }
+    else if (col === 'adj')   { va = computeAdjusted(a, rates).value ?? -1; vb = computeAdjusted(b, rates).value ?? -1; return vb - va; }
     return va - vb;
   });
+}
+
+// ── CMA: comparable-sales adjustment ────────────────────────────────────────────
+function readAdjustmentRates() {
+  const num = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
+  return {
+    refBeds:  num('ref-beds', 0),
+    refBaths: num('ref-baths', 0),
+    refCars:  num('ref-cars', 0),
+    refLand:  num('ref-land', 0),
+    growth:   num('adj-growth', 0.4) / 100,
+    bed:      num('adj-bed', 35000),
+    bath:     num('adj-bath', 20000),
+    car:      num('adj-car', 15000),
+    landRate: num('adj-land', 800),
+  };
+}
+
+function computeAdjusted(r, rates) {
+  if (r.price_num == null) return { value: null, breakdown: 'No price', deltaStr: '' };
+  // Skip if comp is missing key fields needed for adjustment
+  if (r.beds == null || r.baths == null || r.land_area == null || r.land_area <= 0) {
+    return { value: null, breakdown: 'Missing beds/baths/land in comp', deltaStr: '' };
+  }
+  let monthsOld = 0;
+  if (r.sold_date) {
+    const d = new Date(r.sold_date);
+    if (!isNaN(d)) monthsOld = Math.max(0, (Date.now() - d.getTime()) / (1000*60*60*24*30.44));
+  }
+  const timeFactor = Math.pow(1 + rates.growth, monthsOld);
+  const timeAdj = r.price_num * timeFactor;
+
+  const dBed  = (rates.refBeds  - r.beds)      * rates.bed;
+  const dBath = (rates.refBaths - r.baths)     * rates.bath;
+  const dCar  = (r.cars != null) ? (rates.refCars - r.cars) * rates.car : 0;
+  const dLand = (rates.refLand  - r.land_area) * rates.landRate;
+  // Pool: only adjust if BOTH ref and comp values are known
+  let dPool = 0;
+  if (rates.refPool !== null && (r.pool === true || r.pool === false)) {
+    dPool = ((rates.refPool ? 1 : 0) - (r.pool ? 1 : 0)) * rates.pool;
+  }
+  // Storey: only adjust if BOTH known
+  let dStorey = 0;
+  if (rates.refStoreys != null && r.storeys != null) {
+    dStorey = (rates.refStoreys - r.storeys) * rates.storey;
+  }
+
+  const value = Math.round(timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey);
+  const delta = value - r.price_num;
+  const pct = (delta / r.price_num) * 100;
+  const sign = delta >= 0 ? '+' : '−';
+  const deltaStr = `${sign}$${Math.abs(delta).toLocaleString()} (${sign}${Math.abs(pct).toFixed(1)}%)`;
+
+  const breakdown = [
+    `Sold: $${r.price_num.toLocaleString()}`,
+    `Time +${((timeFactor-1)*100).toFixed(1)}% over ${monthsOld.toFixed(1)} mo → $${Math.round(timeAdj).toLocaleString()}`,
+    `Beds  ${dBed>=0?'+':''}$${dBed.toLocaleString()}`,
+    `Baths ${dBath>=0?'+':''}$${dBath.toLocaleString()}`,
+    `Cars  ${dCar>=0?'+':''}$${dCar.toLocaleString()}`,
+    `Land  ${dLand>=0?'+':''}$${Math.round(dLand).toLocaleString()}`,
+    `Pool  ${dPool>=0?'+':''}$${dPool.toLocaleString()}`,
+    `Storey ${dStorey>=0?'+':''}$${dStorey.toLocaleString()}`,
+    `→ Adjusted: $${value.toLocaleString()}`,
+  ].join('\n');
+
+  return { value, breakdown, deltaStr };
+}
+
+function renderEstimate(sorted, rates) {
+  const adjusted = sorted.map(r => computeAdjusted(r, rates).value).filter(v => v != null);
+  const banner = document.getElementById('estimate-banner');
+  if (!banner) return;
+  if (adjusted.length < 3) { banner.classList.remove('visible'); return; }
+  adjusted.sort((a,b)=>a-b);
+  const median = adjusted[Math.floor(adjusted.length/2)];
+  const low  = adjusted[Math.floor(adjusted.length*0.25)];
+  const high = adjusted[Math.floor(adjusted.length*0.75)];
+  document.getElementById('est-median').textContent = '$' + median.toLocaleString();
+  document.getElementById('est-range').textContent  = '$' + low.toLocaleString() + ' – $' + high.toLocaleString();
+  document.getElementById('est-n').textContent      = adjusted.length;
+  banner.classList.add('visible');
+}
+
+// Re-render whenever the user tweaks reference specs or rates
+['ref-beds','ref-baths','ref-cars','ref-land','ref-pool','ref-storeys','adj-growth','adj-bed','adj-bath','adj-car','adj-land','adj-pool','adj-storey'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => { if (allResults.length) renderResults(); });
+});
+
+// ── Auto-fill reference property when search starts ─────────────────────
+function applyRefSpecs(info) {
+  const msg = document.getElementById('ref-fetch-msg');
+  const set = (id, v) => { if (v != null && v !== '') document.getElementById(id).value = v; };
+  set('ref-beds',  info.beds);
+  set('ref-baths', info.baths);
+  set('ref-cars',  info.cars);
+  set('ref-land',  info.land_area);
+  if (info.pool === true)  document.getElementById('ref-pool').value = 'yes';
+  else if (info.pool === false) document.getElementById('ref-pool').value = 'no';
+  if (info.storeys === 1 || info.storeys === 2) document.getElementById('ref-storeys').value = String(info.storeys);
+  const parts = [];
+  if (info.beds  != null) parts.push(`${info.beds} bed`);
+  if (info.baths != null) parts.push(`${info.baths} bath`);
+  if (info.cars  != null) parts.push(`${info.cars} car`);
+  if (info.land_area)     parts.push(`${Math.round(info.land_area)} m²`);
+  if (info.pool === true) parts.push('🏊 pool');
+  if (info.storeys === 1) parts.push('single storey');
+  if (info.storeys === 2) parts.push('double storey');
+  msg.innerHTML = parts.length
+    ? `✅ Auto-filled from Domain: <strong>${parts.join(' · ')}</strong>`
+    : `⚠️ Domain didn't have specs for this address — please enter manually.`;
+  if (allResults.length) renderResults();
+}
+
+// ── Lazy-load pool/storey for visible rows that don't have them yet ─────────
+let lazyInflight = 0;
+const LAZY_MAX_CONCURRENT = 2;
+const lazyQueue = [];
+const lazyAttempted = new Set();
+function scheduleLazyExtras() {
+  for (let i = 0; i < allResults.length; i++) {
+    const r = allResults[i];
+    if (lazyAttempted.has(i)) continue;
+    if (!r.url) continue;
+    if (r.pool != null && r.storeys != null) continue;
+    lazyAttempted.add(i);
+    lazyQueue.push(i);
+  }
+  pumpLazyQueue();
+}
+function pumpLazyQueue() {
+  while (lazyInflight < LAZY_MAX_CONCURRENT && lazyQueue.length) {
+    const idx = lazyQueue.shift();
+    fetchExtrasFor(idx);
+  }
+}
+async function fetchExtrasFor(idx) {
+  const r = allResults[idx];
+  if (!r || !r.url) return;
+  lazyInflight++;
+  try {
+    const params = new URLSearchParams({ url: r.url });
+    if (r.lat) params.set('lat', r.lat);
+    if (r.lng) params.set('lng', r.lng);
+    const resp = await fetch('/api/listing-extras?' + params.toString());
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && (data.pool != null || data.storeys != null)) {
+        if (r.pool == null && data.pool != null) r.pool = data.pool;
+        if (r.storeys == null && data.storeys != null) r.storeys = data.storeys;
+        // Update just the cells in this row instead of re-rendering everything
+        updateRowExtras(idx);
+      }
+    }
+  } catch (e) { /* ignore */ }
+  finally {
+    lazyInflight--;
+    pumpLazyQueue();
+  }
+}
+function updateRowExtras(idx) {
+  const r = allResults[idx];
+  const row = document.querySelector(`tr[data-row="${idx}"]`);
+  if (!row) return;
+  const poolCell = row.querySelector('[data-extras-cell="pool"]');
+  if (poolCell && r.pool != null) {
+    poolCell.outerHTML = r.pool === true
+      ? '<span class="feat-pill">🏊 Yes</span>'
+      : '<span class="sub-muted">No</span>';
+  }
+  const storeyCell = row.querySelector('[data-extras-cell="storeys"]');
+  if (storeyCell && r.storeys != null) {
+    storeyCell.outerHTML = r.storeys === 2
+      ? '<span class="feat-pill">2️⃣</span>'
+      : '<span class="feat-pill">1️⃣</span>';
+  }
+  // Recompute the adjusted-price cell since pool/storey changed
+  const rates = readAdjustmentRates();
+  const adj = computeAdjusted(r, rates);
+  const adjTd = row.children[2];
+  if (adjTd) {
+    adjTd.innerHTML = adj.value != null
+      ? `<span class="price-val adj-val" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
+      : '—';
+  }
+  // Update overall estimate banner since one more comp now has data
+  renderEstimate(sortResults([...allResults]), rates);
 }
 
 document.getElementById('sort-by').addEventListener('change', () => {
@@ -727,15 +1019,27 @@ document.getElementById('sort-by').addEventListener('change', () => {
 
 document.querySelectorAll('thead th[data-col]').forEach(th => {
   th.addEventListener('click', () => {
-    const map = { address:'address', price:'price', date:'date', type:'type', beds:'beds', baths:'baths', dist:'distance' };
+    const map = { address:'address', price:'price', adj:'adj', date:'date', type:'type', beds:'beds', baths:'baths', cars:'cars', land:'land', pool:'pool', storeys:'storeys', dist:'distance' };
     document.getElementById('sort-by').value = map[th.dataset.col] || 'distance';
     if (allResults.length) renderResults();
     document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
     th.classList.add('sorted');
   });
 });
+
+// Format a YYYY-MM-DD sold date as "3 months ago" / "12 days ago" / "2 years ago".
+function soldAgo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days < 0) return '';
+  if (days < 7)   return days <= 1 ? 'today' : `${days} days ago`;
+  if (days < 30)  { const w = Math.floor(days/7); return `${w} week${w>1?'s':''} ago`; }
+  if (days < 365) { const m = Math.floor(days/30); return `${m} month${m>1?'s':''} ago`; }
+  const y = Math.floor(days/365), rem = Math.floor((days%365)/30);
+  return rem ? `${y}y ${rem}mo ago` : `${y} year${y>1?'s':''} ago`;
+}
 </script>
 </body>
-</html>
-
 </html>

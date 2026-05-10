@@ -242,7 +242,8 @@ def _parse_sale(item: Any) -> Optional[SaleResult]:
             property_type=features.get("propertyTypeFormatted") or features.get("propertyType", ""),
             bedrooms=_safe_int(features.get("beds")),
             bathrooms=_safe_int(features.get("baths")),
-            land_area=_safe_float(features.get("landSize")),
+            carspaces=_safe_int(features.get("parking")),
+            land_area=_safe_float(features.get("landSize") or features.get("landArea")),
             url="https://www.domain.com.au" + lm.get("url", "") if lm.get("url") else "",
         )
     except Exception:
@@ -284,6 +285,239 @@ def get_listing_location(
         return float(lat), float(lng), addr, suburb_val, state_val.upper(), postcode_val
     except (KeyError, TypeError):
         return None
+
+
+def get_listing_features(url: str) -> Optional[dict]:
+    """Fetch a Domain listing detail page and extract beds/baths/cars/land/address.
+
+    Returns dict with keys: address, suburb, state, postcode, beds, baths, cars,
+    land_area, property_type, lat, lng, pool, storeys.  Missing fields are None.
+    """
+    if not url or "domain.com.au" not in url:
+        return None
+    html = _fetch_page(url)
+    return _parse_features_from_html(html)
+
+
+def get_listing_pool_storeys(url: str, lat: Optional[float] = None,
+                             lng: Optional[float] = None) -> dict:
+    """Cheap-as-possible pool/storey lookup for one comp listing.
+
+    Used by the lazy-loading API endpoint.  Strategy:
+      1. Scrape the listing page text (storeys + pool both come from
+         description text).
+      2. If pool was not found in text, try OSM Overpass at the
+         lat/lng (caller must pass it for this to work).
+    """
+    out = {"pool": None, "storeys": None}
+    if url and "domain.com.au" in url:
+        try:
+            html = _fetch_page(url)
+            from src.features import parse_pool_storeys_from_html
+            pool, storeys = parse_pool_storeys_from_html(html)
+            if pool is not None:
+                out["pool"] = pool
+            if storeys is not None:
+                out["storeys"] = storeys
+        except Exception:
+            pass
+    if out["pool"] is None and lat and lng:
+        try:
+            from src.features import osm_has_pool
+            osm_pool = osm_has_pool(lat, lng)
+            if osm_pool is not None:
+                out["pool"] = osm_pool
+        except Exception:
+            pass
+    return out
+
+
+def _parse_features_from_html(html: str) -> Optional[dict]:
+    """Shared feature parser for Domain listing/profile detail pages.
+
+    Domain's __NEXT_DATA__ JSON varies between page types (live listing,
+    sold listing, property-profile). Rather than hard-code paths, we
+    recursively walk the JSON looking for the first dict that contains
+    bed/bath/parking/landSize keys.  Pool + storey are extracted from
+    raw page text by `src.features` — they are seldom in the JSON.
+    """
+    data = _extract_next_data(html)
+    if not data:
+        return None
+
+    # Recursively find candidate feature dicts and address dicts.
+    # Collect features from ALL dicts that look feature-ish, since beds/baths
+    # may live in a different dict than parking/landSize on profile pages.
+    feats: dict = {}
+    addr: dict = {}
+
+    # Map of canonical feature name -> set of regex patterns (case-insensitive)
+    # matching keys Domain uses across its various JSON shapes.
+    _key_patterns = {
+        "beds":     [r"^beds?$", r"^bedrooms?$"],
+        "baths":    [r"^baths?$", r"^bathrooms?$"],
+        "cars":     [r"^parking$", r"^carspaces?$", r"^parkingspaces?$"],
+        "land":     [r"^landsize$", r"^landarea(\(.*\))?$"],
+        "ptype":    [r"^propertytype(formatted)?$"],
+    }
+    import re as _re
+    _key_re = {k: [_re.compile(p, _re.I) for p in pats] for k, pats in _key_patterns.items()}
+
+    def _match_canonical(key: str):
+        for canon, regs in _key_re.items():
+            for r in regs:
+                if r.match(key):
+                    return canon
+        return None
+
+    def _walk(obj):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                canon = _match_canonical(k) if isinstance(k, str) else None
+                if canon and v not in (None, "", 0) and not feats.get(canon):
+                    feats[canon] = v
+            keys = set(obj.keys())
+            if not addr and ({"suburb", "postcode"} & keys) and ("street" in keys or "displayableAddress" in keys or "address" in keys):
+                addr.update(obj)
+            for v in obj.values():
+                _walk(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                _walk(v)
+
+    _walk(data)
+
+    def _g(d, *keys):
+        for k in keys:
+            v = d.get(k)
+            if v not in (None, "", 0):
+                return v
+        return None
+
+    beds  = feats.get("beds")
+    baths = feats.get("baths")
+    cars  = feats.get("cars")
+    land  = feats.get("land")
+
+    if beds is None and baths is None and cars is None and land is None:
+        return None
+
+    def _as_str(v):
+        if isinstance(v, str):
+            return v
+        if isinstance(v, dict):
+            for k in ("name", "displayName", "value"):
+                if isinstance(v.get(k), str):
+                    return v[k]
+        if v is None:
+            return ""
+        return str(v)
+
+    suburb_s   = _as_str(addr.get("suburb"))
+    state_s    = _as_str(addr.get("state"))
+    postcode_s = _as_str(addr.get("postcode"))
+
+    addr_raw = _g(addr, "displayableAddress", "address", "street")
+    address_str = _as_str(addr_raw) if addr_raw else ""
+    if address_str and suburb_s and suburb_s not in address_str:
+        address_str = f"{address_str}, {suburb_s} {state_s} {postcode_s}".strip(", ")
+
+    # Pool / storey from page text — Domain descriptions almost always say.
+    from src.features import parse_pool_storeys_from_html
+    pool, storeys = parse_pool_storeys_from_html(html)
+
+    return {
+        "address":  address_str,
+        "suburb":   suburb_s,
+        "state":    state_s.upper(),
+        "postcode": postcode_s,
+        "beds":     _safe_int(beds),
+        "baths":    _safe_int(baths),
+        "cars":     _safe_int(cars),
+        "land_area": _safe_float(land),
+        "property_type": _as_str(feats.get("ptype", "")),
+        "lat": addr.get("lat") or addr.get("latitude"),
+        "lng": addr.get("lng") or addr.get("longitude"),
+        "pool":    pool,
+        "storeys": storeys,
+    }
+
+
+def _build_property_profile_slug(address: str, suburb: str, state: str, postcode: str) -> Optional[str]:
+    """Build a Domain property-profile slug from a Nominatim-style address.
+
+    address example from Nominatim: "10, Callaway Crescent, Mernda Villages Estate, Mernda, Melbourne, Victoria, 3754"
+    target slug:                    "10-callaway-crescent-mernda-vic-3754"
+    """
+    if not address or not suburb or not state:
+        return None
+    # First two comma-parts are street number + street name (sometimes the
+    # number is missing, then first part is the street).
+    parts = [p.strip() for p in address.split(",") if p.strip()]
+    if not parts:
+        return None
+    street_bits = []
+    # Take number + street name (skip later parts which are estate/suburb/etc.)
+    for p in parts[:2]:
+        if p.lower() == suburb.lower():
+            break
+        street_bits.append(p)
+    if not street_bits:
+        return None
+    street = " ".join(street_bits)
+    slug_parts = [street, suburb, state]
+    if postcode:
+        slug_parts.append(postcode)
+    raw = " ".join(slug_parts).lower()
+    # keep alnum and spaces, collapse to hyphens
+    cleaned = re.sub(r"[^a-z0-9 ]+", "", raw)
+    cleaned = re.sub(r"\s+", "-", cleaned).strip("-")
+    return cleaned
+
+
+def get_property_profile(address: str, suburb: str, state: str, postcode: str) -> Optional[dict]:
+    """Look up a property by address on Domain's property-profile pages.
+
+    Tries several Domain URL formats since the slug structure varies.
+    Returns the same dict shape as get_listing_features, or None.
+    """
+    slug = _build_property_profile_slug(address, suburb, state, postcode)
+    if not slug:
+        return None
+    # Domain has a few possible URLs for an address — try them in order.
+    candidate_urls = [
+        f"https://www.domain.com.au/property-profile/{slug}",
+        f"https://www.domain.com.au/{slug}",          # sometimes addresses live at root slug
+        f"https://www.domain.com.au/address/{slug}",
+    ]
+    driver = _get_driver()
+    try:
+        for url in candidate_urls:
+            try:
+                html = _fetch_page_with_driver(driver, url)
+            except Exception:
+                continue
+            if not html or len(html) < 1000:
+                continue
+            info = _parse_features_from_html(html)
+            if info and (info.get("beds") or info.get("baths") or info.get("land_area")):
+                info["_source_url"] = url
+                # OSM pool fallback if the listing text didn't mention one
+                if info.get("pool") is None:
+                    try:
+                        from src.features import osm_has_pool
+                        plat = info.get("lat")
+                        plng = info.get("lng")
+                        if plat and plng:
+                            osm_p = osm_has_pool(float(plat), float(plng))
+                            if osm_p is not None:
+                                info["pool"] = osm_p
+                    except Exception:
+                        pass
+                return info
+    finally:
+        driver.quit()
+    return None
 
 
 def _get_listing_slug_url(listing_id: int) -> Optional[str]:
@@ -435,9 +669,12 @@ def _parse_sale_nearby(item: Any, ref_lat: float, ref_lng: float) -> Optional[Sa
             property_type=features.get("propertyTypeFormatted") or features.get("propertyType", ""),
             bedrooms=_safe_int(features.get("beds")),
             bathrooms=_safe_int(features.get("baths")),
-            land_area=_safe_float(features.get("landSize")),
+            carspaces=_safe_int(features.get("parking")),
+            land_area=_safe_float(features.get("landSize") or features.get("landArea")),
             distance_km=round(distance, 2) if distance is not None else None,
             url="https://www.domain.com.au" + lm.get("url", "") if lm.get("url") else "",
+            lat=_safe_float(item_lat),
+            lng=_safe_float(item_lng),
         )
         return r
     except Exception:

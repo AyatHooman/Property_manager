@@ -264,6 +264,88 @@
     .est-range { font-size: 14px; color: #d0e2ff; margin-top: 4px; }
     .adj-val { color: #6ee7b7 !important; cursor: help; border-bottom: 1px dashed #6ee7b740; }
 
+    /* ── Reference property panel ─────────────────────────────────────────── */
+    .ref-panel {
+      margin-top: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .ref-panel-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, #1e293b 0%, var(--surface2) 100%);
+    }
+    .ref-panel-title {
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      letter-spacing: .03em; white-space: nowrap;
+    }
+    .ref-autofill-badge {
+      font-size: 12px; color: var(--muted); min-height: 16px; flex: 1;
+    }
+    .ref-autofill-badge strong { color: #a5f3fc; }
+    .ref-fields {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+    }
+    @media (max-width: 900px) { .ref-fields { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 560px) { .ref-fields { grid-template-columns: repeat(2, 1fr); } }
+    .ref-field {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px;
+      border-right: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .ref-field:last-child { border-right: none; }
+    .ref-field:hover { background: #1e293b; }
+    .ref-field-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+    .ref-field-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .ref-field-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+    .ref-field-input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 5px; color: var(--text); font-size: 14px; font-weight: 600;
+      padding: 4px 6px; outline: none; transition: border-color .15s;
+    }
+    .ref-field-input:focus { border-color: var(--accent); background: #0f172a; }
+
+    /* ── Adjustment rates (collapsible) ──────────────────────────────────── */
+    .adj-details { border-top: 1px solid var(--border); }
+    .adj-summary {
+      display: flex; align-items: center; gap: 6px;
+      list-style: none; padding: 9px 16px; cursor: pointer;
+      font-size: 12px; color: var(--muted); user-select: none;
+      transition: background .15s;
+    }
+    .adj-summary::-webkit-details-marker { display: none; }
+    .adj-summary::before { content: '▶'; font-size: 9px; transition: transform .2s; }
+    details[open] .adj-summary::before { transform: rotate(90deg); }
+    .adj-summary:hover { background: #1e293b; color: var(--text); }
+    .adj-summary-hint { color: #475569; font-size: 11px; }
+    .adj-rates-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--border);
+    }
+    @media (max-width: 700px) { .adj-rates-grid { grid-template-columns: repeat(2, 1fr); } }
+    .adj-rate-item {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 10px 12px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .adj-rate-item:nth-child(4n) { border-right: none; }
+    .adj-rate-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .adj-rate-input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 5px; color: var(--text); font-size: 13px; font-weight: 600;
+      padding: 5px 8px; outline: none; transition: border-color .15s;
+    }
+    .adj-rate-input:focus { border-color: var(--accent); background: #0f172a; }
+
     /* ── Results ── */
     #results-section { display: none; }
     #results-section.visible { display: block; }
@@ -441,39 +523,102 @@
     </div>
 
     <!-- Reference property specs (for adjusted-price CMA) -->
-    <div style="margin-top: 24px; padding: 16px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);">
-      <label class="field-label" style="font-size:14px; color:var(--accent); margin-bottom:10px; display:block;">🎯 Reference property (auto-filled from your search address; tweak if needed)</label>
-      <div id="ref-fetch-msg" class="sub-muted" style="margin-bottom:10px; min-height:16px;"></div>
-      <div class="filters" style="margin-top:0;">
-        <div><label class="field-label">Beds</label>      <input type="number" id="ref-beds"  class="field-select" min="0" max="15" value="4" /></div>
-        <div><label class="field-label">Baths</label>     <input type="number" id="ref-baths" class="field-select" min="0" max="15" value="2" /></div>
-        <div><label class="field-label">Cars</label>      <input type="number" id="ref-cars"  class="field-select" min="0" max="10" value="2" /></div>
-        <div><label class="field-label">Land m²</label>   <input type="number" id="ref-land"  class="field-select" min="0" step="10" value="500" /></div>
-        <div><label class="field-label">Pool</label>
-          <select id="ref-pool" class="field-select">
-            <option value="">Unknown</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
+    <div class="ref-panel">
+      <div class="ref-panel-header">
+        <span class="ref-panel-title">🎯 Reference Property</span>
+        <span id="ref-fetch-msg" class="ref-autofill-badge"></span>
+      </div>
+
+      <div class="ref-fields">
+        <!-- Beds -->
+        <div class="ref-field">
+          <div class="ref-field-icon">🛏</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-beds">Beds</label>
+            <input type="number" id="ref-beds" class="ref-field-input" min="0" max="15" value="4" />
+          </div>
         </div>
-        <div><label class="field-label">Storeys</label>
-          <select id="ref-storeys" class="field-select">
-            <option value="">Unknown</option>
-            <option value="1">Single</option>
-            <option value="2">Double</option>
-          </select>
+        <!-- Baths -->
+        <div class="ref-field">
+          <div class="ref-field-icon">🚿</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-baths">Baths</label>
+            <input type="number" id="ref-baths" class="ref-field-input" min="0" max="15" value="2" />
+          </div>
+        </div>
+        <!-- Cars -->
+        <div class="ref-field">
+          <div class="ref-field-icon">🚗</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-cars">Cars</label>
+            <input type="number" id="ref-cars" class="ref-field-input" min="0" max="10" value="2" />
+          </div>
+        </div>
+        <!-- Land -->
+        <div class="ref-field">
+          <div class="ref-field-icon">📐</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-land">Land m²</label>
+            <input type="number" id="ref-land" class="ref-field-input" min="0" step="10" value="500" />
+          </div>
+        </div>
+        <!-- Pool -->
+        <div class="ref-field">
+          <div class="ref-field-icon">🏊</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-pool">Pool</label>
+            <select id="ref-pool" class="ref-field-input">
+              <option value="">Unknown</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+        <!-- Storeys -->
+        <div class="ref-field">
+          <div class="ref-field-icon">🏠</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-storeys">Storeys</label>
+            <select id="ref-storeys" class="ref-field-input">
+              <option value="">Unknown</option>
+              <option value="1">Single</option>
+              <option value="2">Double</option>
+            </select>
+          </div>
         </div>
       </div>
-      <details style="margin-top:14px;">
-        <summary style="cursor:pointer; color:var(--muted); font-size:13px;">⚙️ Adjustment rates (advanced)</summary>
-        <div class="filters" style="margin-top:12px;">
-          <div><label class="field-label">Growth %/month</label> <input type="number" id="adj-growth" class="field-select" step="0.1" value="0.4" /></div>
-          <div><label class="field-label">$ per bed</label>      <input type="number" id="adj-bed"    class="field-select" step="1000" value="35000" /></div>
-          <div><label class="field-label">$ per bath</label>     <input type="number" id="adj-bath"   class="field-select" step="1000" value="20000" /></div>
-          <div><label class="field-label">$ per car</label>      <input type="number" id="adj-car"    class="field-select" step="1000" value="15000" /></div>
-          <div><label class="field-label">$ per m² land</label>  <input type="number" id="adj-land"   class="field-select" step="50" value="800" /></div>
-          <div><label class="field-label">$ pool premium</label> <input type="number" id="adj-pool"   class="field-select" step="5000" value="30000" /></div>
-          <div><label class="field-label">$ extra storey</label> <input type="number" id="adj-storey" class="field-select" step="5000" value="25000" /></div>
+
+      <details class="adj-details">
+        <summary class="adj-summary">⚙️ Adjustment rates <span class="adj-summary-hint">(click to expand)</span></summary>
+        <div class="adj-rates-grid">
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">📈 Growth %/month</label>
+            <input type="number" id="adj-growth" class="adj-rate-input" step="0.1" value="0.4" />
+          </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">🛏 $ per bed</label>
+            <input type="number" id="adj-bed" class="adj-rate-input" step="1000" value="35000" />
+          </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">🚿 $ per bath</label>
+            <input type="number" id="adj-bath" class="adj-rate-input" step="1000" value="20000" />
+          </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">🚗 $ per car</label>
+            <input type="number" id="adj-car" class="adj-rate-input" step="1000" value="15000" />
+          </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">📐 $ per m² land</label>
+            <input type="number" id="adj-land" class="adj-rate-input" step="50" value="800" />
+          </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">🏊 $ pool premium</label>
+            <input type="number" id="adj-pool" class="adj-rate-input" step="5000" value="30000" />
+          </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">🏠 $ extra storey</label>
+            <input type="number" id="adj-storey" class="adj-rate-input" step="5000" value="25000" />
+          </div>
         </div>
       </details>
     </div>

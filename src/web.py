@@ -114,8 +114,20 @@ def api_suggest():
                 or addr.get("city_district")
                 or addr.get("village")
                 or addr.get("municipality")
+                or addr.get("quarter")
+                or addr.get("neighbourhood")
+                or addr.get("city")
                 or ""
             )
+            # Last resort: pull suburb from display_name before state
+            if not suburb:
+                display = item.get("display_name", "")
+                parts = [p.strip() for p in display.split(",")]
+                state_full_local = addr.get("state", "")
+                for p in reversed(parts):
+                    if p and p not in (state_full_local, "Australia", addr.get("postcode",""), addr.get("country","")):
+                        suburb = p
+                        break
             state_full = addr.get("state", "")
             state_abbr = _state_abbr(state_full)
             postcode = addr.get("postcode", "")
@@ -186,6 +198,18 @@ def api_nearby_sales():
     postcode = request.args.get("postcode", "").strip()
     address_label = request.args.get("address", "").strip()
     radius = float(request.args.get("radius", 3))
+    # If suburb came through blank, try to extract it from the address label
+    # (Nominatim sometimes omits it for estate/locality addresses)
+    if not suburb and address_label:
+        # address label format: "10 Callaway Crescent, Mernda, Melbourne, VIC 3754"
+        # suburb is typically the first token after the street
+        parts = [p.strip() for p in address_label.split(",")]
+        for p in parts[1:]:  # skip house+street
+            clean = p.strip()
+            if clean and not any(c.isdigit() for c in clean) and clean not in ("Australia",):
+                suburb = clean
+                break
+    print(f"[search] suburb={suburb!r} state={state!r} postcode={postcode!r} lat={lat} lng={lng}", flush=True)
     months = int(request.args.get("months", 6))
     pages = int(request.args.get("pages", 3))
     prop_types = request.args.getlist("types")

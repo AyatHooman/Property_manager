@@ -752,11 +752,14 @@ function renderSuggestions(items, q) {
     const div = document.createElement('div');
     div.className = 'ac-item';
     const sub = [item.suburb, item.state, item.postcode].filter(Boolean).join(' ');
+    // Warn if suburb is missing (these won't search correctly)
+    const missingSuburb = !item.suburb;
     div.innerHTML = `
       <span class="ac-icon">📍</span>
       <div class="ac-label">
         <div>${highlight(item.label, q)}</div>
         ${sub ? `<div class="ac-sub">${sub}</div>` : ''}
+        ${missingSuburb ? `<div class="ac-sub" style="color:#f97316">⚠️ suburb not detected — search may return 0 results</div>` : ''}
       </div>
     `;
     div.addEventListener('click', () => selectItem(item));

@@ -1027,7 +1027,12 @@ function computeAdjusted(r, rates) {
     dStorey = (rates.refStoreys - r.storeys) * storeyRate;
   }
 
-  const value = Math.round(timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey);
+  const raw = timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey;
+  if (!isFinite(raw)) {
+    console.warn('computeAdjusted NaN debug:', {price: r.price_num, timeAdj, dBed, dBath, dCar, dLand, dPool, dStorey, rates});
+    return { value: null, breakdown: 'Calculation error (NaN in inputs)', deltaStr: '' };
+  }
+  const value = Math.round(raw);
   const delta = value - r.price_num;
   const pct = (delta / r.price_num) * 100;
   const sign = delta >= 0 ? '+' : '−';

@@ -159,13 +159,13 @@ def api_listing_extras():
     Overpass query when the listing description doesn't mention a pool.
     """
     url = request.args.get("url", "").strip()
-    if not url:
-        return jsonify({"error": "url required"}), 400
     try:
         lat = float(request.args.get("lat") or 0) or None
         lng = float(request.args.get("lng") or 0) or None
     except ValueError:
         lat = lng = None
+    if not url and not (lat and lng):
+        return jsonify({"error": "url or lat+lng required"}), 400
     try:
         return jsonify(scraper.get_listing_pool_storeys(url, lat, lng))
     except Exception as e:

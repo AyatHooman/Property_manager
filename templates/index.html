@@ -884,7 +884,9 @@ function setStatus(type, msg) {
 function hideStatus() {
   document.getElementById('status-bar').classList.remove('visible');
 }
+let refLat = null, refLng = null, refSearchAddress = null;
 function showRefBanner(address, lat, lng) {
+  refLat = lat; refLng = lng; refSearchAddress = address;
   document.getElementById('ref-address').textContent = address;
   document.getElementById('ref-coords').textContent  = `${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
   document.getElementById('ref-banner').classList.add('visible');
@@ -1016,9 +1018,14 @@ function computeAdjusted(r, rates) {
 
   // Pool: only adjust if BOTH ref and comp values are known
   let dPool = 0;
+  let poolNote = null;
   if (rates.refPool !== null && (r.pool === true || r.pool === false)) {
     const poolRate = isNaN(rates.pool) ? 30000 : rates.pool;
     dPool = ((rates.refPool ? 1 : 0) - (r.pool ? 1 : 0)) * poolRate;
+  } else if (rates.refPool === null && (r.pool === true || r.pool === false)) {
+    poolNote = `Pool  (skipped — set ref pool above to include)`;
+  } else if (r.pool == null) {
+    poolNote = `Pool  (skipped — comp pool unknown, loading…)`;
   }
   // Storey: only adjust if BOTH known
   let dStorey = 0;
@@ -1047,7 +1054,7 @@ function computeAdjusted(r, rates) {
     fmtLine('Baths ', dBath),
     fmtLine('Cars  ', dCar),
     fmtLine('Land  ', dLand),
-    dPool   !== 0 ? fmtLine('Pool  ', dPool)   : null,
+    dPool   !== 0 ? fmtLine('Pool  ', dPool)   : (poolNote || null),
     dStorey !== 0 ? fmtLine('Storey', dStorey) : null,
     `→ Adjusted: $${value.toLocaleString()}`,
   ].filter(Boolean).join('\n');
@@ -1099,11 +1106,43 @@ function applyRefSpecs(info) {
     ? `✅ Auto-filled from Domain: <strong>${parts.join(' · ')}</strong>`
     : `⚠️ Domain didn't have specs for this address — please enter manually.`;
   if (allResults.length) renderResults();
+  // If pool/storeys weren't in the Domain profile, fetch them via listing-extras
+  const poolEl = document.getElementById('ref-pool');
+  const storeyEl = document.getElementById('ref-storeys');
+  const poolUnknown   = !poolEl   || poolEl.value   === '';
+  const storeyUnknown = !storeyEl || storeyEl.value === '';
+  if ((poolUnknown || storeyUnknown) && refLat && refLng) {
+    fetchRefExtras(refSearchAddress, refLat, refLng);
+  }
+}
+
+async function fetchRefExtras(address, lat, lng) {
+  try {
+    // Use the address as a search hint via Nominatim to get a Domain URL, or
+    // just call listing-extras with lat/lng only (OSM path)
+    const params = new URLSearchParams({ lat, lng });
+    // lat/lng only path — triggers OSM pool check, no Domain scrape needed
+    const resp = await fetch('/api/listing-extras?' + params.toString());
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const poolEl   = document.getElementById('ref-pool');
+    const storeyEl = document.getElementById('ref-storeys');
+    if (data.pool != null && poolEl && poolEl.value === '') {
+      poolEl.value = data.pool ? 'yes' : 'no';
+      const msg = document.getElementById('ref-fetch-msg');
+      const existing = msg ? msg.innerHTML : '';
+      if (msg) msg.innerHTML = existing.replace('</strong>', ` · 🏊 pool: ${data.pool ? 'Yes' : 'No'}</strong>`);
+    }
+    if (data.storeys != null && storeyEl && storeyEl.value === '') {
+      storeyEl.value = String(data.storeys);
+    }
+    if (allResults.length) renderResults();
+  } catch(e) { /* non-fatal */ }
 }
 
 // ── Lazy-load pool/storey for visible rows that don't have them yet ─────────
 let lazyInflight = 0;
-const LAZY_MAX_CONCURRENT = 2;
+const LAZY_MAX_CONCURRENT = 4;
 const lazyQueue = [];
 const lazyAttempted = new Set();
 function scheduleLazyExtras() {

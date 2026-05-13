@@ -79,7 +79,12 @@ def _gate():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    resp = Response(render_template("index.html"))
+    # Always serve fresh HTML — never let the browser cache the page shell
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 # ── API: address autocomplete via Nominatim (OpenStreetMap) ───────────────────

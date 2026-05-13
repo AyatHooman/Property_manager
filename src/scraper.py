@@ -33,7 +33,7 @@ def _get_driver():
     if proxy:
         options.add_argument(f"--proxy-server={proxy}")
 
-    kwargs = dict(options=options, headless=True, use_subprocess=False)
+    kwargs = dict(options=options, headless=False, use_subprocess=True)
     if os.path.exists(_chrome_bin):
         kwargs["browser_executable_path"] = _chrome_bin
     if os.path.exists(_driver_bin):
@@ -58,6 +58,23 @@ def _fetch_page(url: str) -> str:
     return html
 
 
+def _wait_for_content(driver, timeout: int = 30) -> str:
+    """Wait until the page has loaded __NEXT_DATA__ (real content) or timeout."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        html = driver.page_source
+        if "__NEXT_DATA__" in html:
+            return html
+        if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
+            raise RuntimeError(
+                "Domain.com.au has blocked this IP address (Akamai bot protection). "
+                "Please wait a few minutes and try again, or use a VPN/proxy."
+            )
+        time.sleep(1)
+    # Final read after timeout
+    return driver.page_source
+
+
 def _fetch_page_with_driver(driver, url: str) -> str:
     """Fetch a page using an existing driver instance (no open/close overhead).
 
@@ -66,8 +83,8 @@ def _fetch_page_with_driver(driver, url: str) -> str:
     """
     try:
         driver.get(url)
-        time.sleep(random.uniform(4, 7))  # randomised delay to avoid bot detection
-        html = driver.page_source
+        time.sleep(random.uniform(3, 5))  # initial wait for page to start loading
+        html = _wait_for_content(driver)
         if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
             raise RuntimeError(
                 "Domain.com.au has blocked this IP address (Akamai bot protection). "
@@ -85,8 +102,8 @@ def _fetch_page_with_url(url: str) -> Tuple[str, str]:
     driver = _get_driver()
     try:
         driver.get(url)
-        time.sleep(random.uniform(4, 7))
-        html = driver.page_source
+        time.sleep(random.uniform(3, 5))
+        html = _wait_for_content(driver)
         if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
             raise RuntimeError(
                 "Domain.com.au has blocked this IP address (Akamai bot protection). "

@@ -75,6 +75,32 @@ def _wait_for_content(driver, timeout: int = 30) -> str:
     return driver.page_source
 
 
+def _quit_driver(driver) -> None:
+    """Quit the driver and forcibly kill any leftover Chrome processes."""
+    import subprocess, os
+    # Grab the browser PID before quitting (undetected_chromedriver exposes it)
+    pids = []
+    try:
+        if hasattr(driver, 'browser_pid') and driver.browser_pid:
+            pids.append(driver.browser_pid)
+    except Exception:
+        pass
+    try:
+        driver.quit()
+    except Exception:
+        pass
+    # Kill any still-running Chrome processes we spawned
+    for pid in pids:
+        try:
+            if os.name == 'nt':
+                subprocess.call(['taskkill', '/F', '/T', '/PID', str(pid)],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                os.kill(pid, 9)
+        except Exception:
+            pass
+
+
 def _fetch_page_with_driver(driver, url: str) -> str:
     """Fetch a page using an existing driver instance (no open/close overhead).
 
@@ -111,7 +137,7 @@ def _fetch_page_with_url(url: str) -> Tuple[str, str]:
             )
         return html, driver.current_url
     finally:
-        driver.quit()
+        _quit_driver(driver)
 
 
 
@@ -537,7 +563,7 @@ def get_property_profile(address: str, suburb: str, state: str, postcode: str) -
                         pass
                 return info
     finally:
-        driver.quit()
+        _quit_driver(driver)
     return None
 
 
@@ -635,7 +661,7 @@ def get_nearby_sales(
                         pass
                 all_results.append(result)
     finally:
-        driver.quit()
+        _quit_driver(driver)
 
     # Sort by distance
     all_results.sort(key=lambda r: r.distance_km if r.distance_km is not None else 999)

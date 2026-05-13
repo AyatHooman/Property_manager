@@ -9,7 +9,7 @@ set AUTH_TOKEN=6143
 
 REM Bind to all interfaces so Cloudflare Tunnel (or your LAN) can reach it
 set HOST=0.0.0.0
-set PORT=5000
+set PORT=5001
 
 echo Starting Property Manager on http://%HOST%:%PORT%
 echo Auth token: %AUTH_TOKEN%

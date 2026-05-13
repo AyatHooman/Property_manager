@@ -1011,6 +1011,22 @@ function readAdjustmentRates() {
 function computeAdjusted(r, rates) {
   if (r.price_num == null) return { value: null, breakdown: 'No price', deltaStr: '' };
 
+  // All 4 fields are mandatory — if any is missing, no adjusted price
+  const hasBeds  = (r.beds      != null && r.beds  > 0);
+  const hasBaths = (r.baths     != null && r.baths > 0);
+  const hasCars  = (r.cars      != null);              // 0 cars IS valid (no parking)
+  const hasLand  = (r.land_area != null && r.land_area > 0);
+
+  if (!hasBeds || !hasBaths || !hasCars || !hasLand) {
+    const missing = [
+      !hasBeds  && 'beds',
+      !hasBaths && 'baths',
+      !hasCars  && 'cars',
+      !hasLand  && 'land size',
+    ].filter(Boolean).join(', ');
+    return { value: null, breakdown: `No adjusted price — missing: ${missing}`, deltaStr: '' };
+  }
+
   let monthsOld = 0;
   if (r.sold_date) {
     const d = new Date(r.sold_date);
@@ -1019,16 +1035,10 @@ function computeAdjusted(r, rates) {
   const timeFactor = Math.pow(1 + rates.growth, monthsOld);
   const timeAdj = r.price_num * timeFactor;
 
-  // Each field: only adjust if comp has a known, non-zero value
-  // beds/baths: 0 means data unavailable (no residential listing truly has 0 beds/baths)
-  const hasBeds  = (r.beds     != null && r.beds  > 0);
-  const hasBaths = (r.baths    != null && r.baths > 0);
-  const hasCars  = (r.cars     != null);              // 0 cars IS valid (no parking)
-  const hasLand  = (r.land_area != null && r.land_area > 0);
-  const dBed  = hasBeds  ? (rates.refBeds  - r.beds)      * rates.bed      : 0;
-  const dBath = hasBaths ? (rates.refBaths - r.baths)     * rates.bath     : 0;
-  const dCar  = hasCars  ? (rates.refCars  - r.cars)      * rates.car      : 0;
-  const dLand = hasLand  ? (rates.refLand  - r.land_area) * rates.landRate : 0;
+  const dBed  = (rates.refBeds  - r.beds)      * rates.bed;
+  const dBath = (rates.refBaths - r.baths)     * rates.bath;
+  const dCar  = (rates.refCars  - r.cars)      * rates.car;
+  const dLand = (rates.refLand  - r.land_area) * rates.landRate;
 
   // Pool: only adjust if BOTH ref and comp values are known
   let dPool = 0;
@@ -1064,10 +1074,10 @@ function computeAdjusted(r, rates) {
   const breakdown = [
     `Sold: $${r.price_num.toLocaleString()}`,
     `Time +${((timeFactor-1)*100).toFixed(1)}% over ${monthsOld.toFixed(1)} mo → $${Math.round(timeAdj).toLocaleString()}`,
-    hasBeds  ? fmtLine('Beds  ', dBed)  : 'Beds   (n/a — skipped)',
-    hasBaths ? fmtLine('Baths ', dBath) : 'Baths  (n/a — skipped)',
-    hasCars  ? fmtLine('Cars  ', dCar)  : 'Cars   (n/a — skipped)',
-    hasLand  ? fmtLine('Land  ', dLand) : 'Land   (n/a — skipped)',
+    fmtLine('Beds  ', dBed),
+    fmtLine('Baths ', dBath),
+    fmtLine('Cars  ', dCar),
+    fmtLine('Land  ', dLand),
     dPool   !== 0 ? fmtLine('Pool  ', dPool)   : (poolNote || null),
     dStorey !== 0 ? fmtLine('Storey', dStorey) : null,
     `→ Adjusted: $${value.toLocaleString()}`,

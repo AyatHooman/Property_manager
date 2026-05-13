@@ -348,27 +348,16 @@ def get_listing_features(url: str) -> Optional[dict]:
 
 def get_listing_pool_storeys(url: str, lat: Optional[float] = None,
                              lng: Optional[float] = None) -> dict:
-    """Cheap-as-possible pool/storey lookup for one comp listing.
+    """Cheap pool/storey lookup for one comp listing.
 
-    Used by the lazy-loading API endpoint.  Strategy:
-      1. Scrape the listing page text (storeys + pool both come from
-         description text).
-      2. If pool was not found in text, try OSM Overpass at the
-         lat/lng (caller must pass it for this to work).
+    Chrome-based scraping of individual listing pages is disabled to avoid
+    triggering Akamai bot detection (each listing = 1 extra Chrome session).
+    Only the OSM Overpass API is used for pool detection (no Chrome needed).
+    Storeys default to None — not worth the bot-detection risk.
     """
     out = {"pool": None, "storeys": None}
-    if url and "domain.com.au" in url:
-        try:
-            html = _fetch_page(url)
-            from src.features import parse_pool_storeys_from_html
-            pool, storeys = parse_pool_storeys_from_html(html)
-            if pool is not None:
-                out["pool"] = pool
-            if storeys is not None:
-                out["storeys"] = storeys
-        except Exception:
-            pass
-    if out["pool"] is None and lat and lng:
+    # OSM pool check only — no Chrome scrape of individual listing pages
+    if lat and lng:
         try:
             from src.features import osm_has_pool
             osm_pool = osm_has_pool(lat, lng)

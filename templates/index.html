@@ -976,9 +976,10 @@ function readAdjustmentRates() {
   const num = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
   // Pool: null if ref left as unknown, otherwise boolean
   const poolEl = document.getElementById('ref-pool');
-  const refPool = poolEl && poolEl.value !== '' ? poolEl.value === 'true' : null;
-  // Storeys: null if ref left as 0/unknown
-  const refStoreys = num('ref-storeys', 0) || null;
+  const refPool = (poolEl && poolEl.value !== '') ? (poolEl.value === 'yes') : null;
+  // Storeys: null if ref left as unknown/empty
+  const storeyEl = document.getElementById('ref-storeys');
+  const refStoreys = (storeyEl && storeyEl.value !== '') ? parseInt(storeyEl.value, 10) : null;
   return {
     refBeds:    num('ref-beds', 0),
     refBaths:   num('ref-baths', 0),
@@ -1016,12 +1017,14 @@ function computeAdjusted(r, rates) {
   // Pool: only adjust if BOTH ref and comp values are known
   let dPool = 0;
   if (rates.refPool !== null && (r.pool === true || r.pool === false)) {
-    dPool = ((rates.refPool ? 1 : 0) - (r.pool ? 1 : 0)) * rates.pool;
+    const poolRate = isNaN(rates.pool) ? 30000 : rates.pool;
+    dPool = ((rates.refPool ? 1 : 0) - (r.pool ? 1 : 0)) * poolRate;
   }
   // Storey: only adjust if BOTH known
   let dStorey = 0;
   if (rates.refStoreys != null && r.storeys != null) {
-    dStorey = (rates.refStoreys - r.storeys) * rates.storey;
+    const storeyRate = isNaN(rates.storey) ? 25000 : rates.storey;
+    dStorey = (rates.refStoreys - r.storeys) * storeyRate;
   }
 
   const value = Math.round(timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey);

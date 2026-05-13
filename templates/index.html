@@ -974,25 +974,31 @@ function sortResults(arr) {
 // ── CMA: comparable-sales adjustment ────────────────────────────────────────────
 function readAdjustmentRates() {
   const num = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
+  // Pool: null if ref left as unknown, otherwise boolean
+  const poolEl = document.getElementById('ref-pool');
+  const refPool = poolEl && poolEl.value !== '' ? poolEl.value === 'true' : null;
+  // Storeys: null if ref left as 0/unknown
+  const refStoreys = num('ref-storeys', 0) || null;
   return {
-    refBeds:  num('ref-beds', 0),
-    refBaths: num('ref-baths', 0),
-    refCars:  num('ref-cars', 0),
-    refLand:  num('ref-land', 0),
-    growth:   num('adj-growth', 0.4) / 100,
-    bed:      num('adj-bed', 35000),
-    bath:     num('adj-bath', 20000),
-    car:      num('adj-car', 15000),
-    landRate: num('adj-land', 800),
+    refBeds:    num('ref-beds', 0),
+    refBaths:   num('ref-baths', 0),
+    refCars:    num('ref-cars', 0),
+    refLand:    num('ref-land', 0),
+    refPool,
+    refStoreys,
+    growth:     num('adj-growth', 0.4) / 100,
+    bed:        num('adj-bed', 35000),
+    bath:       num('adj-bath', 20000),
+    car:        num('adj-car', 15000),
+    landRate:   num('adj-land', 800),
+    pool:       num('adj-pool', 30000),
+    storey:     num('adj-storey', 25000),
   };
 }
 
 function computeAdjusted(r, rates) {
   if (r.price_num == null) return { value: null, breakdown: 'No price', deltaStr: '' };
-  // Skip if comp is missing key fields needed for adjustment
-  if (r.beds == null || r.baths == null || r.land_area == null || r.land_area <= 0) {
-    return { value: null, breakdown: 'Missing beds/baths/land in comp', deltaStr: '' };
-  }
+
   let monthsOld = 0;
   if (r.sold_date) {
     const d = new Date(r.sold_date);
@@ -1001,10 +1007,12 @@ function computeAdjusted(r, rates) {
   const timeFactor = Math.pow(1 + rates.growth, monthsOld);
   const timeAdj = r.price_num * timeFactor;
 
-  const dBed  = (rates.refBeds  - r.beds)      * rates.bed;
-  const dBath = (rates.refBaths - r.baths)     * rates.bath;
-  const dCar  = (r.cars != null) ? (rates.refCars - r.cars) * rates.car : 0;
-  const dLand = (rates.refLand  - r.land_area) * rates.landRate;
+  // Each field: only adjust if comp has a known value
+  const dBed  = (r.beds     != null) ? (rates.refBeds  - r.beds)      * rates.bed      : 0;
+  const dBath = (r.baths    != null) ? (rates.refBaths - r.baths)     * rates.bath     : 0;
+  const dCar  = (r.cars     != null) ? (rates.refCars  - r.cars)      * rates.car      : 0;
+  const dLand = (r.land_area != null && r.land_area > 0) ? (rates.refLand - r.land_area) * rates.landRate : 0;
+
   // Pool: only adjust if BOTH ref and comp values are known
   let dPool = 0;
   if (rates.refPool !== null && (r.pool === true || r.pool === false)) {
@@ -1022,17 +1030,18 @@ function computeAdjusted(r, rates) {
   const sign = delta >= 0 ? '+' : '−';
   const deltaStr = `${sign}$${Math.abs(delta).toLocaleString()} (${sign}${Math.abs(pct).toFixed(1)}%)`;
 
+  const fmtLine = (label, val) => val !== 0 ? `${label} ${val>=0?'+':''}$${Math.round(val).toLocaleString()}` : null;
   const breakdown = [
     `Sold: $${r.price_num.toLocaleString()}`,
     `Time +${((timeFactor-1)*100).toFixed(1)}% over ${monthsOld.toFixed(1)} mo → $${Math.round(timeAdj).toLocaleString()}`,
-    `Beds  ${dBed>=0?'+':''}$${dBed.toLocaleString()}`,
-    `Baths ${dBath>=0?'+':''}$${dBath.toLocaleString()}`,
-    `Cars  ${dCar>=0?'+':''}$${dCar.toLocaleString()}`,
-    `Land  ${dLand>=0?'+':''}$${Math.round(dLand).toLocaleString()}`,
-    `Pool  ${dPool>=0?'+':''}$${dPool.toLocaleString()}`,
-    `Storey ${dStorey>=0?'+':''}$${dStorey.toLocaleString()}`,
+    fmtLine('Beds  ', dBed),
+    fmtLine('Baths ', dBath),
+    fmtLine('Cars  ', dCar),
+    fmtLine('Land  ', dLand),
+    dPool   !== 0 ? fmtLine('Pool  ', dPool)   : null,
+    dStorey !== 0 ? fmtLine('Storey', dStorey) : null,
     `→ Adjusted: $${value.toLocaleString()}`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 
   return { value, breakdown, deltaStr };
 }

@@ -263,6 +263,7 @@
     .est-median { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
     .est-range { font-size: 14px; color: #d0e2ff; margin-top: 4px; }
     .adj-val { color: #6ee7b7 !important; cursor: help; border-bottom: 1px dashed #6ee7b740; }
+    .adj-val-outlier { color: #f97316 !important; cursor: help; border-bottom: 1px dashed #f9731660; }
 
     /* ── Reference property panel ─────────────────────────────────────────── */
     .ref-panel {
@@ -613,11 +614,11 @@
           </div>
           <div class="adj-rate-item">
             <label class="adj-rate-label">🏊 $ pool premium</label>
-            <input type="number" id="adj-pool" class="adj-rate-input" step="5000" value="30000" />
+            <input type="number" id="adj-pool" class="adj-rate-input" step="5000" value="40000" />
           </div>
           <div class="adj-rate-item">
             <label class="adj-rate-label">🏠 $ extra storey</label>
-            <input type="number" id="adj-storey" class="adj-rate-input" step="5000" value="25000" />
+            <input type="number" id="adj-storey" class="adj-rate-input" step="5000" value="120000" />
           </div>
         </div>
       </details>
@@ -934,8 +935,9 @@ function renderResults() {
                      : r.storeys === 1 ? '<span class="feat-pill">1️⃣</span>'
                      : `<span class="sub-muted" data-extras-cell="storeys" data-row="${origIdx}">…</span>`;
     const adj = computeAdjusted(r, rates);
+    const adjCls  = outlierIndices.has(origIdx) ? 'price-val adj-val-outlier' : 'price-val adj-val';
     const adjHtml = (adj.value != null && isFinite(adj.value))
-      ? `<span class="price-val adj-val" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
+      ? `<span class="${adjCls}" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
       : '—';
     return `<tr data-row="${origIdx}">
       <td class="td-address">${addrHtml}</td>
@@ -994,8 +996,8 @@ function readAdjustmentRates() {
     bath:       num('adj-bath', 20000),
     car:        num('adj-car', 15000),
     landRate:   num('adj-land', 800),
-    pool:       num('adj-pool', 30000),
-    storey:     num('adj-storey', 25000),
+    pool:       num('adj-pool', 40000),
+    storey:     num('adj-storey', 120000),
   };
 }
 
@@ -1062,19 +1064,57 @@ function computeAdjusted(r, rates) {
   return { value, breakdown, deltaStr };
 }
 
+// Global set of comp indices whose adjusted price is an outlier
+let outlierIndices = new Set();
+
 function renderEstimate(sorted, rates) {
-  const adjusted = sorted.map(r => computeAdjusted(r, rates).value).filter(v => v != null && isFinite(v));
   const banner = document.getElementById('estimate-banner');
   if (!banner) return;
-  if (adjusted.length < 3) { banner.classList.remove('visible'); return; }
-  adjusted.sort((a,b)=>a-b);
-  const median = adjusted[Math.floor(adjusted.length/2)];
-  const low  = adjusted[Math.floor(adjusted.length*0.25)];
-  const high = adjusted[Math.floor(adjusted.length*0.75)];
-  document.getElementById('est-median').textContent = '$' + median.toLocaleString();
+
+  // Build [{idx, value}] for all comps with a valid adjusted price
+  const pairs = sorted.map((r, si) => {
+    const origIdx = allResults.indexOf(r);
+    const val = computeAdjusted(r, rates).value;
+    return (val != null && isFinite(val)) ? { origIdx, val } : null;
+  }).filter(Boolean);
+
+  if (pairs.length < 3) { banner.classList.remove('visible'); outlierIndices = new Set(); return; }
+
+  // IQR outlier detection (1.5× IQR fence)
+  const vals = pairs.map(p => p.val).sort((a,b) => a-b);
+  const q1 = vals[Math.floor(vals.length * 0.25)];
+  const q3 = vals[Math.floor(vals.length * 0.75)];
+  const iqr = q3 - q1;
+  const lo  = q1 - 1.5 * iqr;
+  const hi  = q3 + 1.5 * iqr;
+
+  outlierIndices = new Set(pairs.filter(p => p.val < lo || p.val > hi).map(p => p.origIdx));
+  const inliers  = pairs.filter(p => p.val >= lo && p.val <= hi).map(p => p.val);
+
+  if (inliers.length < 2) { banner.classList.remove('visible'); return; }
+
+  // Average of inliers for the headline estimate
+  const avg = Math.round(inliers.reduce((s,v) => s+v, 0) / inliers.length);
+  inliers.sort((a,b) => a-b);
+  const low  = inliers[Math.floor(inliers.length * 0.25)];
+  const high = inliers[Math.floor(inliers.length * 0.75)];
+
+  document.getElementById('est-median').textContent = '$' + avg.toLocaleString();
   document.getElementById('est-range').textContent  = '$' + low.toLocaleString() + ' – $' + high.toLocaleString();
-  document.getElementById('est-n').textContent      = adjusted.length;
+  const nEl = document.getElementById('est-n');
+  const excluded = pairs.length - inliers.length;
+  nEl.textContent = inliers.length + (excluded > 0 ? ` (${excluded} outlier${excluded>1?'s':''} excluded)` : '');
   banner.classList.add('visible');
+
+  // Re-colour outlier cells in the already-rendered table
+  document.querySelectorAll('.adj-val, .adj-val-outlier').forEach(el => {
+    const row = el.closest('tr');
+    if (!row) return;
+    const idx = parseInt(row.dataset.row, 10);
+    el.className = outlierIndices.has(idx)
+      ? 'price-val adj-val-outlier'
+      : 'price-val adj-val';
+  });
 }
 
 // Re-render whenever the user tweaks reference specs or rates
@@ -1207,8 +1247,9 @@ function updateRowExtras(idx) {
   const adj = computeAdjusted(r, rates);
   const adjTd = row.children[2];
   if (adjTd) {
+    const adjCls = outlierIndices.has(idx) ? 'price-val adj-val-outlier' : 'price-val adj-val';
     adjTd.innerHTML = (adj.value != null && isFinite(adj.value))
-      ? `<span class="price-val adj-val" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
+      ? `<span class="${adjCls}" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
       : '—';
   }
   // Update overall estimate banner since one more comp now has data

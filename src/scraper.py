@@ -6,52 +6,36 @@ import json
 import re
 import time
 import math
+import random
 from datetime import datetime, timedelta
 from typing import Optional, List, Any, Tuple
 from src.models import PropertyListing, SaleResult
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-
-
-def _get_driver() -> webdriver.Chrome:
+def _get_driver():
+    """Return an undetected Chrome driver that bypasses Akamai/Cloudflare bot detection."""
     import os
-    options = Options()
-    # Use portable Chrome 148 (64-bit) bundled in the project to avoid system Chrome 110 crashes
+    import undetected_chromedriver as uc
+
     _base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     _chrome_bin = os.path.join(_base, "chrome-portable", "chrome-win64", "chrome.exe")
     _driver_bin = os.path.join(_base, "chrome-portable", "chromedriver-win64", "chromedriver.exe")
-    if os.path.exists(_chrome_bin):
-        options.binary_location = _chrome_bin
-    options.add_argument("--headless=new")
+
+    options = uc.ChromeOptions()
+    # Do NOT pass --headless here; use uc's headless=True param instead
+    # (the manual flag is fingerprinted by Akamai; uc patches it differently)
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--disable-background-networking")
-    options.add_argument("--disable-background-timer-throttling")
-    options.add_argument("--disable-renderer-backgrounding")
-    options.add_argument("--no-first-run")
-    options.add_argument("--no-default-browser-check")
     options.add_argument("--window-size=1280,800")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    options.add_experimental_option("useAutomationExtension", False)
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
-    )
+
+    kwargs = dict(options=options, headless=True, use_subprocess=False)
+    if os.path.exists(_chrome_bin):
+        kwargs["browser_executable_path"] = _chrome_bin
     if os.path.exists(_driver_bin):
-        service = Service(_driver_bin)
-    else:
-        service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    driver.set_page_load_timeout(30)
-    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        kwargs["driver_executable_path"] = _driver_bin
+
+    driver = uc.Chrome(**kwargs)
+    driver.set_page_load_timeout(40)
     return driver
 
 
@@ -69,15 +53,24 @@ def _fetch_page(url: str) -> str:
     return html
 
 
-def _fetch_page_with_driver(driver: webdriver.Chrome, url: str) -> str:
+def _fetch_page_with_driver(driver, url: str) -> str:
     """Fetch a page using an existing driver instance (no open/close overhead).
-    
+
     Returns empty string on crash so the caller can skip the page gracefully.
+    Raises RuntimeError if Domain returns an Akamai Access Denied page.
     """
     try:
         driver.get(url)
-        time.sleep(3)
-        return driver.page_source
+        time.sleep(random.uniform(4, 7))  # randomised delay to avoid bot detection
+        html = driver.page_source
+        if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
+            raise RuntimeError(
+                "Domain.com.au has blocked this IP address (Akamai bot protection). "
+                "Please wait a few minutes and try again, or use a VPN/proxy."
+            )
+        return html
+    except RuntimeError:
+        raise
     except Exception:
         return ""
 
@@ -87,8 +80,14 @@ def _fetch_page_with_url(url: str) -> Tuple[str, str]:
     driver = _get_driver()
     try:
         driver.get(url)
-        time.sleep(3)  # wait for JS to render
-        return driver.page_source, driver.current_url
+        time.sleep(random.uniform(4, 7))
+        html = driver.page_source
+        if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
+            raise RuntimeError(
+                "Domain.com.au has blocked this IP address (Akamai bot protection). "
+                "Please wait a few minutes and try again, or use a VPN/proxy."
+            )
+        return html, driver.current_url
     finally:
         driver.quit()
 

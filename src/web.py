@@ -161,6 +161,43 @@ def api_listing_info():
         return jsonify({"error": str(e)}), 500
 
 
+# ── API: debug — inspect raw __NEXT_DATA__ keys from a sold-listings page ──
+
+@app.route("/api/debug-scrape")
+def api_debug_scrape():
+    """Debug: fetch a Domain sold-listings page and return the JSON key structure."""
+    suburb  = request.args.get("suburb", "Mernda").strip()
+    state   = request.args.get("state", "VIC").strip().upper()
+    postcode = request.args.get("postcode", "").strip()
+    try:
+        from src.scraper import _slug, _fetch_page, _extract_next_data, _extract_json_listings
+        slug = _slug(suburb, state, postcode)
+        url  = f"https://www.domain.com.au/sold-listings/{slug}/?page=1"
+        html = _fetch_page(url)
+        nd   = _extract_next_data(html)
+        # Return key structure without giant data blobs
+        def _keys(obj, depth=0):
+            if depth > 4 or not isinstance(obj, dict):
+                return type(obj).__name__
+            return {k: _keys(v, depth+1) for k, v in list(obj.items())[:20]}
+        raw = _extract_json_listings(html)
+        props_keys = list(nd.get("props", {}).get("pageProps", {}).keys()) if nd else []
+        cp_keys    = list(nd.get("props", {}).get("pageProps", {}).get("componentProps", {}).keys()) if nd else []
+        return jsonify({
+            "url": url,
+            "html_len": len(html),
+            "html_preview": html[:500],
+            "next_data_found": bool(nd),
+            "props_pageProps_keys": props_keys,
+            "componentProps_keys": cp_keys,
+            "raw_listings_count": len(raw),
+            "first_listing_keys": list(raw[0].keys()) if raw else [],
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+
+
 # ── API: lazy-load pool/storey for one comp ─────────────────────────
 
 @app.route("/api/listing-extras")

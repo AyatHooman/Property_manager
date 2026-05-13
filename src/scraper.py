@@ -109,7 +109,7 @@ def _fetch_page_with_driver(driver, url: str) -> str:
     """
     try:
         driver.get(url)
-        time.sleep(random.uniform(3, 5))  # initial wait for page to start loading
+        time.sleep(random.uniform(5, 9))  # human-like wait for page to start loading
         html = _wait_for_content(driver)
         if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
             raise RuntimeError(
@@ -128,7 +128,7 @@ def _fetch_page_with_url(url: str) -> Tuple[str, str]:
     driver = _get_driver()
     try:
         driver.get(url)
-        time.sleep(random.uniform(3, 5))
+        time.sleep(random.uniform(5, 9))
         html = _wait_for_content(driver)
         if len(html) < 2000 and "Access Denied" in html and "edgesuite.net" in html:
             raise RuntimeError(
@@ -638,6 +638,8 @@ def get_nearby_sales(
     driver = _get_driver()
     try:
         for page in range(1, pages + 1):
+            if page > 1:
+                time.sleep(random.uniform(8, 14))  # human-like pause between pages
             url = f"https://www.domain.com.au/sold-listings/{slug}/?page={page}"
             html = _fetch_page_with_driver(driver, url)
             raw = _extract_json_listings(html)

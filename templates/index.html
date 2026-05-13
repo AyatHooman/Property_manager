@@ -1084,7 +1084,7 @@ function renderEstimate(sorted, rates) {
 
   if (pairs.length < 3) { banner.classList.remove('visible'); outlierIndices = new Set(); return; }
 
-  // IQR outlier detection (1.5× IQR fence)
+  // IQR outlier detection (user-controlled multiplier, default 1.0×)
   const vals = pairs.map(p => p.val).sort((a,b) => a-b);
   const q1 = vals[Math.floor(vals.length * 0.25)];
   const q3 = vals[Math.floor(vals.length * 0.75)];

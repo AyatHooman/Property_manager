@@ -612,6 +612,9 @@
             <label class="adj-rate-label">📐 $ per m² land</label>
             <input type="number" id="adj-land" class="adj-rate-input" step="50" value="800" />
           </div>
+            <label class="adj-rate-label">📊 Outlier fence (×IQR)</label>
+            <input type="number" id="adj-iqr" class="adj-rate-input" step="0.25" min="0.25" max="3" value="1.0" />
+          </div>
           <div class="adj-rate-item">
             <label class="adj-rate-label">🏊 $ pool premium</label>
             <input type="number" id="adj-pool" class="adj-rate-input" step="5000" value="40000" />
@@ -998,6 +1001,7 @@ function readAdjustmentRates() {
     landRate:   num('adj-land', 800),
     pool:       num('adj-pool', 40000),
     storey:     num('adj-storey', 120000),
+    iqrMult:    num('adj-iqr', 1.0),
   };
 }
 
@@ -1085,8 +1089,8 @@ function renderEstimate(sorted, rates) {
   const q1 = vals[Math.floor(vals.length * 0.25)];
   const q3 = vals[Math.floor(vals.length * 0.75)];
   const iqr = q3 - q1;
-  const lo  = q1 - 1.5 * iqr;
-  const hi  = q3 + 1.5 * iqr;
+  const lo  = q1 - (rates.iqrMult ?? 1.0) * iqr;
+  const hi  = q3 + (rates.iqrMult ?? 1.0) * iqr;
 
   outlierIndices = new Set(pairs.filter(p => p.val < lo || p.val > hi).map(p => p.origIdx));
   const inliers  = pairs.filter(p => p.val >= lo && p.val <= hi).map(p => p.val);
@@ -1118,7 +1122,7 @@ function renderEstimate(sorted, rates) {
 }
 
 // Re-render whenever the user tweaks reference specs or rates
-['ref-beds','ref-baths','ref-cars','ref-land','ref-pool','ref-storeys','adj-growth','adj-bed','adj-bath','adj-car','adj-land','adj-pool','adj-storey'].forEach(id => {
+['ref-beds','ref-baths','ref-cars','ref-land','ref-pool','ref-storeys','adj-growth','adj-bed','adj-bath','adj-car','adj-land','adj-pool','adj-storey','adj-iqr'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', () => { if (allResults.length) renderResults(); });
 });

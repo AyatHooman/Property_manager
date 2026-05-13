@@ -28,6 +28,11 @@ def _get_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1280,800")
 
+    # Optional proxy: set SCRAPER_PROXY=http://host:port in .env
+    proxy = os.environ.get("SCRAPER_PROXY", "").strip()
+    if proxy:
+        options.add_argument(f"--proxy-server={proxy}")
+
     kwargs = dict(options=options, headless=True, use_subprocess=False)
     if os.path.exists(_chrome_bin):
         kwargs["browser_executable_path"] = _chrome_bin

@@ -932,7 +932,7 @@ function renderResults() {
                      : r.storeys === 1 ? '<span class="feat-pill">1️⃣</span>'
                      : `<span class="sub-muted" data-extras-cell="storeys" data-row="${origIdx}">…</span>`;
     const adj = computeAdjusted(r, rates);
-    const adjHtml = adj.value != null
+    const adjHtml = (adj.value != null && isFinite(adj.value))
       ? `<span class="price-val adj-val" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
       : '—';
     return `<tr data-row="${origIdx}">
@@ -1030,9 +1030,10 @@ function computeAdjusted(r, rates) {
   const raw = timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey;
   if (!isFinite(raw)) {
     console.warn('computeAdjusted NaN debug:', {price: r.price_num, timeAdj, dBed, dBath, dCar, dLand, dPool, dStorey, rates});
-    return { value: null, breakdown: 'Calculation error (NaN in inputs)', deltaStr: '' };
+    return { value: null, breakdown: 'Calculation error', deltaStr: '' };
   }
   const value = Math.round(raw);
+  if (!isFinite(value)) return { value: null, breakdown: 'Calculation error', deltaStr: '' };
   const delta = value - r.price_num;
   const pct = (delta / r.price_num) * 100;
   const sign = delta >= 0 ? '+' : '−';
@@ -1055,7 +1056,7 @@ function computeAdjusted(r, rates) {
 }
 
 function renderEstimate(sorted, rates) {
-  const adjusted = sorted.map(r => computeAdjusted(r, rates).value).filter(v => v != null);
+  const adjusted = sorted.map(r => computeAdjusted(r, rates).value).filter(v => v != null && isFinite(v));
   const banner = document.getElementById('estimate-banner');
   if (!banner) return;
   if (adjusted.length < 3) { banner.classList.remove('visible'); return; }
@@ -1167,7 +1168,7 @@ function updateRowExtras(idx) {
   const adj = computeAdjusted(r, rates);
   const adjTd = row.children[2];
   if (adjTd) {
-    adjTd.innerHTML = adj.value != null
+    adjTd.innerHTML = (adj.value != null && isFinite(adj.value))
       ? `<span class="price-val adj-val" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
       : '—';
   }

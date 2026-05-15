@@ -351,8 +351,7 @@
     /* ── Results ── */
     #results-section { display: none; }
     #results-section.visible { display: block; }
-    #map-card { display: none; margin-top: 16px; }
-    #map-card.visible { display: block; }
+    #map-card { display: block; margin-top: 16px; }
     #map { height: 480px; border-radius: 10px; z-index: 0; }
     .ref-map-marker { background: none; border: none; }
     .comp-popup .price { font-weight: 700; font-size: 14px; }
@@ -640,6 +639,12 @@
     </button>
   </div>
 
+  <!-- Map -->
+  <div id="map-card" class="card">
+    <div class="card-title">🗺️ Map View</div>
+    <div id="map"></div>
+  </div>
+
   <!-- Status bar -->
   <div id="status-bar">
     <div class="spinner"></div>
@@ -700,12 +705,6 @@
         <tbody id="results-body"></tbody>
       </table>
     </div>
-  </div>
-
-  <!-- Map -->
-  <div id="map-card" class="card">
-    <div class="card-title">🗺️ Map View</div>
-    <div id="map"></div>
   </div>
 
 </div><!-- /container -->
@@ -803,6 +802,8 @@ function selectItem(item) {
   document.getElementById('sel-address').value = item.label;
   closeAc();
   updateSearchBtn();
+  // Immediately pin reference on map
+  pinRefOnMap(parseFloat(item.lat), parseFloat(item.lng), item.label);
 }
 
 function clearSelection() {
@@ -1104,32 +1105,40 @@ function computeAdjusted(r, rates) {
 
 // ── Map ──────────────────────────────────────────────────────────────────────
 let _map = null;
+let _refMarker = null;
 
-function renderMap(results, refLat, refLng, refAddress, rates) {
-  const mapCard = document.getElementById('map-card');
-  if (!refLat || !refLng) { mapCard.classList.remove('visible'); return; }
-  mapCard.classList.add('visible');
+function _initMap() {
+  if (_map) return;
+  // Default view: Melbourne CBD
+  _map = L.map('map').setView([-37.8136, 144.9631], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(_map);
+}
 
-  if (!_map) {
-    _map = L.map('map').setView([refLat, refLng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(_map);
-  } else {
-    _map.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.CircleMarker) _map.removeLayer(l); });
-    _map.setView([refLat, refLng], 14);
-  }
-
-  // Reference property — red star marker
+function pinRefOnMap(lat, lng, address) {
+  _initMap();
+  if (_refMarker) { _map.removeLayer(_refMarker); _refMarker = null; }
   const refIcon = L.divIcon({
     className: 'ref-map-marker',
-    html: '<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 4px #0008)">📍</div>',
-    iconAnchor: [14, 28]
+    html: '<div style="font-size:32px;line-height:1;filter:drop-shadow(0 2px 6px #0009)">📍</div>',
+    iconAnchor: [16, 32]
   });
-  L.marker([refLat, refLng], { icon: refIcon, zIndexOffset: 1000 })
+  _refMarker = L.marker([lat, lng], { icon: refIcon, zIndexOffset: 1000 })
     .addTo(_map)
-    .bindPopup(`<b>🎯 Reference</b><br><span style="font-size:12px">${refAddress || ''}</span>`);
+    .bindPopup(`<b>🎯 Reference</b><br><span style="font-size:12px">${address || ''}</span>`)
+    .openPopup();
+  _map.setView([lat, lng], 15);
+  setTimeout(() => _map.invalidateSize(), 100);
+}
+
+function renderMap(results, refLat, refLng, refAddress, rates) {
+  _initMap();
+  if (refLat && refLng) pinRefOnMap(refLat, refLng, refAddress);
+
+  // Remove old comp markers
+  _map.eachLayer(l => { if (l instanceof L.CircleMarker) _map.removeLayer(l); });
 
   // Comp sold properties
   results.forEach(r => {
@@ -1158,6 +1167,9 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
 
   setTimeout(() => _map.invalidateSize(), 100);
 }
+
+// Init map on page load
+window.addEventListener('load', () => _initMap());
 
 // Global set of comp indices whose adjusted price is an outlier
 let outlierIndices = new Set();

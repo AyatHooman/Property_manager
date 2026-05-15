@@ -356,6 +356,31 @@
     .comp-popup .price { font-weight: 700; font-size: 14px; }
     .comp-popup .adj  { color: #6ee7b7; font-size: 12px; }
     .comp-popup .addr { font-size: 12px; color: #94a3b8; }
+    .map-controls { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 0 8px 0; }
+    .zone-toggle {
+      display: flex; align-items: center; gap: 6px;
+      background: #1e293b; border: 1px solid #2e3350;
+      border-radius: 8px; padding: 6px 14px;
+      cursor: pointer; font-size: 13px; color: var(--text);
+      user-select: none; transition: background .15s, border-color .15s;
+    }
+    .zone-toggle:hover { background: #263349; }
+    .zone-toggle.active { border-color: var(--accent); background: #1a2a4a; }
+    .zone-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .map-controls {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      padding: 8px 0 4px 0;
+    }
+    .zone-toggle {
+      display: flex; align-items: center; gap: 6px;
+      background: #1e293b; border: 1px solid #2e3350;
+      border-radius: 8px; padding: 6px 12px;
+      cursor: pointer; font-size: 13px; color: var(--text);
+      user-select: none; transition: background .15s;
+    }
+    .zone-toggle:hover { background: #263349; }
+    .zone-toggle.active { border-color: var(--accent); background: #1a2a4a; }
+    .zone-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 
     .results-header {
       display: flex;
@@ -482,6 +507,19 @@
     <input type="hidden" id="sel-state" />
     <input type="hidden" id="sel-postcode" />
     <input type="hidden" id="sel-address" />
+
+    <!-- Map (below search bar) -->
+    <div style="margin: 16px 0;">
+      <div class="map-controls">
+        <div class="zone-toggle" id="toggle-primary" onclick="toggleZone('primary')">
+          <span class="zone-dot" style="background:#3b82f6"></span> Primary School Zone
+        </div>
+        <div class="zone-toggle" id="toggle-secondary" onclick="toggleZone('secondary')">
+          <span class="zone-dot" style="background:#f59e0b"></span> Secondary School Zone
+        </div>
+      </div>
+      <div id="map" style="height:420px;width:100%;border-radius:10px;"></div>
+    </div>
 
     <div class="filters" style="margin-top: 24px;">
 
@@ -1163,6 +1201,119 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
 
 // Init map on page load
 document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
+
+// ── School Zones ───────────────────────────────────────────────────────────
+const _zoneLayers = { primary: null, secondary: null };
+const _zoneActive = { primary: false, secondary: false };
+const _zoneColors = { primary: '#3b82f6', secondary: '#f59e0b' };
+
+async function toggleZone(type) {
+  _initMap();
+  const btn = document.getElementById('toggle-' + type);
+  const label = type === 'primary' ? 'Primary School Zone' : 'Secondary School Zone';
+  const color = _zoneColors[type];
+
+  if (_zoneActive[type]) {
+    if (_zoneLayers[type]) { _map.removeLayer(_zoneLayers[type]); _zoneLayers[type] = null; }
+    _zoneActive[type] = false;
+    btn.classList.remove('active');
+    btn.innerHTML = `<span class="zone-dot" style="background:${color}"></span> ${label}`;
+    return;
+  }
+
+  const lat = parseFloat(document.getElementById('sel-lat').value) || refLat;
+  const lng = parseFloat(document.getElementById('sel-lng').value) || refLng;
+  if (!lat || !lng) {
+    alert('Please select an address first so we know which zone to load.');
+    return;
+  }
+
+  btn.innerHTML = '⏳ Loading…';
+  try {
+    const r = await fetch(`/api/school-zones?lat=${lat}&lng=${lng}&type=${type}`);
+    const geojson = await r.json();
+    if (geojson.error) throw new Error(geojson.error);
+    if (!geojson.features || geojson.features.length === 0) {
+      alert(`No ${label} found for this location.\nNote: zone data is only available for Victoria.`);
+      btn.innerHTML = `<span class="zone-dot" style="background:${color}"></span> ${label}`;
+      return;
+    }
+    _zoneLayers[type] = L.geoJSON(geojson, {
+      style: { color, weight: 2.5, fillColor: color, fillOpacity: 0.12, dashArray: '6,4' },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const name = p.SCHOOL_NAME || p.school_name || label;
+        layer.bindPopup(`<b>🏫 ${name}</b><br><span style="font-size:11px;color:#94a3b8">${label}</span>`);
+      }
+    }).addTo(_map);
+    _zoneActive[type] = true;
+    btn.classList.add('active');
+    btn.innerHTML = `<span class="zone-dot" style="background:${color}"></span> ${label}`;
+    _map.fitBounds(_zoneLayers[type].getBounds(), { padding: [30, 30], maxZoom: 14 });
+  } catch (e) {
+    alert('Failed to load zone: ' + e.message);
+    btn.innerHTML = `<span class="zone-dot" style="background:${color}"></span> ${label}`;
+  }
+}
+
+// ── School Zones ───────────────────────────────────────────────────────────
+const _zoneLayers = { primary: null, secondary: null };
+const _zoneActive = { primary: false, secondary: false };
+const _zoneColors = { primary: '#3b82f6', secondary: '#f59e0b' };
+
+async function toggleZone(type) {
+  _initMap();
+  const btn = document.getElementById('toggle-' + type);
+
+  if (_zoneActive[type]) {
+    // Turn off
+    if (_zoneLayers[type]) { _map.removeLayer(_zoneLayers[type]); _zoneLayers[type] = null; }
+    _zoneActive[type] = false;
+    btn.classList.remove('active');
+    return;
+  }
+
+  // Turn on — need a lat/lng to query
+  const lat = parseFloat(document.getElementById('sel-lat').value) || (refLat);
+  const lng = parseFloat(document.getElementById('sel-lng').value) || (refLng);
+  if (!lat || !lng) {
+    alert('Please select an address first so we know which zone to load.');
+    return;
+  }
+
+  btn.textContent = '⏳ Loading…';
+  try {
+    const resp = await fetch(`/api/school-zones?lat=${lat}&lng=${lng}&type=${type}&token=${getToken()}`);
+    const geojson = await resp.json();
+    if (geojson.error) throw new Error(geojson.error);
+    if (!geojson.features || geojson.features.length === 0) {
+      alert(`No ${type} school zone found for this location.`);
+      btn.innerHTML = `<span class="zone-dot" style="background:${_zoneColors[type]}"></span> ${type === 'primary' ? 'Primary' : 'Secondary'} School Zone`;
+      return;
+    }
+    const color = _zoneColors[type];
+    _zoneLayers[type] = L.geoJSON(geojson, {
+      style: { color, weight: 2.5, fillColor: color, fillOpacity: 0.12, dashArray: '5,4' },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const name = p.SCHOOL_NAME || p.school_name || (type === 'primary' ? 'Primary Zone' : 'Secondary Zone');
+        layer.bindPopup(`<b>${name}</b><br><span style="font-size:11px;color:#94a3b8">${type === 'primary' ? '🏫 Primary' : '🏫 Secondary'} school zone</span>`);
+      }
+    }).addTo(_map);
+    _zoneActive[type] = true;
+    btn.classList.add('active');
+    btn.innerHTML = `<span class="zone-dot" style="background:${color}"></span> ${type === 'primary' ? 'Primary' : 'Secondary'} School Zone`;
+    _map.fitBounds(_zoneLayers[type].getBounds(), { padding: [20, 20], maxZoom: 14 });
+  } catch (e) {
+    alert('Failed to load zone: ' + e.message);
+    btn.innerHTML = `<span class="zone-dot" style="background:${_zoneColors[type]}"></span> ${type === 'primary' ? 'Primary' : 'Secondary'} School Zone`;
+  }
+}
+
+function getToken() {
+  const m = document.cookie.match(/pm_token=([^;]+)/);
+  return m ? m[1] : '';
+}
 
 // Global set of comp indices whose adjusted price is an outlier
 let outlierIndices = new Set();

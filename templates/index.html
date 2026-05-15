@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Property Manager — Nearby Sales</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -350,6 +351,13 @@
     /* ── Results ── */
     #results-section { display: none; }
     #results-section.visible { display: block; }
+    #map-card { display: none; margin-top: 16px; }
+    #map-card.visible { display: block; }
+    #map { height: 480px; border-radius: 10px; z-index: 0; }
+    .ref-map-marker { background: none; border: none; }
+    .comp-popup .price { font-weight: 700; font-size: 14px; }
+    .comp-popup .adj  { color: #6ee7b7; font-size: 12px; }
+    .comp-popup .addr { font-size: 12px; color: #94a3b8; }
 
     .results-header {
       display: flex;
@@ -694,8 +702,15 @@
     </div>
   </div>
 
+  <!-- Map -->
+  <div id="map-card" class="card">
+    <div class="card-title">🗺️ Map View</div>
+    <div id="map"></div>
+  </div>
+
 </div><!-- /container -->
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ── State ──────────────────────────────────────────────────────────────────────
 let allResults = [];
@@ -962,6 +977,7 @@ function renderResults() {
   }).join('');
 
   renderEstimate(sorted, rates);
+  renderMap(allResults, refLat, refLng, refSearchAddress, rates);
   scheduleLazyExtras();
 
   section.classList.add('visible');
@@ -1084,6 +1100,63 @@ function computeAdjusted(r, rates) {
   ].filter(Boolean).join('\n');
 
   return { value, breakdown, deltaStr };
+}
+
+// ── Map ──────────────────────────────────────────────────────────────────────
+let _map = null;
+
+function renderMap(results, refLat, refLng, refAddress, rates) {
+  const mapCard = document.getElementById('map-card');
+  if (!refLat || !refLng) { mapCard.classList.remove('visible'); return; }
+  mapCard.classList.add('visible');
+
+  if (!_map) {
+    _map = L.map('map').setView([refLat, refLng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(_map);
+  } else {
+    _map.eachLayer(l => { if (l instanceof L.Marker || l instanceof L.CircleMarker) _map.removeLayer(l); });
+    _map.setView([refLat, refLng], 14);
+  }
+
+  // Reference property — red star marker
+  const refIcon = L.divIcon({
+    className: 'ref-map-marker',
+    html: '<div style="font-size:28px;line-height:1;filter:drop-shadow(0 2px 4px #0008)">📍</div>',
+    iconAnchor: [14, 28]
+  });
+  L.marker([refLat, refLng], { icon: refIcon, zIndexOffset: 1000 })
+    .addTo(_map)
+    .bindPopup(`<b>🎯 Reference</b><br><span style="font-size:12px">${refAddress || ''}</span>`);
+
+  // Comp sold properties
+  results.forEach(r => {
+    if (r.lat == null || r.lng == null) return;
+    const adj = computeAdjusted(r, rates);
+    const hasAdj = adj.value != null;
+    const color  = hasAdj ? '#4f8ef7' : '#64748b';
+    const circle = L.circleMarker([r.lat, r.lng], {
+      radius: 7,
+      fillColor: color,
+      color: '#fff',
+      weight: 1.5,
+      fillOpacity: 0.85
+    }).addTo(_map);
+    const priceStr = r.price_num ? '$' + r.price_num.toLocaleString() : (r.price || '—');
+    const adjStr   = hasAdj ? `<div class="adj">Adj: $${adj.value.toLocaleString()}</div>` : '';
+    circle.bindPopup(
+      `<div class="comp-popup">
+        <div class="addr">${r.address || ''}</div>
+        <div class="price">${priceStr}</div>
+        ${adjStr}
+        <div style="font-size:11px;color:#94a3b8">${r.sold_date || ''} · ${r.type || ''}</div>
+      </div>`
+    );
+  });
+
+  setTimeout(() => _map.invalidateSize(), 100);
 }
 
 // Global set of comp indices whose adjusted price is an outlier

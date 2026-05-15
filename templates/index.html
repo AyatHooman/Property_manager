@@ -357,6 +357,38 @@
     .comp-popup .price { font-weight: 700; font-size: 14px; }
     .comp-popup .adj  { color: #6ee7b7; font-size: 12px; }
     .comp-popup .addr { font-size: 12px; color: #94a3b8; }
+    .zone-toggles { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0 12px; }
+    .zone-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1e293b; border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px;
+      cursor: pointer; font-size: 13px; color: var(--text);
+      user-select: none; transition: background .15s, border-color .15s;
+    }
+    .zone-toggle:hover { background: #263349; }
+    .zone-toggle.active { border-color: var(--accent); background: #1a2a4a; }
+    .zone-toggle.loading { opacity: .6; pointer-events: none; }
+    .zone-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .map-legend {
+      padding: 6px 4px 12px;
+      font-size: 12px; color: var(--muted);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .legend-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .legend-label { font-weight: 600; color: #cbd5e1; min-width: 100px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 1.5px solid #fff; flex-shrink: 0;
+    }
+    .legend-dot.square { border-radius: 2px; }
+    .legend-fill {
+      width: 14px; height: 10px; border-radius: 2px;
+      opacity: 0.45; flex-shrink: 0;
+      border: 1px solid currentColor;
+    }
+    .legend-pin { font-size: 14px; line-height: 1; }
+    .legend-sep { color: #475569; padding: 0 4px; }
 
     .results-header {
       display: flex;
@@ -619,6 +651,7 @@
             <label class="adj-rate-label">📐 $ per m² land</label>
             <input type="number" id="adj-land" class="adj-rate-input" step="50" value="800" />
           </div>
+          <div class="adj-rate-item">
             <label class="adj-rate-label">📊 Outlier fence (×IQR)</label>
             <input type="number" id="adj-iqr" class="adj-rate-input" step="0.25" min="0.25" max="3" value="1.0" />
           </div>
@@ -642,6 +675,40 @@
   <!-- Map -->
   <div id="map-card" class="card">
     <div class="card-title">🗺️ Map View</div>
+    <div class="zone-toggles">
+      <div class="zone-toggle" id="toggle-level-primary" onclick="toggleLevel('primary')">
+        <span class="zone-dot" style="background:#3b82f6"></span> 🏫 Primary Schools + Zones
+      </div>
+      <div class="zone-toggle" id="toggle-level-secondary" onclick="toggleLevel('secondary')">
+        <span class="zone-dot" style="background:#f59e0b"></span> 🎓 Secondary Schools + Zones (Yr 7)
+      </div>
+      <div class="zone-toggle" id="toggle-transport" onclick="toggleTransport()">
+        <span class="zone-dot" style="background:#dc2626"></span> 🚉 Public Transport
+      </div>
+    </div>
+    <div class="map-legend" id="map-legend">
+      <div class="legend-row">
+        <span class="legend-label">📍 Properties:</span>
+        <span class="legend-item"><span class="legend-pin">📍</span>Reference</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#fbbf24;border-color:#78350f"></span>Sold (with adj. price)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#94a3b8;border-color:#1e293b"></span>Sold (no adj.)</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-label">🏫 Schools:</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Government</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Catholic</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Independent</span>
+        <span class="legend-sep">·</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#3b82f6"></span>Primary zone</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#f59e0b"></span>Secondary zone</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-label">🚉 Transport:</span>
+        <span class="legend-item"><span class="legend-dot square" style="background:#dc2626"></span>Train</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#14b8a6"></span>Tram</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#6366f1"></span>Bus</span>
+      </div>
+    </div>
     <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
   </div>
 
@@ -670,6 +737,7 @@
     <div class="results-header">
       <div class="results-count">
         <span id="result-count">0</span> sold properties found
+        <span id="cache-badge" style="display:none;font-size:11px;color:#22c55e;background:#0a2a17;padding:3px 8px;border-radius:6px;margin-left:8px;font-weight:500"></span>
       </div>
       <div class="sort-wrap">
         Sort by:
@@ -881,11 +949,34 @@ async function runSearch() {
       applyRefSpecs(data.ref || {});
     }
 
+    if (data.status === 'cached') {
+      // Cached results arrived — render them now, keep spinner showing refresh in progress
+      allResults = data.results;
+      const badge = document.getElementById('cache-badge');
+      badge.textContent = `📦 cached · ${data.cache_age_min}m ago`;
+      badge.style.display = 'inline-block';
+      renderResults();
+      setStatus('loading', '🔄 Checking Domain for new sales since last cache…');
+    }
+
     if (data.status === 'done') {
       es.close();
       hideStatus();
       searchBtn.disabled = false;
       allResults = data.results;
+      const badge = document.getElementById('cache-badge');
+      if (data.cached) {
+        let txt = `📦 cached · ${data.cache_age_min}m ago`;
+        if (typeof data.new_count === 'number') {
+          txt += data.new_count > 0 ? ` · ✨ +${data.new_count} new` : ' · ✅ no new sales';
+        } else if (data.refresh_failed) {
+          txt += ' · ⚠️ refresh failed';
+        }
+        badge.textContent = txt;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
       renderResults();
     }
   };
@@ -1110,11 +1201,25 @@ let _refMarker = null;
 function _initMap() {
   if (_map) return;
   // Default view: Melbourne CBD
-  _map = L.map('map').setView([-37.8136, 144.9631], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
-  }).addTo(_map);
+  });
+  const satellite = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution: 'Tiles © Esri', maxZoom: 19 }
+  );
+  const labels = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    { attribution: '', maxZoom: 19, opacity: 0.9 }
+  );
+  const satWithLabels = L.layerGroup([satellite, labels]);
+  _map = L.map('map', { layers: [streets] }).setView([-37.8136, 144.9631], 11);
+  L.control.layers(
+    { '🗺️ Streets': streets, '🛰️ Satellite': satWithLabels },
+    {},
+    { position: 'topright', collapsed: false }
+  ).addTo(_map);
 }
 
 function pinRefOnMap(lat, lng, address) {
@@ -1141,17 +1246,21 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
   _map.eachLayer(l => { if (l instanceof L.CircleMarker) _map.removeLayer(l); });
 
   // Comp sold properties
+  const pts = [];
+  if (refLat != null && refLng != null) pts.push([refLat, refLng]);
   results.forEach(r => {
     if (r.lat == null || r.lng == null) return;
+    pts.push([r.lat, r.lng]);
     const adj = computeAdjusted(r, rates);
     const hasAdj = adj.value != null;
-    const color  = hasAdj ? '#4f8ef7' : '#64748b';
+    const color  = hasAdj ? '#fbbf24' : '#94a3b8';
+    const border = hasAdj ? '#78350f' : '#1e293b';
     const circle = L.circleMarker([r.lat, r.lng], {
       radius: 7,
       fillColor: color,
-      color: '#fff',
-      weight: 1.5,
-      fillOpacity: 0.85
+      color: border,
+      weight: 1.8,
+      fillOpacity: 0.95
     }).addTo(_map);
     const priceStr = r.price_num ? '$' + r.price_num.toLocaleString() : (r.price || '—');
     const adjStr   = hasAdj ? `<div class="adj">Adj: $${adj.value.toLocaleString()}</div>` : '';
@@ -1165,11 +1274,188 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
     );
   });
 
+  // Zoom out to fit reference + all comps
+  if (pts.length >= 2) {
+    _map.fitBounds(pts, { padding: [40, 40], maxZoom: 15 });
+  }
   setTimeout(() => _map.invalidateSize(), 100);
 }
 
 // Init map on page load
 document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
+
+// ── School Zones + Markers (combined per level) ─────────────────────────────
+const _levelCfg = {
+  primary: {
+    color: '#3b82f6', label: 'Primary',
+    zoneFile:   '/static/school_zones/primary.geojson',
+    schoolFile: '/static/school_zones/schools_primary.geojson',
+  },
+  secondary: {
+    color: '#f59e0b', label: 'Secondary (Yr 7)',
+    zoneFile:   '/static/school_zones/secondary.geojson',
+    schoolFile: '/static/school_zones/schools_secondary.geojson',
+  },
+};
+const _sectorColor = { 'Government': '#3b82f6', 'Catholic': '#ef4444', 'Independent': '#22c55e' };
+const _zoneData    = { primary: null, secondary: null };
+const _schoolData  = { primary: null, secondary: null };
+const _zoneLayer   = { primary: null, secondary: null };
+const _schoolLayer = { primary: null, secondary: null };
+
+async function toggleLevel(type) {
+  _initMap();
+  const btn = document.getElementById('toggle-level-' + type);
+  const cfg = _levelCfg[type];
+
+  // Already on → remove both layers
+  if (_zoneLayer[type] || _schoolLayer[type]) {
+    if (_zoneLayer[type])   { _map.removeLayer(_zoneLayer[type]);   _zoneLayer[type]   = null; }
+    if (_schoolLayer[type]) { _map.removeLayer(_schoolLayer[type]); _schoolLayer[type] = null; }
+    btn.classList.remove('active');
+    return;
+  }
+
+  // Lazy-load both files in parallel
+  btn.classList.add('loading');
+  try {
+    const [zd, sd] = await Promise.all([
+      _zoneData[type]   ? Promise.resolve(_zoneData[type])   : fetch(cfg.zoneFile).then(r => { if (!r.ok) throw new Error(`zone HTTP ${r.status}`); return r.json(); }),
+      _schoolData[type] ? Promise.resolve(_schoolData[type]) : fetch(cfg.schoolFile).then(r => { if (!r.ok) throw new Error(`schools HTTP ${r.status}`); return r.json(); }),
+    ]);
+    _zoneData[type]   = zd;
+    _schoolData[type] = sd;
+  } catch (e) {
+    btn.classList.remove('loading');
+    alert(`Failed to load ${cfg.label}: ${e.message}`);
+    return;
+  }
+  btn.classList.remove('loading');
+
+  // Zones first (underneath)
+  _zoneLayer[type] = L.geoJSON(_zoneData[type], {
+    style: { color: cfg.color, weight: 1.5, fillColor: cfg.color, fillOpacity: 0.10 },
+    onEachFeature(feature, layer) {
+      const p = feature.properties || {};
+      const name = p.School_Name || p.Campus_Name || `${cfg.label} zone`;
+      layer.bindPopup(
+        `<b>🏫 ${name}</b><br>` +
+        `<span style="font-size:11px;color:#94a3b8">${cfg.label} zone · ${p.Year_Level || ''} · ${p.Boundary_Year || ''}</span>`
+      );
+    }
+  }).addTo(_map);
+
+  // Markers on top
+  _schoolLayer[type] = L.geoJSON(_schoolData[type], {
+    pointToLayer(feature, latlng) {
+      const p = feature.properties || {};
+      return L.circleMarker(latlng, {
+        radius: 5,
+        fillColor: _sectorColor[p.sector] || '#64748b',
+        color: '#fff',
+        weight: 1.5,
+        fillOpacity: 0.95,
+      });
+    },
+    onEachFeature(feature, layer) {
+      const p = feature.properties || {};
+      const q = encodeURIComponent(`${p.name} ${p.town || ''}`);
+      const isSecondary = p.type === 'Secondary' || p.type === 'Pri/Sec';
+      const isPrimary   = p.type === 'Primary'   || p.type === 'Pri/Sec';
+      const naplan = `https://www.google.com/search?q=${q}+NAPLAN+myschool.edu.au`;
+      const vce    = `https://www.google.com/search?q=VCE+results+median+study+score+${q}`;
+      const better = `https://www.google.com/search?q=${q}+site:bettereducation.com.au`;
+      const links = [];
+      if (isPrimary)   links.push(`<a href="${naplan}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">📊 NAPLAN scores (My School)</a>`);
+      if (isSecondary) {
+        if (!isPrimary) links.push(`<a href="${naplan}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">📊 NAPLAN Yr 7/9 (My School)</a>`);
+        links.push(`<a href="${vce}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">🎓 VCE results (median study score)</a>`);
+      }
+      links.push(`<a href="${better}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">🏆 Better Education ranking</a>`);
+      layer.bindPopup(
+        `<div style="min-width:240px">
+          <b>${p.name}</b><br>
+          <span style="font-size:11px;color:#94a3b8">${p.sector} · ${p.type}</span><br>
+          <span style="font-size:11px">${p.address || ''}</span><br>
+          ${p.phone ? `<span style="font-size:11px;color:#94a3b8">📞 ${p.phone}</span><br>` : ''}
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">
+            ${links.join('')}
+          </div>
+        </div>`
+      );
+    }
+  }).addTo(_map);
+
+  btn.classList.add('active');
+}
+
+// ── Public Transport (train/tram/bus stops) ──────────────────────────────
+const _transportCfg = {
+  trains: { color: '#dc2626', file: '/static/transport/trains.geojson', radius: 5, square: true  },
+  trams:  { color: '#14b8a6', file: '/static/transport/trams.geojson',  radius: 3, square: false },
+  buses:  { color: '#6366f1', file: '/static/transport/buses.geojson',  radius: 2, square: false, canvas: true },
+};
+const _transportData  = { trains: null, trams: null, buses: null };
+const _transportLayer = { trains: null, trams: null, buses: null };
+let _busCanvas = null;  // shared canvas renderer for bus markers (perf)
+
+async function toggleTransport() {
+  _initMap();
+  const btn = document.getElementById('toggle-transport');
+  const modes = ['trains', 'trams', 'buses'];
+
+  // Already on → remove all
+  if (modes.some(m => _transportLayer[m])) {
+    modes.forEach(m => {
+      if (_transportLayer[m]) { _map.removeLayer(_transportLayer[m]); _transportLayer[m] = null; }
+    });
+    btn.classList.remove('active');
+    return;
+  }
+
+  btn.classList.add('loading');
+  try {
+    await Promise.all(modes.map(async m => {
+      if (!_transportData[m]) {
+        const r = await fetch(_transportCfg[m].file);
+        if (!r.ok) throw new Error(`${m} HTTP ${r.status}`);
+        _transportData[m] = await r.json();
+      }
+    }));
+  } catch (e) {
+    btn.classList.remove('loading');
+    alert(`Failed to load transport: ${e.message}`);
+    return;
+  }
+  btn.classList.remove('loading');
+
+  if (!_busCanvas) _busCanvas = L.canvas({ padding: 0.5 });
+
+  // Render buses first (under), then trams, then trains (on top)
+  for (const m of modes) {
+    const cfg = _transportCfg[m];
+    _transportLayer[m] = L.geoJSON(_transportData[m], {
+      pointToLayer(feature, latlng) {
+        const opts = {
+          radius: cfg.radius,
+          fillColor: cfg.color,
+          color: '#fff',
+          weight: cfg.square ? 1 : 0.8,
+          fillOpacity: 0.9,
+        };
+        if (cfg.canvas) opts.renderer = _busCanvas;
+        return L.circleMarker(latlng, opts);
+      },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const icon = m === 'trains' ? '🚆' : (m === 'trams' ? '🚊' : '🚌');
+        layer.bindPopup(`<b>${icon} ${p.name || ''}</b><br><span style="font-size:11px;color:#94a3b8">${p.mode || ''}</span>`);
+      }
+    }).addTo(_map);
+  }
+
+  btn.classList.add('active');
+}
 
 // Global set of comp indices whose adjusted price is an outlier
 let outlierIndices = new Set();

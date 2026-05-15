@@ -17,3 +17,9 @@ debug.log
 test_*.py
 check.py
 fix_encoding.py
+
+# Claude Code working files
+.claude/
+
+# Stray git bundles
+*.bundle

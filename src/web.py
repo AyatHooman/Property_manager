@@ -4,9 +4,67 @@ Run with: python -m src.web
 """
 import os
 import json
+import time
+import hashlib
 import threading
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from src import scraper
+
+# Cache for /api/nearby-sales results. Repeat searches return instantly instead
+# of re-scraping Domain (50–85s fresh because of anti-bot delays). Persists to
+# disk so cache survives server restarts — sold prices don't change once the
+# sale closes, so caching forever is safe (just won't include sales added after
+# the cache was written).
+CACHE_TTL_SEC = 60 * 60 * 24 * 365 * 10  # 10 years ≈ forever
+# When a cached result is older than this, the request also fetches page 1
+# from Domain and merges any new sales into the cached set. Keeps results
+# fresh without paying the full scrape cost on every search.
+REFRESH_AFTER_SEC = 60 * 60  # 1 hour
+_CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "sales_cache")
+_sales_cache: dict = {}
+_cache_lock = threading.Lock()
+
+
+def _cache_key_hash(key: tuple) -> str:
+    return hashlib.sha256(json.dumps(key, default=str).encode()).hexdigest()[:16]
+
+
+def _cache_load() -> None:
+    """Populate _sales_cache from disk on startup."""
+    if not os.path.isdir(_CACHE_DIR):
+        os.makedirs(_CACHE_DIR, exist_ok=True)
+        return
+    loaded = 0
+    for fname in os.listdir(_CACHE_DIR):
+        if not fname.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(_CACHE_DIR, fname), "r", encoding="utf-8") as f:
+                entry = json.load(f)
+            key = tuple(entry.get("key", []))
+            # Re-tuple inner sequences (json doesn't distinguish tuple/list)
+            key = key[:8] + (tuple(key[8]),) if len(key) >= 9 else key
+            _sales_cache[key] = {"ts": entry["ts"], "ref": entry.get("ref"), "items": entry.get("items", [])}
+            loaded += 1
+        except Exception as e:
+            print(f"[cache] skip {fname}: {e}", flush=True)
+    print(f"[cache] loaded {loaded} entries from {_CACHE_DIR}", flush=True)
+
+
+def _cache_save_one(key: tuple, ref, items) -> None:
+    """Persist one cache entry to disk."""
+    try:
+        os.makedirs(_CACHE_DIR, exist_ok=True)
+        path = os.path.join(_CACHE_DIR, f"{_cache_key_hash(key)}.json")
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump({"key": list(key), "ts": time.time(), "ref": ref, "items": items}, f, default=str)
+        os.replace(tmp, path)
+    except Exception as e:
+        print(f"[cache] save failed: {e}", flush=True)
+
+
+_cache_load()
 
 app = Flask(
     __name__,
@@ -254,11 +312,80 @@ def api_nearby_sales():
     if not lat or not lng or not suburb or not state:
         return jsonify({"error": "lat, lng, suburb and state are required"}), 400
 
+    cache_key = (
+        round(lat, 5), round(lng, 5), round(radius, 2),
+        months, pages, suburb.lower(), state, postcode,
+        tuple(sorted(prop_types)),
+    )
+
+    def _results_to_items(results):
+        out = []
+        for r in results:
+            out.append({
+                "address": r.address,
+                "price": r.price_display or (f"${r.price:,.0f}" if r.price else "Undisclosed"),
+                "price_num": r.price,
+                "sold_date": r.sold_date or "",
+                "type": r.property_type or "",
+                "beds": r.bedrooms,
+                "baths": r.bathrooms,
+                "cars": r.carspaces,
+                "land_area": r.land_area,
+                "distance_km": r.distance_km,
+                "url": r.url or "",
+                "lat": r.lat,
+                "lng": r.lng,
+                "pool": r.pool,
+                "storeys": r.storeys,
+            })
+        return out
+
+    def _dedup_key(item):
+        return item.get("url") or f"{item.get('address','')}|{item.get('sold_date','')}|{item.get('price_num','')}"
+
     def generate():
         yield f"data: {json.dumps({'status': 'searching', 'address': address_label, 'lat': lat, 'lng': lng})}\n\n"
 
-        # Try to look up the reference property's specs from Domain's
-        # property-profile page so the UI can auto-fill beds/baths/cars/land.
+        # ── Cache hit ────────────────────────────────────────────────────
+        hit = _sales_cache.get(cache_key)
+        if hit and (time.time() - hit['ts']) < CACHE_TTL_SEC:
+            age_min = int((time.time() - hit['ts']) / 60)
+            age_sec = time.time() - hit['ts']
+            print(f"[cache] HIT for {cache_key[:3]} (age {age_min}m, {len(hit['items'])} items)", flush=True)
+            if hit.get('ref'):
+                yield f"data: {json.dumps({'status': 'ref_specs', 'ref': hit['ref']})}\n\n"
+
+            # Fresh enough → return as-is, no refresh
+            if age_sec < REFRESH_AFTER_SEC:
+                yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min})}\n\n"
+                return
+
+            # Stale → emit cached results immediately, then fetch page 1 to find new sales
+            yield f"data: {json.dumps({'status': 'cached', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cache_age_min': age_min})}\n\n"
+            try:
+                fresh = scraper.get_nearby_sales(
+                    lat, lng, radius_km=radius, months=months, pages=1,
+                    suburb=suburb, state=state, postcode=postcode,
+                )
+                if prop_types:
+                    fresh = [r for r in fresh if _type_matches(r.property_type or "", prop_types)]
+                fresh_items = _results_to_items(fresh)
+                existing_keys = {_dedup_key(it) for it in hit['items']}
+                new_items = [it for it in fresh_items if _dedup_key(it) not in existing_keys]
+                merged = new_items + hit['items']
+                with _cache_lock:
+                    _sales_cache[cache_key] = {'ts': time.time(), 'ref': hit.get('ref'), 'items': merged}
+                _cache_save_one(cache_key, hit.get('ref'), merged)
+                print(f"[cache] REFRESH found {len(new_items)} new (total {len(merged)})", flush=True)
+                yield f"data: {json.dumps({'status': 'done', 'results': merged, 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min, 'new_count': len(new_items)})}\n\n"
+            except Exception as e:
+                # Refresh failed — keep cached results
+                print(f"[cache] REFRESH failed: {e} — serving cached only", flush=True)
+                yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min, 'refresh_failed': True})}\n\n"
+            return
+
+        # ── Cache miss → run the scraper ─────────────────────────────────
+        ref = None
         try:
             ref = scraper.get_property_profile(address_label, suburb, state, postcode)
             if ref:
@@ -284,25 +411,12 @@ def api_nearby_sales():
         if prop_types:
             results = [r for r in results if _type_matches(r.property_type or "", prop_types)]
 
-        items = []
-        for r in results:
-            items.append({
-                "address": r.address,
-                "price": r.price_display or (f"${r.price:,.0f}" if r.price else "Undisclosed"),
-                "price_num": r.price,
-                "sold_date": r.sold_date or "",
-                "type": r.property_type or "",
-                "beds": r.bedrooms,
-                "baths": r.bathrooms,
-                "cars": r.carspaces,
-                "land_area": r.land_area,
-                "distance_km": r.distance_km,
-                "url": r.url or "",
-                "lat": r.lat,
-                "lng": r.lng,
-                "pool": r.pool,
-                "storeys": r.storeys,
-            })
+        items = _results_to_items(results)
+
+        with _cache_lock:
+            _sales_cache[cache_key] = {'ts': time.time(), 'ref': ref, 'items': items}
+        _cache_save_one(cache_key, ref, items)
+        print(f"[cache] STORE for {cache_key[:3]} ({len(items)} items) → disk", flush=True)
         yield f"data: {json.dumps({'status': 'done', 'results': items, 'ref_address': address_label, 'lat': lat, 'lng': lng})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")

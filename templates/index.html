@@ -1140,12 +1140,15 @@ let _refMarker = null;
 
 function _initMap() {
   if (_map) return;
+  const el = document.getElementById('map');
+  if (!el || el.offsetWidth === 0) return; // not painted yet, retry later
   // Default view: Melbourne CBD
   _map = L.map('map').setView([-37.8136, 144.9631], 11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
   }).addTo(_map);
+  setTimeout(() => _map && _map.invalidateSize(), 300);
 }
 
 function pinRefOnMap(lat, lng, address) {
@@ -1200,7 +1203,17 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
 }
 
 // Init map on page load
-document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
+// Retry init until the #map div has a real width (painted by browser)
+function _tryInitMap(attempts) {
+  const el = document.getElementById('map');
+  if (!el) return;
+  if (el.offsetWidth > 0) {
+    _initMap();
+  } else if (attempts > 0) {
+    setTimeout(() => _tryInitMap(attempts - 1), 150);
+  }
+}
+document.addEventListener('DOMContentLoaded', () => _tryInitMap(20));
 
 // ── School Zones ───────────────────────────────────────────────────────────
 const _zoneLayers = { primary: null, secondary: null };

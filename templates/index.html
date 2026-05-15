@@ -642,7 +642,7 @@
   <!-- Map -->
   <div id="map-card" class="card">
     <div class="card-title">🗺️ Map View</div>
-    <div id="map"></div>
+    <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
   </div>
 
   <!-- Status bar -->
@@ -1169,7 +1169,7 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
 }
 
 // Init map on page load
-window.addEventListener('load', () => _initMap());
+document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
 
 // Global set of comp indices whose adjusted price is an outlier
 let outlierIndices = new Set();

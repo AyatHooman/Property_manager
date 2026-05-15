@@ -5,7 +5,6 @@ Run with: python -m src.web
 import os
 import json
 import threading
-import httpx
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from src import scraper
 
@@ -220,48 +219,6 @@ def api_listing_extras():
         return jsonify(scraper.get_listing_pool_storeys(url, lat, lng))
     except Exception as e:
         return jsonify({"error": str(e), "pool": None, "storeys": None}), 500
-
-
-# ── API: school zone polygons (proxy to Vic DET ArcGIS) ───────────────────────
-
-# Vic DET ArcGIS FeatureServer — school zones (public, no auth needed)
-_SCHOOL_ZONE_URLS = {
-    "primary":   "https://services.maps.vic.gov.au/arcgis/rest/services/SCHOOLS/Vicmap_Schools/FeatureServer/1/query",
-    "secondary": "https://services.maps.vic.gov.au/arcgis/rest/services/SCHOOLS/Vicmap_Schools/FeatureServer/2/query",
-}
-
-@app.route("/api/school-zones")
-def api_school_zones():
-    """Return GeoJSON polygon(s) for the school zone containing a lat/lng point.
-    Query params: lat, lng, type (primary|secondary)
-    """
-    try:
-        lat  = float(request.args.get("lat", 0))
-        lng  = float(request.args.get("lng", 0))
-        kind = request.args.get("type", "primary").lower()
-    except (TypeError, ValueError):
-        return jsonify({"error": "invalid params"}), 400
-
-    url = _SCHOOL_ZONE_URLS.get(kind)
-    if not url:
-        return jsonify({"error": "type must be primary or secondary"}), 400
-
-    params = {
-        "geometry":     f"{lng},{lat}",
-        "geometryType": "esriGeometryPoint",
-        "spatialRel":   "esriSpatialRelIntersects",
-        "inSR":         "4326",
-        "outSR":        "4326",
-        "outFields":    "SCHOOL_NAME,SCHOOL_TYPE,ZONE_TYPE",
-        "returnGeometry": "true",
-        "f":            "geojson",
-    }
-    try:
-        resp = httpx.get(url, params=params, timeout=10)
-        resp.raise_for_status()
-        return jsonify(resp.json())
-    except Exception as e:
-        return jsonify({"error": str(e)}), 502
 
 
 # ── API: nearby sold properties (SSE streaming) ────────────────────────────────

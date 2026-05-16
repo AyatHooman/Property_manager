@@ -1285,8 +1285,8 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
   _initMap();
   if (refLat && refLng) pinRefOnMap(refLat, refLng, refAddress);
 
-  // Remove old comp markers
-  _map.eachLayer(l => { if (l instanceof L.CircleMarker) _map.removeLayer(l); });
+  // Remove old comp markers (preserve the ref marker)
+  _map.eachLayer(l => { if (l instanceof L.CircleMarker && l !== _refMarker) _map.removeLayer(l); });
 
   // Comp sold properties
   const pts = [];
@@ -1375,19 +1375,12 @@ function buildSchoolPopup(p) {
     ? `https://www.myschool.edu.au/school/${p.acara_id}`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
   const naplanUrl = p.acara_id ? `${mySchoolBase}/naplan/results` : mySchoolBase;
-  const vceUrl    = p.acara_id ? `${mySchoolBase}/senior-secondary` : mySchoolBase;
-  // Direct per-school Better Education page (works for both primary and secondary)
+  // Direct per-school Better Education page — shows VCE results + ranking
   const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
-  // Fallback rating/search page for broader comparison
-  const beRatingUrl = isSec
-    ? `https://bettereducation.com.au/school/Secondary/vic/vic_secondary_school_rating.aspx`
-    : `https://bettereducation.com.au/school/primary/vic/vic_primary_school_rating.aspx`;
 
   const links = [
     A(naplanUrl, '📊 NAPLAN'),
-    ...(isSec ? [A(vceUrl, '🎓 VCE')] : []),
-    A(beDirectUrl, '🏆 Better Ed'),
-    A(beRatingUrl, '📋 Rankings'),
+    A(beDirectUrl, isSec ? '🎓 VCE (Better Ed)' : '🏆 Better Ed'),
   ];
 
   // Compact metric row: label | coloured value | short hint

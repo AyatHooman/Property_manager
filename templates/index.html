@@ -212,6 +212,22 @@
     .btn-search:hover { opacity: .9; }
     .btn-search:active { transform: scale(.99); }
     .btn-search:disabled { opacity: .5; cursor: not-allowed; }
+    .search-row { display: flex; gap: 10px; margin-top: 20px; }
+    .search-row .btn-search { margin-top: 0; flex: 1; }
+    .btn-refresh {
+      padding: 14px 18px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-refresh:hover { background: #2a3147; border-color: var(--accent); }
+    .btn-refresh:disabled { opacity: .5; cursor: not-allowed; }
 
     /* ── Status bar ── */
     #status-bar {
@@ -388,6 +404,7 @@
       border: 1px solid currentColor;
     }
     .legend-pin { font-size: 14px; line-height: 1; }
+    .legend-emoji { font-size: 14px; line-height: 1; display: inline-block; width: 18px; text-align: center; }
     .legend-sep { color: #475569; padding: 0 4px; }
 
     .results-header {
@@ -667,9 +684,14 @@
       </details>
     </div>
 
-    <button class="btn-search" id="search-btn" disabled>
-      Search Nearby Sold Properties
-    </button>
+    <div class="search-row">
+      <button class="btn-search" id="search-btn" disabled>
+        Search Nearby Sold Properties
+      </button>
+      <button class="btn-refresh" id="refresh-btn" disabled title="Force re-fetch from Domain — bypasses cache">
+        🔄 Refresh
+      </button>
+    </div>
   </div>
 
   <!-- Map -->
@@ -685,6 +707,15 @@
       <div class="zone-toggle" id="toggle-transport" onclick="toggleTransport()">
         <span class="zone-dot" style="background:#dc2626"></span> 🚉 Public Transport
       </div>
+      <div class="zone-toggle" id="toggle-overlay-flood" onclick="toggleOverlay('flood')">
+        <span class="zone-dot" style="background:#06b6d4"></span> 🌊 Flood
+      </div>
+      <div class="zone-toggle" id="toggle-overlay-heritage" onclick="toggleOverlay('heritage')">
+        <span class="zone-dot" style="background:#a16207"></span> 🏛️ Heritage
+      </div>
+      <div class="zone-toggle" id="toggle-overlay-bushfire" onclick="toggleOverlay('bushfire')">
+        <span class="zone-dot" style="background:#ea580c"></span> 🔥 Bushfire
+      </div>
     </div>
     <div class="map-legend" id="map-legend">
       <div class="legend-row">
@@ -695,18 +726,37 @@
       </div>
       <div class="legend-row">
         <span class="legend-label">🏫 Schools:</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Government</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Catholic</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Independent</span>
+        <span class="legend-item"><span class="legend-emoji">🏫</span>Government</span>
+        <span class="legend-item"><span class="legend-emoji">⛪</span>Catholic</span>
+        <span class="legend-item"><span class="legend-emoji">🎓</span>Independent</span>
         <span class="legend-sep">·</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#3b82f6"></span>Primary zone</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#f59e0b"></span>Secondary zone</span>
+        <span class="legend-item" style="color:#cbd5e1">Ring colour = performance band (see below)</span>
       </div>
       <div class="legend-row">
         <span class="legend-label">🚉 Transport:</span>
         <span class="legend-item"><span class="legend-dot square" style="background:#dc2626"></span>Train</span>
         <span class="legend-item"><span class="legend-dot" style="background:#14b8a6"></span>Tram</span>
         <span class="legend-item"><span class="legend-dot" style="background:#6366f1"></span>Bus</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-label">⚠️ Property risks:</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#06b6d4"></span>Flood (LSIO)</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#a16207"></span>Heritage Overlay</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Bushfire Mgmt (BMO)</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-label">📊 Zone fill colour:</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#7c3aed"></span>Best</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#166534"></span>Top</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#16a34a"></span>Strong</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#ca8a04"></span>Above avg</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Avg</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#b91c1c"></span>Below</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#6b7280"></span>No data</span>
+      </div>
+      <div class="legend-row" style="font-size:11px;color:#94a3b8;line-height:1.5">
+        <span><b style="color:#cbd5e1">Secondary zones</b> are coloured by <b>VCE median study score</b> (real outcome data, VRQA).
+        <b style="color:#cbd5e1">Primary zones</b> are coloured by <b>SEIFA IEO decile</b> — a <i>catchment-wealth proxy</i>, NOT teaching quality (no public bulk NAPLAN; click a school for per-school NAPLAN via My School, or apply for <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#4f8ef7">ACARA bulk data</a>).</span>
       </div>
     </div>
     <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
@@ -718,8 +768,8 @@
     <span id="status-text">Loading…</span>
   </div>
 
-  <!-- Reference property banner -->
-  <div id="ref-banner">
+  <!-- Reference property banner (hidden — address already shown in search field) -->
+  <div id="ref-banner" style="display:none !important">
     <div class="ref-label">📍 Reference property</div>
     <div class="ref-address" id="ref-address"></div>
     <div class="ref-coords" id="ref-coords"></div>
@@ -885,7 +935,9 @@ function closeAc() { acList.classList.remove('open'); }
 function updateSearchBtn() {
   const lat = document.getElementById('sel-lat').value;
   const suburb = document.getElementById('sel-suburb').value;
-  searchBtn.disabled = !lat || !suburb;
+  const disabled = !lat || !suburb;
+  searchBtn.disabled = disabled;
+  document.getElementById('refresh-btn').disabled = disabled;
 }
 
 // ── Radius slider ───────────────────────────────────────────────────────────────
@@ -901,9 +953,10 @@ document.querySelectorAll('.type-chip').forEach(chip => {
 });
 
 // ── Search ──────────────────────────────────────────────────────────────────────
-searchBtn.addEventListener('click', runSearch);
+searchBtn.addEventListener('click', () => runSearch(false));
+document.getElementById('refresh-btn').addEventListener('click', () => runSearch(true));
 
-async function runSearch() {
+async function runSearch(forceRefresh) {
   const lat     = document.getElementById('sel-lat').value;
   const lng     = document.getElementById('sel-lng').value;
   const suburb  = document.getElementById('sel-suburb').value;
@@ -918,14 +971,16 @@ async function runSearch() {
   const types  = [...document.querySelectorAll('.type-chip.selected')].map(c => c.dataset.type);
 
   // UI reset
-  setStatus('loading', '🔍 Searching sold listings…');
+  setStatus('loading', forceRefresh ? '🔄 Force-refreshing from Domain (bypassing cache)…' : '🔍 Searching sold listings…');
   document.getElementById('ref-banner').classList.remove('visible');
   document.getElementById('results-section').classList.remove('visible');
   allResults = [];
   searchBtn.disabled = true;
+  document.getElementById('refresh-btn').disabled = true;
 
   const params = new URLSearchParams({ lat, lng, suburb, state, postcode, address, radius, months, pages });
   types.forEach(t => params.append('types', t));
+  if (forceRefresh) params.append('force', '1');
 
   const es = new EventSource(`/api/nearby-sales?${params}`);
 
@@ -936,11 +991,14 @@ async function runSearch() {
       setStatus('error', '❌ ' + data.error);
       es.close();
       searchBtn.disabled = false;
+      document.getElementById('refresh-btn').disabled = false;
       return;
     }
 
     if (data.status === 'searching') {
-      setStatus('loading', `🔍 Searching sold listings near ${data.address || suburb}…`);
+      setStatus('loading', forceRefresh
+        ? `🔄 Force-refreshing from Domain near ${data.address || suburb}… (~60s)`
+        : `🔍 Searching sold listings near ${data.address || suburb}…`);
       showRefBanner(data.address || address, data.lat, data.lng);
       document.getElementById('ref-fetch-msg').textContent = '⏳ Auto-fetching reference property specs from Domain…';
     }
@@ -949,33 +1007,19 @@ async function runSearch() {
       applyRefSpecs(data.ref || {});
     }
 
-    if (data.status === 'cached') {
-      // Cached results arrived — render them now, keep spinner showing refresh in progress
-      allResults = data.results;
-      const badge = document.getElementById('cache-badge');
-      badge.textContent = `📦 cached · ${data.cache_age_min}m ago`;
-      badge.style.display = 'inline-block';
-      renderResults();
-      setStatus('loading', '🔄 Checking Domain for new sales since last cache…');
-    }
-
     if (data.status === 'done') {
       es.close();
       hideStatus();
       searchBtn.disabled = false;
+      document.getElementById('refresh-btn').disabled = false;
       allResults = data.results;
       const badge = document.getElementById('cache-badge');
       if (data.cached) {
-        let txt = `📦 cached · ${data.cache_age_min}m ago`;
-        if (typeof data.new_count === 'number') {
-          txt += data.new_count > 0 ? ` · ✨ +${data.new_count} new` : ' · ✅ no new sales';
-        } else if (data.refresh_failed) {
-          txt += ' · ⚠️ refresh failed';
-        }
-        badge.textContent = txt;
+        badge.textContent = `📦 cached · ${data.cache_age_min}m ago`;
         badge.style.display = 'inline-block';
       } else {
-        badge.style.display = 'none';
+        badge.textContent = '🔄 fresh from Domain';
+        badge.style.display = 'inline-block';
       }
       renderResults();
     }
@@ -985,6 +1029,7 @@ async function runSearch() {
     setStatus('error', '❌ Connection error. Please try again.');
     es.close();
     searchBtn.disabled = false;
+    document.getElementById('refresh-btn').disabled = false;
   };
 }
 
@@ -1225,15 +1270,15 @@ function _initMap() {
 function pinRefOnMap(lat, lng, address) {
   _initMap();
   if (_refMarker) { _map.removeLayer(_refMarker); _refMarker = null; }
-  const refIcon = L.divIcon({
-    className: 'ref-map-marker',
-    html: '<div style="font-size:32px;line-height:1;filter:drop-shadow(0 2px 6px #0009)">📍</div>',
-    iconAnchor: [16, 32]
-  });
-  _refMarker = L.marker([lat, lng], { icon: refIcon, zIndexOffset: 1000 })
-    .addTo(_map)
-    .bindPopup(`<b>🎯 Reference</b><br><span style="font-size:12px">${address || ''}</span>`)
-    .openPopup();
+  // Subtle ring marker — no popup, no big icon to obscure the property
+  _refMarker = L.circleMarker([lat, lng], {
+    radius: 8,
+    fillColor: '#ef4444',
+    fillOpacity: 0,
+    color: '#ef4444',
+    weight: 2.5,
+    interactive: false,
+  }).addTo(_map);
   _map.setView([lat, lng], 15);
   setTimeout(() => _map.invalidateSize(), 100);
 }
@@ -1298,6 +1343,137 @@ const _levelCfg = {
   },
 };
 const _sectorColor = { 'Government': '#3b82f6', 'Catholic': '#ef4444', 'Independent': '#22c55e' };
+const _sectorEmoji = { 'Government': '🏫', 'Catholic': '⛪', 'Independent': '🎓' };
+
+// Build a school divIcon — ring color = PERFORMANCE band; emoji = sector
+// (so purple ring 🏫 = elite Govt school; red ring ⛪ = below-band Catholic, etc.)
+function _schoolIcon(sector, band) {
+  const ring = _vceBandColor[band || 0];
+  const emoji = _sectorEmoji[sector] || '🏫';
+  return L.divIcon({
+    className: 'school-icon',
+    html: `<div style="font-size:13px;line-height:20px;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid ${ring};text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.5)">${emoji}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+}
+
+// Shared school popup — used by both school marker click AND zone polygon click
+// so clicking either gives the same detailed view.
+function buildSchoolPopup(p) {
+  const name   = p.name || p.School_Name || p.Campus_Name || 'School';
+  const sector = p.sector || '';
+  const type   = p.type   || (p.Year_Level ? 'Secondary' : '');
+  const q      = encodeURIComponent(`${name} ${p.town || ''}`);
+  const isSec  = type === 'Secondary' || type === 'Pri/Sec' || p.vce_median != null;
+
+  const A = (href, label) =>
+    `<a href="${href}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">${label}</a>`;
+
+  // My School: direct per-school URL if ACARA ID is known, else search fallback
+  const mySchoolUrl = p.acara_id
+    ? `https://www.myschool.edu.au/school/${p.acara_id}`
+    : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
+
+  // Better Education: direct VIC rating page (primary or secondary)
+  const beUrl = isSec
+    ? `https://bettereducation.com.au/school/Secondary/vic/vic_secondary_school_rating.aspx`
+    : `https://bettereducation.com.au/school/primary/vic/vic_primary_school_rating.aspx`;
+
+  const links = [
+    A(mySchoolUrl, '📊 NAPLAN scores (My School)'),
+    ...(isSec ? [A(`https://www.google.com/search?q=VCE+results+median+study+score+${q}`, '🎓 VCE results (median study score)')] : []),
+    A(beUrl, '🏆 Better Education ranking'),
+  ];
+
+  // Primary block — NOT NAPLAN. Lead with the disclaimer so it's the first thing seen.
+  let seifa = '';
+  if (p.seifa_decile != null && !isSec) {
+    const c = _vceBandColor[p.seifa_band];
+    const tier = ['','Bottom 10% (Melb)','10–25%','25–50%','50–75%','75–90%','Top 10% (Melb)'][p.seifa_band] || '';
+    seifa =
+      `<div style="margin-top:6px;padding:8px 10px;background:#0f172a;border-left:3px solid ${c};border-radius:4px">
+         <div style="background:#451a03;color:#fbbf24;padding:5px 8px;border-radius:3px;font-size:11px;font-weight:600;margin-bottom:8px;line-height:1.4">
+           ⚠️ Not NAPLAN. We don't have bulk primary NAPLAN data (it's gated behind <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#fde68a;text-decoration:underline">ACARA DAP</a>). Coloured by catchment wealth instead.
+         </div>
+         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+           <span style="background:${c};color:#fff;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">Catchment SES · ${tier}</span>
+         </div>
+         <div style="font-size:12px;color:#cbd5e1;line-height:1.6">
+           <div>Postcode <b>${p.postcode||'—'}</b> sits in the <b style="color:${c}">${tier.toLowerCase()}</b> of all Melbourne primary catchments for parents' education + occupation.</div>
+           <div style="margin-top:4px">SEIFA IEO score: <b style="color:${c}">${p.seifa_score}</b> <span style="color:#94a3b8">(1000 = AU avg; Australian decile ${p.seifa_decile}/10)</span></div>
+         </div>
+         <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.4">
+           For real teaching quality: click 📊 NAPLAN below to look this school up on My School (free, no scraping).
+         </div>
+       </div>`;
+  }
+
+  let vce = '';
+  if (p.vce_median != null) {
+    const medBand = _bandMedian(p.vce_median);
+    const cMed   = _vceBandColor[medBand];
+    const cPct40 = _vceBandColor[_bandPct40(p.vce_pct40)];
+    const cComp  = _vceBandColor[_bandCompletion(p.vce_pct_compl)];
+    const cIcsea = _vceBandColor[_bandIcsea(p.vce_icsea)];
+    const N = (v, c) => `<b style="color:${c};font-size:15px">${v}</b>`;
+    // Badge + left-border use median band so it matches the zone polygon's fill colour
+    vce =
+      `<div style="margin-top:6px;padding:8px 10px;background:#0f172a;border-left:3px solid ${cMed};border-radius:4px">
+         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+           <span style="background:${cMed};color:#fff;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">${_vceBandLabel[medBand]}</span>
+           <span style="font-size:11px;color:#94a3b8">VCE ${p.vce_year || ''}</span>
+         </div>
+         <div style="font-size:13px;line-height:1.7">
+           <div>Median ${N(p.vce_median, cMed)} <span style="color:#94a3b8;font-size:11px">— middle study score (0–50; 30 = state avg, 38+ elite)</span></div>
+           ${p.vce_pct40     != null ? `<div>${N(p.vce_pct40 + '%', cPct40)} ≥ 40 <span style="color:#94a3b8;font-size:11px">— top-band share (5% typical, 20%+ strong, 30%+ elite)</span></div>` : ''}
+           ${p.vce_pct_compl != null ? `<div>${N(p.vce_pct_compl + '%', cComp)} completion <span style="color:#94a3b8;font-size:11px">— share finishing VCE (95%+ healthy)</span></div>` : ''}
+           ${p.vce_icsea     != null ? `<div>ICSEA ${N(p.vce_icsea, cIcsea)} <span style="color:#94a3b8;font-size:11px">— catchment SES (1000 = AU avg; <i>context, not quality</i>)</span></div>` : `<div style="color:#94a3b8;font-size:11px">ICSEA: not in VRQA record for this year</div>`}
+         </div>
+         <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.4">
+           Each number coloured by its own band — schools can be top-tier on one metric and average on another.
+         </div>
+       </div>`;
+  } else if (isSec) {
+    vce = `<div style="margin-top:6px;padding:6px 8px;background:#0f172a;border-left:3px solid #6b7280;border-radius:4px;font-size:11px;color:#94a3b8">
+             No VRQA VCE data for this school (small/new, P-9/junior-only, IB-curriculum, or specialist)
+           </div>`;
+  }
+
+  return `<div style="min-width:260px">
+    <b>${name}</b>${sector || type ? `<br><span style="font-size:11px;color:#94a3b8">${sector}${sector && type ? ' · ' : ''}${type}</span>` : ''}
+    ${seifa}
+    ${vce}
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">${links.join('')}</div>
+  </div>`;
+}
+
+// VCE band colours (1=below 28 .. 6=38+ elite; 0=no data)
+const _vceBandColor = {
+  6: '#7c3aed',  // Elite (38+)        — deep purple
+  5: '#166534',  // Top tier (35–37)   — dark green
+  4: '#16a34a',  // Strong (32–34)     — green
+  3: '#ca8a04',  // Above avg (30–31)  — yellow-amber
+  2: '#ea580c',  // Average (28–29)    — orange
+  1: '#b91c1c',  // Below (<28)        — red
+  0: '#6b7280',  // No data            — grey
+};
+const _vceBandLabel = {
+  6: 'Elite (38+)', 5: 'Top tier (35–37)', 4: 'Strong (32–34)',
+  3: 'Above avg (30–31)', 2: 'Average (28–29)', 1: 'Below (<28)', 0: 'No data',
+};
+
+// Per-metric bands so each NUMBER gets its own colour based on its own merit
+// (e.g. median can be red while % ≥40 is green — schools have lopsided profiles)
+function _bandMedian(s)     { if (s==null) return 0; if (s>=38) return 6; if (s>=35) return 5; if (s>=32) return 4; if (s>=30) return 3; if (s>=28) return 2; return 1; }
+function _bandPct40(p)      { if (p==null) return 0; if (p>=30) return 6; if (p>=20) return 5; if (p>=10) return 4; if (p>=5)  return 3; if (p>=2)  return 2; return 1; }
+function _bandCompletion(p) { if (p==null) return 0; if (p>=99) return 6; if (p>=95) return 5; if (p>=90) return 4; if (p>=85) return 3; if (p>=80) return 2; return 1; }
+function _bandIcsea(i)      { if (i==null) return 0; if (i>=1200) return 6; if (i>=1100) return 5; if (i>=1050) return 4; if (i>=1000) return 3; if (i>=950)  return 2; return 1; }
+// Overall band = max of the three performance metrics (drives the marker ring + zone fill)
+function _bandOverall(p) {
+  if (p.vce_median == null) return 0;
+  return Math.max(_bandMedian(p.vce_median), _bandPct40(p.vce_pct40), _bandCompletion(p.vce_pct_compl));
+}
 const _zoneData    = { primary: null, secondary: null };
 const _schoolData  = { primary: null, secondary: null };
 const _zoneLayer   = { primary: null, secondary: null };
@@ -1332,60 +1508,96 @@ async function toggleLevel(type) {
   }
   btn.classList.remove('loading');
 
-  // Zones first (underneath)
+  // Zones first (underneath).
+  // Secondary: colour by VCE band when available (real performance data).
+  // Primary:   colour by SEIFA IEO band — a CATCHMENT-WEALTH proxy, not school quality
+  //            (no public bulk NAPLAN — only path for real data is ACARA DAP application).
+  // Polygon click shows the SAME detailed popup as clicking the school marker.
   _zoneLayer[type] = L.geoJSON(_zoneData[type], {
-    style: { color: cfg.color, weight: 1.5, fillColor: cfg.color, fillOpacity: 0.10 },
-    onEachFeature(feature, layer) {
+    style(feature) {
       const p = feature.properties || {};
-      const name = p.School_Name || p.Campus_Name || `${cfg.label} zone`;
-      layer.bindPopup(
-        `<b>🏫 ${name}</b><br>` +
-        `<span style="font-size:11px;color:#94a3b8">${cfg.label} zone · ${p.Year_Level || ''} · ${p.Boundary_Year || ''}</span>`
-      );
-    }
-  }).addTo(_map);
-
-  // Markers on top
-  _schoolLayer[type] = L.geoJSON(_schoolData[type], {
-    pointToLayer(feature, latlng) {
-      const p = feature.properties || {};
-      return L.circleMarker(latlng, {
-        radius: 5,
-        fillColor: _sectorColor[p.sector] || '#64748b',
-        color: '#fff',
-        weight: 1.5,
-        fillOpacity: 0.95,
-      });
+      if (type === 'secondary' && p.vce_band) {
+        return { color: _vceBandColor[p.vce_band], weight: 1.5, fillColor: _vceBandColor[p.vce_band], fillOpacity: 0.30 };
+      }
+      if (type === 'primary' && p.seifa_band) {
+        return { color: _vceBandColor[p.seifa_band], weight: 1.5, fillColor: _vceBandColor[p.seifa_band], fillOpacity: 0.22 };
+      }
+      return { color: cfg.color, weight: 1.5, fillColor: cfg.color, fillOpacity: 0.10 };
     },
     onEachFeature(feature, layer) {
       const p = feature.properties || {};
-      const q = encodeURIComponent(`${p.name} ${p.town || ''}`);
-      const isSecondary = p.type === 'Secondary' || p.type === 'Pri/Sec';
-      const isPrimary   = p.type === 'Primary'   || p.type === 'Pri/Sec';
-      const naplan = `https://www.google.com/search?q=${q}+NAPLAN+myschool.edu.au`;
-      const vce    = `https://www.google.com/search?q=VCE+results+median+study+score+${q}`;
-      const better = `https://www.google.com/search?q=${q}+site:bettereducation.com.au`;
-      const links = [];
-      if (isPrimary)   links.push(`<a href="${naplan}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">📊 NAPLAN scores (My School)</a>`);
-      if (isSecondary) {
-        if (!isPrimary) links.push(`<a href="${naplan}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">📊 NAPLAN Yr 7/9 (My School)</a>`);
-        links.push(`<a href="${vce}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">🎓 VCE results (median study score)</a>`);
-      }
-      links.push(`<a href="${better}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">🏆 Better Education ranking</a>`);
-      layer.bindPopup(
-        `<div style="min-width:240px">
-          <b>${p.name}</b><br>
-          <span style="font-size:11px;color:#94a3b8">${p.sector} · ${p.type}</span><br>
-          <span style="font-size:11px">${p.address || ''}</span><br>
-          ${p.phone ? `<span style="font-size:11px;color:#94a3b8">📞 ${p.phone}</span><br>` : ''}
-          <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">
-            ${links.join('')}
-          </div>
-        </div>`
-      );
+      // Use same popup as school marker (zones already have vce_*/seifa_* fields embedded)
+      const props = { ...p, name: p.School_Name || p.Campus_Name, type: type === 'secondary' ? 'Secondary' : 'Primary' };
+      layer.bindPopup(buildSchoolPopup(props));
     }
   }).addTo(_map);
 
+  // Markers on top — emoji per sector inside a performance-coloured ring.
+  // Secondary uses vce_band (real VCE outcome); primary uses seifa_band (catchment proxy).
+  _schoolLayer[type] = L.geoJSON(_schoolData[type], {
+    pointToLayer(feature, latlng) {
+      const p = feature.properties || {};
+      const band = (type === 'secondary' ? p.vce_band : p.seifa_band) || 0;
+      return L.marker(latlng, { icon: _schoolIcon(p.sector, band) });
+    },
+    onEachFeature(feature, layer) {
+      layer.bindPopup(buildSchoolPopup(feature.properties || {}));
+    }
+  }).addTo(_map);
+
+  btn.classList.add('active');
+}
+
+// ── Property risk overlays (flood / heritage / bushfire) ────────────────
+const _overlayCfg = {
+  flood:    { color: '#06b6d4', file: '/static/overlays/flood.geojson',    label: 'Flood (LSIO)',         schemeField: 'SCHEME' },
+  heritage: { color: '#a16207', file: '/static/overlays/heritage.geojson', label: 'Heritage Overlay',     schemeField: 'SCHEME' },
+  bushfire: { color: '#ea580c', file: '/static/overlays/bushfire.geojson', label: 'Bushfire Mgmt (BMO)',  schemeField: 'SCHEME' },
+};
+const _overlayData  = { flood: null, heritage: null, bushfire: null };
+const _overlayLayer = { flood: null, heritage: null, bushfire: null };
+
+async function toggleOverlay(name) {
+  _initMap();
+  const btn = document.getElementById('toggle-overlay-' + name);
+  const cfg = _overlayCfg[name];
+
+  if (_overlayLayer[name]) {
+    _map.removeLayer(_overlayLayer[name]);
+    _overlayLayer[name] = null;
+    btn.classList.remove('active');
+    return;
+  }
+
+  if (!_overlayData[name]) {
+    btn.classList.add('loading');
+    try {
+      const r = await fetch(cfg.file);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      _overlayData[name] = await r.json();
+    } catch (e) {
+      btn.classList.remove('loading');
+      alert(`Failed to load ${cfg.label}: ${e.message}`);
+      return;
+    }
+    btn.classList.remove('loading');
+  }
+
+  _overlayLayer[name] = L.geoJSON(_overlayData[name], {
+    style: { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.25, dashArray: name === 'bushfire' ? '4,3' : null },
+    onEachFeature(feature, layer) {
+      const p = feature.properties || {};
+      const code = p.ZONE_CODE || p.OVERLAY || '';
+      const desc = p.ZONE_DESCRIPTION || '';
+      const lga  = p.LGA || '';
+      layer.bindPopup(
+        `<b>${cfg.label}</b>` +
+        (code ? `<br><span style="font-size:12px"><b>${code}</b></span>` : '') +
+        (desc && desc !== code ? `<br><span style="font-size:11px;color:#cbd5e1">${desc}</span>` : '') +
+        (lga ? `<br><span style="font-size:11px;color:#94a3b8">LGA: ${lga}</span>` : '')
+      );
+    }
+  }).addTo(_map);
   btn.classList.add('active');
 }
 

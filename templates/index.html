@@ -1371,9 +1371,11 @@ function buildSchoolPopup(p) {
   const A = (href, label) =>
     `<a href="${href}" target="_blank" rel="noopener" style="font-size:11px;color:#60a5fa;white-space:nowrap">${label}</a>`;
 
-  const mySchoolUrl = p.acara_id
+  const mySchoolBase = p.acara_id
     ? `https://www.myschool.edu.au/school/${p.acara_id}`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
+  const naplanUrl = p.acara_id ? `${mySchoolBase}/naplan/results` : mySchoolBase;
+  const vceUrl    = p.acara_id ? `${mySchoolBase}/senior-secondary` : mySchoolBase;
   // Direct per-school Better Education page (works for both primary and secondary)
   const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
   // Fallback rating/search page for broader comparison
@@ -1382,9 +1384,10 @@ function buildSchoolPopup(p) {
     : `https://bettereducation.com.au/school/primary/vic/vic_primary_school_rating.aspx`;
 
   const links = [
-    A(mySchoolUrl, '📊 My School'),
-    ...(isSec ? [A(beDirectUrl, '🎓 VCE (Better Ed)')] : []),
-    A(beRatingUrl, '🏆 Rankings'),
+    A(naplanUrl, '📊 NAPLAN'),
+    ...(isSec ? [A(vceUrl, '🎓 VCE')] : []),
+    A(beDirectUrl, '🏆 Better Ed'),
+    A(beRatingUrl, '📋 Rankings'),
   ];
 
   // Compact metric row: label | coloured value | short hint

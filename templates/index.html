@@ -1374,7 +1374,7 @@ function buildSchoolPopup(p) {
   const mySchoolBase = p.acara_id
     ? `https://www.myschool.edu.au/school/${p.acara_id}`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
-  const naplanUrl = p.acara_id ? `${mySchoolBase}/naplan/results` : mySchoolBase;
+  const naplanUrl = p.acara_id ? `${mySchoolBase}/naplan` : mySchoolBase;
   // Direct per-school Better Education page — shows VCE results + ranking
   const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
 

@@ -11,7 +11,7 @@ REM   4. Enable Funnel for this device:
 REM      https://login.tailscale.com/admin/settings/funnel
 REM      → tick the checkbox next to this PC's hostname
 REM   5. (PowerShell, as Admin) Run once:
-REM        tailscale serve --bg --https=443 http://localhost:5000
+REM        tailscale serve --bg --https=443 http://localhost:5003
 REM        tailscale funnel 443 on
 REM   6. Find your URL:
 REM        tailscale status --json | findstr DNSName
@@ -31,10 +31,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Configuring Tailscale Funnel for http://localhost:5000 ...
+echo Configuring Tailscale Funnel for http://localhost:5003 ...
 "C:\Program Files\Tailscale\tailscale.exe" serve reset
 "C:\Program Files\Tailscale\tailscale.exe" funnel reset
-"C:\Program Files\Tailscale\tailscale.exe" funnel --bg --yes 5000
+"C:\Program Files\Tailscale\tailscale.exe" funnel --bg --yes 5003
 echo.
 echo ============================================================
 echo   Public URL:  https://l-bhpv5y2.taila40a46.ts.net

@@ -754,7 +754,7 @@
         <span class="legend-item"><span class="legend-fill" style="background:#6b7280"></span>—</span>
       </div>
       <div style="font-size:10px;color:#64748b;line-height:1.4">
-        Secondary=VCE median · Primary=SEIFA wealth proxy (≠ NAPLAN) · <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#4f8ef7">ACARA bulk data</a>
+        Secondary=VCE median · Primary=Better Education score (top ~442 only; rest are grey) · <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#4f8ef7">ACARA DAP for full NAPLAN</a>
       </div>
     </div>
     <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
@@ -1371,10 +1371,9 @@ function buildSchoolPopup(p) {
   const A = (href, label) =>
     `<a href="${href}" target="_blank" rel="noopener" style="font-size:11px;color:#60a5fa;white-space:nowrap">${label}</a>`;
 
-  const mySchoolBase = p.acara_id
-    ? `https://www.myschool.edu.au/school/${p.acara_id}`
+  const naplanUrl = p.acara_id
+    ? `https://www.myschool.edu.au/school/${p.acara_id}/naplan/results`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
-  const naplanUrl = p.acara_id ? `${mySchoolBase}/naplan` : mySchoolBase;
   // Direct per-school Better Education page — shows VCE results + ranking
   const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
 
@@ -1390,47 +1389,60 @@ function buildSchoolPopup(p) {
        <td style="font-weight:700;color:${color};font-size:13px" title="${hint}">${val}</td>
      </tr>`;
 
-  let seifa = '';
-  if (p.seifa_decile != null && !isSec) {
-    const c  = _vceBandColor[p.seifa_band];
-    const tc = _tc[p.seifa_band] || '#94a3b8';
-    const tier = ['','Bottom 10%','10–25%','25–50%','50–75%','75–90%','Top 10%'][p.seifa_band] || '';
-    seifa =
-      `<div style="margin-top:5px;padding:6px 8px;background:#0f172a;border-left:3px solid ${c};border-radius:4px">
-         <div style="font-size:10px;color:#fbbf24;margin-bottom:4px">⚠️ Not NAPLAN — coloured by catchment wealth (<a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#fde68a">ACARA DAP</a> for real data)</div>
-         <table style="border-collapse:collapse">
-           ${R('SES tier', tier + ' (Melb)', tc, 'Parents\' education + occupation ranking')}
-           ${R('SEIFA IEO', p.seifa_score, tc, '1000 = AU avg; decile ' + p.seifa_decile + '/10')}
-         </table>
-       </div>`;
-  }
+  // Inline metric: short-label · coloured value (hint in tooltip)
+  const M = (label, val, color, hint) =>
+    `<span title="${hint}" style="white-space:nowrap"><span style="color:#94a3b8">${label}</span> <b style="color:${color}">${val}</b></span>`;
 
-  let vce = '';
+  let block = '';
   if (p.vce_median != null) {
     const medBand  = _bandMedian(p.vce_median);
     const cMed     = _vceBandColor[medBand];
     const icseaVal = p.vce_icsea ?? p.icsea;
-    vce =
-      `<div style="margin-top:5px;padding:6px 8px;background:#0f172a;border-left:3px solid ${cMed};border-radius:4px">
-         <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
-           <span style="background:${cMed};color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">${_vceBandLabel[medBand]}</span>
-           <span style="font-size:10px;color:#94a3b8">VCE ${p.vce_year || ''}</span>
+    const metrics = [
+      M('Med', p.vce_median, _tc[medBand], 'Median study score (0–50; 30=state avg, 38+=elite)'),
+      p.vce_pct40     != null ? M('≥40', p.vce_pct40 + '%',     _tc[_bandPct40(p.vce_pct40)],         '% scoring 40+ (5% typical, 20%+ strong)') : '',
+      p.vce_pct_compl != null ? M('Compl', p.vce_pct_compl + '%', _tc[_bandCompletion(p.vce_pct_compl)], '% finishing VCE (95%+ healthy)') : '',
+      icseaVal        != null ? M('ICSEA', icseaVal,            _tc[_bandIcsea(icseaVal)],            'Catchment SES (1000=AU avg, 1200+=elite)') : '',
+    ].filter(Boolean).join('  ·  ');
+    block =
+      `<div style="margin-top:3px;padding:3px 6px;background:#0f172a;border-left:3px solid ${cMed};border-radius:3px;font-size:12px;line-height:1.5">
+         <span style="background:${cMed};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700">${_vceBandLabel[medBand]}</span>
+         <span style="font-size:10px;color:#94a3b8"> VCE ${p.vce_year || ''}</span><br>
+         ${metrics}
+         <div style="font-size:9px;color:#64748b;margin-top:2px;line-height:1.3">
+           Med=median study score (0–50; 30=avg, 38+=elite) · ≥40=% scores ≥40 (5% typical, 20%+ strong) · Compl=% finishing VCE · ICSEA=catchment SES (1000=AU avg)
          </div>
-         <table style="border-collapse:collapse">
-           ${R('Median', p.vce_median,           _tc[medBand],                           '0–50; state avg=30, elite=38+')}
-           ${p.vce_pct40     != null ? R('≥40 score', p.vce_pct40 + '%',    _tc[_bandPct40(p.vce_pct40)],        '% scoring 40+; 5% typical, 20%+ strong') : ''}
-           ${p.vce_pct_compl != null ? R('Completion', p.vce_pct_compl + '%', _tc[_bandCompletion(p.vce_pct_compl)], '% finishing VCE; 95%+ healthy') : ''}
-           ${icseaVal        != null ? R('ICSEA', icseaVal,                  _tc[_bandIcsea(icseaVal)],           'Catchment SES; 1000=AU avg, 1200+=elite') : ''}
-         </table>
        </div>`;
   } else if (isSec) {
-    vce = `<div style="margin-top:5px;padding:4px 8px;background:#0f172a;border-left:3px solid #6b7280;border-radius:4px;font-size:10px;color:#64748b">No VCE data (new/small/IB/specialist school)</div>`;
+    block = `<div style="margin-top:3px;font-size:10px;color:#64748b">No VCE data (junior secondary / IB / specialist)</div>`;
+  } else if (p.icsea != null || p.be_score != null) {
+    const cI  = _vceBandColor[p.icsea_band || 0];
+    const tcI = _tc[p.icsea_band || 0] || '#94a3b8';
+    const tierI = ['','Bot 10%','10–25%','25–50%','50–75%','75–90%','Top 10%'][p.icsea_band] || '?';
+    const metrics = [
+      p.icsea    != null ? M(tierI + ' Melb', 'ICSEA ' + p.icsea, tcI, `Per-school ICSEA; AU pctile ${p.icsea_pctile || '?'}`) : '',
+      p.be_score != null
+        ? M('BE', p.be_score + '/100 (top ' + (p.be_pctile || '?') + '% VIC)', _tc[p.be_band || 0], 'Better Education composite — top 442 VIC primaries only')
+        : `<span style="color:#64748b" title="Not in Better Education's top 442 VIC primaries (~top 25%)">BE: unranked</span>`,
+    ].filter(Boolean).join('  ·  ');
+    block =
+      `<div style="margin-top:3px;padding:3px 6px;background:#0f172a;border-left:3px solid ${cI};border-radius:3px;font-size:12px;line-height:1.5">
+         <span style="font-size:10px;color:#fbbf24">⚠️ ICSEA proxy (not NAPLAN)</span><br>
+         ${metrics}
+         <div style="font-size:9px;color:#64748b;margin-top:2px;line-height:1.3">
+           ICSEA=per-school catchment SES (1000=AU avg) · BE=Better Education composite (top 442 VIC primaries) · Real NAPLAN needs ACARA DAP application
+         </div>
+       </div>`;
   }
 
-  return `<div style="min-width:220px;max-width:280px">
+  const noZone = p.no_zone
+    ? `<div style="margin-top:3px;font-size:10px;color:#a78bfa;background:#1e1b4b;padding:2px 6px;border-radius:3px">🎯 Select-entry / specialist — no catchment zone (entry by application/test, not by address)</div>`
+    : '';
+  return `<div style="min-width:200px;max-width:280px;font-size:12px">
     <b style="font-size:13px">${name}</b>${sector || type ? `<span style="font-size:10px;color:#94a3b8"> · ${sector}${sector && type ? ' ' : ''}${type}</span>` : ''}
-    ${seifa}${vce}
-    <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">${links.join('')}</div>
+    ${noZone}
+    ${block}
+    <div style="margin-top:4px">${links.join(' · ')}</div>
   </div>`;
 }
 
@@ -1505,8 +1517,8 @@ async function toggleLevel(type) {
       if (type === 'secondary' && p.vce_band) {
         return { color: _vceBandColor[p.vce_band], weight: 1.5, fillColor: _vceBandColor[p.vce_band], fillOpacity: 0.30 };
       }
-      if (type === 'primary' && p.seifa_band) {
-        return { color: _vceBandColor[p.seifa_band], weight: 1.5, fillColor: _vceBandColor[p.seifa_band], fillOpacity: 0.22 };
+      if (type === 'primary' && p.be_band) {
+        return { color: _vceBandColor[p.be_band], weight: 1.5, fillColor: _vceBandColor[p.be_band], fillOpacity: 0.30 };
       }
       return { color: cfg.color, weight: 1.5, fillColor: cfg.color, fillOpacity: 0.10 };
     },
@@ -1519,11 +1531,11 @@ async function toggleLevel(type) {
   }).addTo(_map);
 
   // Markers on top — emoji per sector inside a performance-coloured ring.
-  // Secondary uses vce_band (real VCE outcome); primary uses seifa_band (catchment proxy).
+  // Secondary uses vce_band (real VCE outcome); primary uses be_band (Better Education score).
   _schoolLayer[type] = L.geoJSON(_schoolData[type], {
     pointToLayer(feature, latlng) {
       const p = feature.properties || {};
-      const band = (type === 'secondary' ? p.vce_band : p.seifa_band) || 0;
+      const band = (type === 'secondary' ? p.vce_band : p.be_band) || 0;
       return L.marker(latlng, { icon: _schoolIcon(p.sector, band) });
     },
     onEachFeature(feature, layer) {

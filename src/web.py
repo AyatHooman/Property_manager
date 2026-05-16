@@ -16,10 +16,6 @@ from src import scraper
 # sale closes, so caching forever is safe (just won't include sales added after
 # the cache was written).
 CACHE_TTL_SEC = 60 * 60 * 24 * 365 * 10  # 10 years ≈ forever
-# When a cached result is older than this, the request also fetches page 1
-# from Domain and merges any new sales into the cached set. Keeps results
-# fresh without paying the full scrape cost on every search.
-REFRESH_AFTER_SEC = 60 * 60  # 1 hour
 _CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "sales_cache")
 _sales_cache: dict = {}
 _cache_lock = threading.Lock()
@@ -308,6 +304,7 @@ def api_nearby_sales():
     months = int(request.args.get("months", 6))
     pages = int(request.args.get("pages", 3))
     prop_types = request.args.getlist("types")
+    force_refresh = request.args.get("force", "").strip() in ("1", "true", "yes")
 
     if not lat or not lng or not suburb or not state:
         return jsonify({"error": "lat, lng, suburb and state are required"}), 400
@@ -340,49 +337,20 @@ def api_nearby_sales():
             })
         return out
 
-    def _dedup_key(item):
-        return item.get("url") or f"{item.get('address','')}|{item.get('sold_date','')}|{item.get('price_num','')}"
-
     def generate():
         yield f"data: {json.dumps({'status': 'searching', 'address': address_label, 'lat': lat, 'lng': lng})}\n\n"
 
-        # ── Cache hit ────────────────────────────────────────────────────
+        # ── Cache hit → return as-is (only the explicit Refresh button bypasses) ──
         hit = _sales_cache.get(cache_key)
-        if hit and (time.time() - hit['ts']) < CACHE_TTL_SEC:
+        if hit and not force_refresh:
             age_min = int((time.time() - hit['ts']) / 60)
-            age_sec = time.time() - hit['ts']
             print(f"[cache] HIT for {cache_key[:3]} (age {age_min}m, {len(hit['items'])} items)", flush=True)
             if hit.get('ref'):
                 yield f"data: {json.dumps({'status': 'ref_specs', 'ref': hit['ref']})}\n\n"
-
-            # Fresh enough → return as-is, no refresh
-            if age_sec < REFRESH_AFTER_SEC:
-                yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min})}\n\n"
-                return
-
-            # Stale → emit cached results immediately, then fetch page 1 to find new sales
-            yield f"data: {json.dumps({'status': 'cached', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cache_age_min': age_min})}\n\n"
-            try:
-                fresh = scraper.get_nearby_sales(
-                    lat, lng, radius_km=radius, months=months, pages=1,
-                    suburb=suburb, state=state, postcode=postcode,
-                )
-                if prop_types:
-                    fresh = [r for r in fresh if _type_matches(r.property_type or "", prop_types)]
-                fresh_items = _results_to_items(fresh)
-                existing_keys = {_dedup_key(it) for it in hit['items']}
-                new_items = [it for it in fresh_items if _dedup_key(it) not in existing_keys]
-                merged = new_items + hit['items']
-                with _cache_lock:
-                    _sales_cache[cache_key] = {'ts': time.time(), 'ref': hit.get('ref'), 'items': merged}
-                _cache_save_one(cache_key, hit.get('ref'), merged)
-                print(f"[cache] REFRESH found {len(new_items)} new (total {len(merged)})", flush=True)
-                yield f"data: {json.dumps({'status': 'done', 'results': merged, 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min, 'new_count': len(new_items)})}\n\n"
-            except Exception as e:
-                # Refresh failed — keep cached results
-                print(f"[cache] REFRESH failed: {e} — serving cached only", flush=True)
-                yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min, 'refresh_failed': True})}\n\n"
+            yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min})}\n\n"
             return
+        if force_refresh:
+            print(f"[cache] FORCE refresh for {cache_key[:3]} -- bypassing cache", flush=True)
 
         # ── Cache miss → run the scraper ─────────────────────────────────
         ref = None
@@ -416,7 +384,7 @@ def api_nearby_sales():
         with _cache_lock:
             _sales_cache[cache_key] = {'ts': time.time(), 'ref': ref, 'items': items}
         _cache_save_one(cache_key, ref, items)
-        print(f"[cache] STORE for {cache_key[:3]} ({len(items)} items) → disk", flush=True)
+        print(f"[cache] STORE for {cache_key[:3]} ({len(items)} items) -> disk", flush=True)
         yield f"data: {json.dumps({'status': 'done', 'results': items, 'ref_address': address_label, 'lat': lat, 'lng': lng})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")

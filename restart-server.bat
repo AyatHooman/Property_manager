@@ -35,12 +35,12 @@ start "Property Manager Server" /MIN cmd /k "%~dp0start-server.bat"
 
 REM Poll for up to 20 seconds, checking every second
 echo.
-echo Waiting for server to bind to port 5002...
+echo Waiting for server to bind to port 5003...
 set /a tries=0
 :waitloop
 set /a tries+=1
 timeout /t 1 /nobreak >nul
-netstat -ano | findstr ":5002.*LISTENING" >nul
+netstat -ano | findstr ":5003.*LISTENING" >nul
 if not errorlevel 1 goto serverup
 if %tries% geq 60 goto serverdown
 set /a mod=%tries% %% 5
@@ -49,15 +49,15 @@ goto waitloop
 
 :serverup
 echo.
-echo    [OK] Server is LISTENING on port 5002 (took %tries%s)
+echo    [OK] Server is LISTENING on port 5003 (took %tries%s)
 echo.
-echo    Local:  http://127.0.0.1:5002/?token=6143
+echo    Local:  http://127.0.0.1:5003/?token=6143
 echo    Public: https://l-bhpv5y2.taila40a46.ts.net/?token=6143
 goto done
 
 :serverdown
 echo.
-echo    [!] WARNING: Server did not bind to :5002 within 60s
+echo    [!] WARNING: Server did not bind to :5003 within 60s
 echo        Check the minimized "Property Manager Server" window for errors
 
 :done

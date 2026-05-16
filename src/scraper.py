@@ -76,9 +76,14 @@ def _wait_for_content(driver, timeout: int = 30) -> str:
 
 
 def _quit_driver(driver) -> None:
-    """Quit the driver and forcibly kill any leftover Chrome processes."""
+    """Quit the driver and forcibly kill any leftover Chrome processes.
+
+    Chrome spawns many child processes (renderer, GPU, network, utility) and
+    taskkill /T can miss them when undetected_chromedriver detaches the tree.
+    Final sweep kills any chrome.exe / chromedriver.exe whose ExecutablePath
+    matches our portable copy, so we don't touch the user's own browser.
+    """
     import subprocess, os
-    # Grab the browser PID before quitting (undetected_chromedriver exposes it)
     pids = []
     try:
         if hasattr(driver, 'browser_pid') and driver.browser_pid:
@@ -89,7 +94,6 @@ def _quit_driver(driver) -> None:
         driver.quit()
     except Exception:
         pass
-    # Kill any still-running Chrome processes we spawned
     for pid in pids:
         try:
             if os.name == 'nt':
@@ -97,6 +101,16 @@ def _quit_driver(driver) -> None:
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
                 os.kill(pid, 9)
+        except Exception:
+            pass
+    if os.name == 'nt':
+        try:
+            subprocess.call([
+                'powershell', '-NoProfile', '-Command',
+                "Get-CimInstance Win32_Process -Filter \"Name='chrome.exe' OR Name='chromedriver.exe'\" | "
+                "Where-Object { $_.ExecutablePath -and $_.ExecutablePath -like '*chrome-portable*' } | "
+                "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=15)
         except Exception:
             pass
 
@@ -348,23 +362,29 @@ def get_listing_features(url: str) -> Optional[dict]:
 
 def get_listing_pool_storeys(url: str, lat: Optional[float] = None,
                              lng: Optional[float] = None) -> dict:
-    """Cheap pool/storey lookup for one comp listing.
+    """Cheap pool/storey lookup for one comp listing — zero ban risk.
 
-    Chrome-based scraping of individual listing pages is disabled to avoid
-    triggering Akamai bot detection (each listing = 1 extra Chrome session).
-    Only the OSM Overpass API is used for pool detection (no Chrome needed).
-    Storeys default to None — not worth the bot-detection risk.
+    Chrome scraping of individual Domain listings is DISABLED (Akamai bot
+    detection). Only safe open-data sources are used here:
+      - OSM Overpass for swimming pool tag (good hit rate for backyard pools)
+      - OSM Overpass for building:levels (low hit rate for AU residential
+        but authoritative when present)
+    Storeys/pool already extracted from the sold-listings page JSON in
+    _parse_sale_nearby — this endpoint is the fallback when those came back null.
     """
     out = {"pool": None, "storeys": None}
-    # OSM pool check only — no Chrome scrape of individual listing pages
-    if lat and lng:
-        try:
-            from src.features import osm_has_pool
-            osm_pool = osm_has_pool(lat, lng)
-            if osm_pool is not None:
-                out["pool"] = osm_pool
-        except Exception:
-            pass
+    if not (lat and lng):
+        return out
+    try:
+        from src.features import osm_has_pool, osm_building_levels
+        osm_pool = osm_has_pool(lat, lng)
+        if osm_pool is not None:
+            out["pool"] = osm_pool
+        levels = osm_building_levels(lat, lng)
+        if levels is not None:
+            out["storeys"] = 2 if levels >= 2 else 1
+    except Exception:
+        pass
     return out
 
 
@@ -695,6 +715,29 @@ def _parse_sale_nearby(item: Any, ref_lat: float, ref_lng: float) -> Optional[Sa
                 except ValueError:
                     pass
 
+        # Extract any free-text the sold-listings JSON gave us (headline, summary,
+        # description, badge labels). Run keyword regex for storeys/pool — zero
+        # extra HTTP requests, zero ban risk.
+        from src.features import storeys_from_text, pool_from_text
+        text_bits = []
+        for k in ("headline", "title", "summary", "summaryDescription",
+                  "description", "teaser", "subtitle"):
+            v = lm.get(k)
+            if isinstance(v, str): text_bits.append(v)
+        # Badge / promo labels sometimes mention "double storey"
+        for k in ("promoLevel", "promoText", "labels"):
+            v = lm.get(k)
+            if isinstance(v, str): text_bits.append(v)
+            elif isinstance(v, list):
+                for s in v:
+                    if isinstance(s, str): text_bits.append(s)
+        # Address title sometimes carries info too
+        if address.get("displayableAddress"):
+            text_bits.append(address["displayableAddress"])
+        combined = " ".join(text_bits)
+        storeys_guess = storeys_from_text(combined)
+        pool_guess    = pool_from_text(combined)
+
         r = SaleResult(
             property_id=int(listing_id) if listing_id else None,
             address=full_address,
@@ -713,6 +756,8 @@ def _parse_sale_nearby(item: Any, ref_lat: float, ref_lng: float) -> Optional[Sa
             url="https://www.domain.com.au" + lm.get("url", "") if lm.get("url") else "",
             lat=_safe_float(item_lat),
             lng=_safe_float(item_lng),
+            pool=pool_guess,
+            storeys=storeys_guess,
         )
         return r
     except Exception:

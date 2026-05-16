@@ -30,6 +30,38 @@ _OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 _HTTP_HEADERS = {"User-Agent": "PropertyManager/1.0 (research)"}
 
 
+# ── OSM building:levels ─────────────────────────────────────────────────────
+
+def osm_building_levels(lat: float, lng: float, radius_m: int = 25) -> Optional[int]:
+    """Return building:levels for the nearest tagged building (zero ban risk).
+
+    AU residential rarely has this tag — but when it does it's authoritative.
+    Returns ``None`` on network error OR no tagged building found nearby.
+    """
+    if not lat or not lng:
+        return None
+    query = (
+        f"[out:json][timeout:10];"
+        f"way[\"building\"][\"building:levels\"](around:{radius_m},{lat},{lng});"
+        f"out tags;"
+    )
+    try:
+        with httpx.Client(headers=_HTTP_HEADERS, timeout=12) as client:
+            r = client.post(_OVERPASS_URL, data={"data": query})
+            r.raise_for_status()
+            elements = r.json().get("elements", [])
+        for e in elements:
+            lvl = e.get("tags", {}).get("building:levels")
+            if lvl:
+                try:
+                    return int(float(lvl))
+                except ValueError:
+                    continue
+        return None
+    except Exception:
+        return None
+
+
 # ── OSM pool ────────────────────────────────────────────────────────────────
 
 def osm_has_pool(lat: float, lng: float, radius_m: int = 60) -> Optional[bool]:

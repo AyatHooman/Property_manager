@@ -386,12 +386,12 @@
     .zone-toggle.loading { opacity: .6; pointer-events: none; }
     .zone-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
     .map-legend {
-      padding: 6px 4px 12px;
-      font-size: 12px; color: var(--muted);
-      display: flex; flex-direction: column; gap: 6px;
+      padding: 4px 2px 8px;
+      font-size: 11px; color: var(--muted);
+      display: flex; flex-direction: column; gap: 4px;
     }
-    .legend-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .legend-label { font-weight: 600; color: #cbd5e1; min-width: 100px; }
+    .legend-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .legend-label { font-weight: 600; color: #cbd5e1; min-width: 80px; }
     .legend-item { display: inline-flex; align-items: center; gap: 5px; }
     .legend-dot {
       width: 10px; height: 10px; border-radius: 50%;
@@ -719,18 +719,17 @@
     </div>
     <div class="map-legend" id="map-legend">
       <div class="legend-row">
-        <span class="legend-label">📍 Properties:</span>
-        <span class="legend-item"><span class="legend-pin">📍</span>Reference</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#fbbf24;border-color:#78350f"></span>Sold (with adj. price)</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#94a3b8;border-color:#1e293b"></span>Sold (no adj.)</span>
+        <span class="legend-label">📍 Props:</span>
+        <span class="legend-item"><span class="legend-pin" style="font-size:12px">📍</span>Ref</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#fbbf24;border-color:#78350f"></span>Sold (adj)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#94a3b8;border-color:#1e293b"></span>Sold</span>
       </div>
       <div class="legend-row">
         <span class="legend-label">🏫 Schools:</span>
-        <span class="legend-item"><span class="legend-emoji">🏫</span>Government</span>
-        <span class="legend-item"><span class="legend-emoji">⛪</span>Catholic</span>
-        <span class="legend-item"><span class="legend-emoji">🎓</span>Independent</span>
-        <span class="legend-sep">·</span>
-        <span class="legend-item" style="color:#cbd5e1">Ring colour = performance band (see below)</span>
+        <span class="legend-item"><span class="legend-emoji" style="font-size:12px">🏫</span>Gov</span>
+        <span class="legend-item"><span class="legend-emoji" style="font-size:12px">⛪</span>Cath</span>
+        <span class="legend-item"><span class="legend-emoji" style="font-size:12px">🎓</span>Ind</span>
+        <span class="legend-item" style="color:#94a3b8">· Ring=band</span>
       </div>
       <div class="legend-row">
         <span class="legend-label">🚉 Transport:</span>
@@ -739,24 +738,23 @@
         <span class="legend-item"><span class="legend-dot" style="background:#6366f1"></span>Bus</span>
       </div>
       <div class="legend-row">
-        <span class="legend-label">⚠️ Property risks:</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#06b6d4"></span>Flood (LSIO)</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#a16207"></span>Heritage Overlay</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Bushfire Mgmt (BMO)</span>
+        <span class="legend-label">⚠️ Risks:</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#06b6d4"></span>Flood</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#a16207"></span>Heritage</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Bushfire</span>
       </div>
       <div class="legend-row">
-        <span class="legend-label">📊 Zone fill colour:</span>
+        <span class="legend-label">📊 Zone:</span>
         <span class="legend-item"><span class="legend-fill" style="background:#7c3aed"></span>Best</span>
         <span class="legend-item"><span class="legend-fill" style="background:#166534"></span>Top</span>
         <span class="legend-item"><span class="legend-fill" style="background:#16a34a"></span>Strong</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#ca8a04"></span>Above avg</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#ca8a04"></span>Avg+</span>
         <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Avg</span>
         <span class="legend-item"><span class="legend-fill" style="background:#b91c1c"></span>Below</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#6b7280"></span>No data</span>
+        <span class="legend-item"><span class="legend-fill" style="background:#6b7280"></span>—</span>
       </div>
-      <div class="legend-row" style="font-size:11px;color:#94a3b8;line-height:1.5">
-        <span><b style="color:#cbd5e1">Secondary zones</b> are coloured by <b>VCE median study score</b> (real outcome data, VRQA).
-        <b style="color:#cbd5e1">Primary zones</b> are coloured by <b>SEIFA IEO decile</b> — a <i>catchment-wealth proxy</i>, NOT teaching quality (no public bulk NAPLAN; click a school for per-school NAPLAN via My School, or apply for <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#4f8ef7">ACARA bulk data</a>).</span>
+      <div style="font-size:10px;color:#64748b;line-height:1.4">
+        Secondary=VCE median · Primary=SEIFA wealth proxy (≠ NAPLAN) · <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#4f8ef7">ACARA bulk data</a>
       </div>
     </div>
     <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
@@ -1367,82 +1365,73 @@ function buildSchoolPopup(p) {
   const q      = encodeURIComponent(`${name} ${p.town || ''}`);
   const isSec  = type === 'Secondary' || type === 'Pri/Sec' || p.vce_median != null;
 
-  const A = (href, label) =>
-    `<a href="${href}" target="_blank" rel="noopener" style="font-size:12px;color:#4f8ef7">${label}</a>`;
+  // Bright text colours for dark background (separate from zone fill colours)
+  const _tc = { 6:'#c4b5fd', 5:'#4ade80', 4:'#86efac', 3:'#fde047', 2:'#fb923c', 1:'#f87171', 0:'#94a3b8' };
 
-  // My School: direct per-school URL if ACARA ID is known, else search fallback
+  const A = (href, label) =>
+    `<a href="${href}" target="_blank" rel="noopener" style="font-size:11px;color:#60a5fa;white-space:nowrap">${label}</a>`;
+
   const mySchoolUrl = p.acara_id
     ? `https://www.myschool.edu.au/school/${p.acara_id}`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
-
-  // Better Education: direct VIC rating page (primary or secondary)
   const beUrl = isSec
     ? `https://bettereducation.com.au/school/Secondary/vic/vic_secondary_school_rating.aspx`
     : `https://bettereducation.com.au/school/primary/vic/vic_primary_school_rating.aspx`;
 
   const links = [
-    A(mySchoolUrl, '📊 NAPLAN scores (My School)'),
-    ...(isSec ? [A(`https://www.google.com/search?q=VCE+results+median+study+score+${q}`, '🎓 VCE results (median study score)')] : []),
-    A(beUrl, '🏆 Better Education ranking'),
+    A(mySchoolUrl, '📊 My School'),
+    ...(isSec ? [A(`https://www.google.com/search?q=VCE+results+median+study+score+${q}`, '🎓 VCE')] : []),
+    A(beUrl, '🏆 Better Ed'),
   ];
 
-  // Primary block — NOT NAPLAN. Lead with the disclaimer so it's the first thing seen.
+  // Compact metric row: label | coloured value | short hint
+  const R = (label, val, color, hint) =>
+    `<tr>
+       <td style="color:#94a3b8;padding:1px 8px 1px 0;white-space:nowrap;font-size:11px">${label}</td>
+       <td style="font-weight:700;color:${color};font-size:13px" title="${hint}">${val}</td>
+     </tr>`;
+
   let seifa = '';
   if (p.seifa_decile != null && !isSec) {
-    const c = _vceBandColor[p.seifa_band];
-    const tier = ['','Bottom 10% (Melb)','10–25%','25–50%','50–75%','75–90%','Top 10% (Melb)'][p.seifa_band] || '';
+    const c  = _vceBandColor[p.seifa_band];
+    const tc = _tc[p.seifa_band] || '#94a3b8';
+    const tier = ['','Bottom 10%','10–25%','25–50%','50–75%','75–90%','Top 10%'][p.seifa_band] || '';
     seifa =
-      `<div style="margin-top:6px;padding:8px 10px;background:#0f172a;border-left:3px solid ${c};border-radius:4px">
-         <div style="background:#451a03;color:#fbbf24;padding:5px 8px;border-radius:3px;font-size:11px;font-weight:600;margin-bottom:8px;line-height:1.4">
-           ⚠️ Not NAPLAN. We don't have bulk primary NAPLAN data (it's gated behind <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#fde68a;text-decoration:underline">ACARA DAP</a>). Coloured by catchment wealth instead.
-         </div>
-         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
-           <span style="background:${c};color:#fff;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">Catchment SES · ${tier}</span>
-         </div>
-         <div style="font-size:12px;color:#cbd5e1;line-height:1.6">
-           <div>Postcode <b>${p.postcode||'—'}</b> sits in the <b style="color:${c}">${tier.toLowerCase()}</b> of all Melbourne primary catchments for parents' education + occupation.</div>
-           <div style="margin-top:4px">SEIFA IEO score: <b style="color:${c}">${p.seifa_score}</b> <span style="color:#94a3b8">(1000 = AU avg; Australian decile ${p.seifa_decile}/10)</span></div>
-         </div>
-         <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.4">
-           For real teaching quality: click 📊 NAPLAN below to look this school up on My School (free, no scraping).
-         </div>
+      `<div style="margin-top:5px;padding:6px 8px;background:#0f172a;border-left:3px solid ${c};border-radius:4px">
+         <div style="font-size:10px;color:#fbbf24;margin-bottom:4px">⚠️ Not NAPLAN — coloured by catchment wealth (<a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#fde68a">ACARA DAP</a> for real data)</div>
+         <table style="border-collapse:collapse">
+           ${R('SES tier', tier + ' (Melb)', tc, 'Parents\' education + occupation ranking')}
+           ${R('SEIFA IEO', p.seifa_score, tc, '1000 = AU avg; decile ' + p.seifa_decile + '/10')}
+         </table>
        </div>`;
   }
 
   let vce = '';
   if (p.vce_median != null) {
-    const medBand = _bandMedian(p.vce_median);
-    const cMed   = _vceBandColor[medBand];
-    const cPct40 = _vceBandColor[_bandPct40(p.vce_pct40)];
-    const cComp  = _vceBandColor[_bandCompletion(p.vce_pct_compl)];
+    const medBand  = _bandMedian(p.vce_median);
+    const cMed     = _vceBandColor[medBand];
     const icseaVal = p.vce_icsea ?? p.icsea;
-    const cIcsea = _vceBandColor[_bandIcsea(icseaVal)];
-    const N = (v, c) => `<b style="color:${c};font-size:15px">${v}</b>`;
-    // Badge + left-border use median band so it matches the zone polygon's fill colour
     vce =
-      `<div style="margin-top:6px;padding:8px 10px;background:#0f172a;border-left:3px solid ${cMed};border-radius:4px">
-         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-           <span style="background:${cMed};color:#fff;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700">${_vceBandLabel[medBand]}</span>
-           <span style="font-size:11px;color:#94a3b8">VCE ${p.vce_year || ''}</span>
+      `<div style="margin-top:5px;padding:6px 8px;background:#0f172a;border-left:3px solid ${cMed};border-radius:4px">
+         <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
+           <span style="background:${cMed};color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:700">${_vceBandLabel[medBand]}</span>
+           <span style="font-size:10px;color:#94a3b8">VCE ${p.vce_year || ''}</span>
          </div>
-         <div style="font-size:13px;line-height:1.7">
-           <div>Median ${N(p.vce_median, cMed)} <span style="color:#94a3b8;font-size:11px">— middle study score (0–50; 30 = state avg, 38+ elite)</span></div>
-           ${p.vce_pct40     != null ? `<div>${N(p.vce_pct40 + '%', cPct40)} ≥ 40 <span style="color:#94a3b8;font-size:11px">— top-band share (5% typical, 20%+ strong, 30%+ elite)</span></div>` : ''}
-           ${p.vce_pct_compl != null ? `<div>${N(p.vce_pct_compl + '%', cComp)} completion <span style="color:#94a3b8;font-size:11px">— share finishing VCE (95%+ healthy)</span></div>` : ''}
-           ${icseaVal        != null ? `<div>ICSEA ${N(icseaVal, cIcsea)} <span style="color:#94a3b8;font-size:11px">— catchment SES (1000 = AU avg; <i>context, not quality</i>)</span></div>` : ''}
-         </div>
+         <table style="border-collapse:collapse">
+           ${R('Median', p.vce_median,           _tc[medBand],                           '0–50; state avg=30, elite=38+')}
+           ${p.vce_pct40     != null ? R('≥40 score', p.vce_pct40 + '%',    _tc[_bandPct40(p.vce_pct40)],        '% scoring 40+; 5% typical, 20%+ strong') : ''}
+           ${p.vce_pct_compl != null ? R('Completion', p.vce_pct_compl + '%', _tc[_bandCompletion(p.vce_pct_compl)], '% finishing VCE; 95%+ healthy') : ''}
+           ${icseaVal        != null ? R('ICSEA', icseaVal,                  _tc[_bandIcsea(icseaVal)],           'Catchment SES; 1000=AU avg, 1200+=elite') : ''}
+         </table>
        </div>`;
   } else if (isSec) {
-    vce = `<div style="margin-top:6px;padding:6px 8px;background:#0f172a;border-left:3px solid #6b7280;border-radius:4px;font-size:11px;color:#94a3b8">
-             No VRQA VCE data for this school (small/new, P-9/junior-only, IB-curriculum, or specialist)
-           </div>`;
+    vce = `<div style="margin-top:5px;padding:4px 8px;background:#0f172a;border-left:3px solid #6b7280;border-radius:4px;font-size:10px;color:#64748b">No VCE data (new/small/IB/specialist school)</div>`;
   }
 
-  return `<div style="min-width:260px">
-    <b>${name}</b>${sector || type ? `<br><span style="font-size:11px;color:#94a3b8">${sector}${sector && type ? ' · ' : ''}${type}</span>` : ''}
-    ${seifa}
-    ${vce}
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">${links.join('')}</div>
+  return `<div style="min-width:220px;max-width:280px">
+    <b style="font-size:13px">${name}</b>${sector || type ? `<span style="font-size:10px;color:#94a3b8"> · ${sector}${sector && type ? ' ' : ''}${type}</span>` : ''}
+    ${seifa}${vce}
+    <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">${links.join('')}</div>
   </div>`;
 }
 

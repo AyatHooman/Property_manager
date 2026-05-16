@@ -1415,7 +1415,8 @@ function buildSchoolPopup(p) {
     const cMed   = _vceBandColor[medBand];
     const cPct40 = _vceBandColor[_bandPct40(p.vce_pct40)];
     const cComp  = _vceBandColor[_bandCompletion(p.vce_pct_compl)];
-    const cIcsea = _vceBandColor[_bandIcsea(p.vce_icsea)];
+    const icseaVal = p.vce_icsea ?? p.icsea;
+    const cIcsea = _vceBandColor[_bandIcsea(icseaVal)];
     const N = (v, c) => `<b style="color:${c};font-size:15px">${v}</b>`;
     // Badge + left-border use median band so it matches the zone polygon's fill colour
     vce =
@@ -1428,10 +1429,7 @@ function buildSchoolPopup(p) {
            <div>Median ${N(p.vce_median, cMed)} <span style="color:#94a3b8;font-size:11px">— middle study score (0–50; 30 = state avg, 38+ elite)</span></div>
            ${p.vce_pct40     != null ? `<div>${N(p.vce_pct40 + '%', cPct40)} ≥ 40 <span style="color:#94a3b8;font-size:11px">— top-band share (5% typical, 20%+ strong, 30%+ elite)</span></div>` : ''}
            ${p.vce_pct_compl != null ? `<div>${N(p.vce_pct_compl + '%', cComp)} completion <span style="color:#94a3b8;font-size:11px">— share finishing VCE (95%+ healthy)</span></div>` : ''}
-           ${p.vce_icsea     != null ? `<div>ICSEA ${N(p.vce_icsea, cIcsea)} <span style="color:#94a3b8;font-size:11px">— catchment SES (1000 = AU avg; <i>context, not quality</i>)</span></div>` : `<div style="color:#94a3b8;font-size:11px">ICSEA: not in VRQA record for this year</div>`}
-         </div>
-         <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.4">
-           Each number coloured by its own band — schools can be top-tier on one metric and average on another.
+           ${icseaVal        != null ? `<div>ICSEA ${N(icseaVal, cIcsea)} <span style="color:#94a3b8;font-size:11px">— catchment SES (1000 = AU avg; <i>context, not quality</i>)</span></div>` : ''}
          </div>
        </div>`;
   } else if (isSec) {

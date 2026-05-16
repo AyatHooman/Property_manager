@@ -1374,14 +1374,17 @@ function buildSchoolPopup(p) {
   const mySchoolUrl = p.acara_id
     ? `https://www.myschool.edu.au/school/${p.acara_id}`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
-  const beUrl = isSec
+  // Direct per-school Better Education page (works for both primary and secondary)
+  const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
+  // Fallback rating/search page for broader comparison
+  const beRatingUrl = isSec
     ? `https://bettereducation.com.au/school/Secondary/vic/vic_secondary_school_rating.aspx`
     : `https://bettereducation.com.au/school/primary/vic/vic_primary_school_rating.aspx`;
 
   const links = [
     A(mySchoolUrl, '📊 My School'),
-    ...(isSec ? [A(`https://www.google.com/search?q=VCE+results+median+study+score+${q}`, '🎓 VCE')] : []),
-    A(beUrl, '🏆 Better Ed'),
+    ...(isSec ? [A(beDirectUrl, '🎓 VCE (Better Ed)')] : []),
+    A(beRatingUrl, '🏆 Rankings'),
   ];
 
   // Compact metric row: label | coloured value | short hint

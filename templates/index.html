@@ -2124,16 +2124,20 @@ function renderRefTimeline(info) {
   });
   if (info.estimate) {
     const e = info.estimate;
-    const txt = (e.low && e.high) ? `${fmtK(e.low)}–${fmtK(e.high)}` : (e.mid ? fmtK(e.mid) : '');
-    if (txt) {
+    const midTxt = e.mid ? fmtK(e.mid) : '';
+    const rangeTxt = (e.low && e.high) ? `${fmtK(e.low)}–${fmtK(e.high)}` : '';
+    const mainTxt = rangeTxt
+      ? `${fmtK(e.low)}–<strong style="color:#fbbf24">${midTxt}</strong>–${fmtK(e.high)}`
+      : midTxt;
+    if (mainTxt) {
       const rentBits = [];
       if (e.rent_pw) rentBits.push(`$${e.rent_pw}/wk`);
       if (e.rent_yield) rentBits.push(`${e.rent_yield}% yield`);
       const sub = rentBits.length ? ` · ${rentBits.join(' · ')}` : '';
       const confTip = e.confidence ? ` (${e.confidence} confidence)` : '';
       chips.push(
-        `<span class="tl-event estimate" title="Domain price estimate${confTip}">` +
-        `<span class="tl-price">💰 ${txt}${sub}</span><span class="tl-date">today (est)</span></span>`
+        `<span class="tl-event estimate" title="Domain price estimate — median: ${midTxt}${confTip}">` +
+        `<span class="tl-price">💰 ${mainTxt}${sub}</span><span class="tl-date">today (est)</span></span>`
       );
     }
   }

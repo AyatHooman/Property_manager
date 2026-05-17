@@ -306,11 +306,28 @@
     .ref-autofill-badge strong { color: #a5f3fc; }
     .ref-fields {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(7, 1fr);
       gap: 0;
     }
-    @media (max-width: 900px) { .ref-fields { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 560px) { .ref-fields { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 900px) { .ref-fields { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 560px) {
+      .ref-fields { grid-template-columns: repeat(4, 1fr); }
+      .ref-field { padding: 5px 4px; gap: 3px; min-width: 0; }
+      .ref-field-icon { font-size: 12px; }
+      .ref-field-body { min-width: 0; }
+      .ref-field-label { font-size: 8px; letter-spacing: .03em; }
+      .ref-field-input { font-size: 11px; padding: 2px 3px; min-width: 0; }
+    }
+    @media (max-width: 420px) {
+      .ref-fields { grid-template-columns: repeat(4, 1fr); }
+      .ref-field { padding: 4px 3px; }
+      .ref-field-icon { display: none; }  /* save horiz space on very narrow screens */
+      .ref-field-input { font-size: 11px; padding: 2px 2px; min-width: 0; }
+      /* Hide spinner buttons on number inputs to save width */
+      .ref-field-input[type=number]::-webkit-inner-spin-button,
+      .ref-field-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+      .ref-field-input[type=number] { -moz-appearance: textfield; }
+    }
     .ref-field {
       display: flex; align-items: center; gap: 8px;
       padding: 10px 12px;
@@ -323,11 +340,47 @@
     .ref-field-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
     .ref-field-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
     .ref-field-input {
-      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      width: 100%; min-width: 0; box-sizing: border-box;
+      background: var(--surface); border: 1px solid var(--border);
       border-radius: 5px; color: var(--text); font-size: 14px; font-weight: 600;
       padding: 4px 6px; outline: none; transition: border-color .15s;
     }
     .ref-field-input:focus { border-color: var(--accent); background: #0f172a; }
+
+    /* ── Reference property history timeline (horizontal) ──────────────── */
+    .ref-timeline {
+      display: flex; align-items: center; gap: 0;
+      padding: 8px 12px;
+      background: #0f172a;
+      border-top: 1px solid var(--border);
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: thin;
+    }
+    .ref-timeline .tl-label {
+      font-size: 10px; color: #94a3b8; text-transform: uppercase;
+      letter-spacing: .06em; font-weight: 600; padding-right: 8px;
+      flex-shrink: 0;
+    }
+    .ref-timeline .tl-event {
+      display: inline-flex; flex-direction: column; align-items: center;
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 11px; line-height: 1.2;
+      border: 1px solid; flex-shrink: 0;
+    }
+    .ref-timeline .tl-event.sale  { background:#0a2a17; border-color:#16a34a; color:#86efac; }
+    .ref-timeline .tl-event.lease { background:#1e1b00; border-color:#ca8a04; color:#fde047; }
+    .ref-timeline .tl-event.estimate { background:#1e1b4b; border-color:#7c3aed; color:#c4b5fd; }
+    .ref-timeline .tl-event .tl-price { font-weight: 700; }
+    .ref-timeline .tl-event .tl-date  { font-size: 9px; opacity: .75; }
+    .ref-timeline .tl-arrow {
+      color: #475569; padding: 0 4px; flex-shrink: 0;
+    }
+    @media (max-width: 560px) {
+      .ref-timeline { padding: 6px 8px; }
+      .ref-timeline .tl-event { font-size: 10px; padding: 2px 6px; }
+      .ref-timeline .tl-event .tl-date { font-size: 8px; }
+    }
 
     /* ── Adjustment rates (collapsible) ──────────────────────────────────── */
     .adj-details { border-top: 1px solid var(--border); }
@@ -404,6 +457,36 @@
       border: 1px solid currentColor;
     }
     .legend-pin { font-size: 14px; line-height: 1; }
+    /* ─ Floating layer-control on the map (Google Maps style) ──────────── */
+    .layer-fab {
+      background: #1a1d27; border: 1px solid #2e3350; border-radius: 6px;
+      padding: 6px 10px; cursor: pointer; font-size: 13px; color: #e2e8f0;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4); display: inline-flex; align-items: center; gap: 5px;
+      user-select: none;
+    }
+    .layer-fab:hover { background: #263349; }
+    .layer-fab-panel {
+      background: #1a1d27; border: 1px solid #2e3350; border-radius: 6px;
+      padding: 8px; margin-top: 5px; max-width: 240px; max-height: 60vh;
+      overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.5);
+    }
+    .layer-fab-panel .zone-toggle { margin: 0; font-size: 12px; padding: 5px 9px; }
+    .map-legend-floating {
+      background: rgba(20,23,32,0.93); border: 1px solid #2e3350;
+      border-radius: 6px; padding: 5px 8px; font-size: 10px; color: #cbd5e1;
+      max-width: 280px; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    }
+    .map-legend-floating.empty { display: none; }
+    .map-legend-floating .row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .map-legend-floating .lbl { color: #cbd5e1; font-weight: 600; min-width: 60px; }
+    .map-legend-floating .swatch { width: 10px; height: 8px; border-radius: 2px; display: inline-block; vertical-align: middle; }
+    .map-legend-floating .dot    { width: 9px;  height: 9px; border-radius: 50%; display: inline-block; border: 1.5px solid #fff; vertical-align: middle; }
+    @media (max-width: 600px) {
+      .layer-fab-panel { max-width: 200px; }
+      .layer-fab-panel .zone-toggle { font-size: 11px; padding: 4px 7px; }
+      .map-legend-floating { max-width: 220px; font-size: 9px; }
+    }
     .legend-emoji { font-size: 14px; line-height: 1; display: inline-block; width: 18px; text-align: center; }
     .legend-sep { color: #475569; padding: 0 4px; }
 
@@ -526,6 +609,7 @@
     </div>
 
     <!-- hidden fields — populated by Nominatim autocomplete -->
+    <input type="hidden" id="ref-slope" /><!-- populated from Open-Meteo -->
     <input type="hidden" id="sel-lat" />
     <input type="hidden" id="sel-lng" />
     <input type="hidden" id="sel-suburb" />
@@ -586,6 +670,9 @@
         <span id="ref-fetch-msg" class="ref-autofill-badge"></span>
       </div>
 
+      <!-- Horizontal timeline of past sales + leases for this address -->
+      <div id="ref-timeline" class="ref-timeline" style="display:none"></div>
+
       <div class="ref-fields">
         <!-- Beds -->
         <div class="ref-field">
@@ -619,6 +706,14 @@
             <input type="number" id="ref-land" class="ref-field-input" min="0" step="10" value="500" />
           </div>
         </div>
+        <!-- Building -->
+        <div class="ref-field">
+          <div class="ref-field-icon">🏗</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label" for="ref-bldg">Bldg m²</label>
+            <input type="number" id="ref-bldg" class="ref-field-input" min="0" step="10" placeholder="—" />
+          </div>
+        </div>
         <!-- Pool -->
         <div class="ref-field">
           <div class="ref-field-icon">🏊</div>
@@ -650,7 +745,7 @@
         <div class="adj-rates-grid">
           <div class="adj-rate-item">
             <label class="adj-rate-label">📈 Growth %/month</label>
-            <input type="number" id="adj-growth" class="adj-rate-input" step="0.1" value="0.4" />
+            <input type="number" id="adj-growth" class="adj-rate-input" step="0.1" value="0" />
           </div>
           <div class="adj-rate-item">
             <label class="adj-rate-label">🛏 $ per bed</label>
@@ -680,6 +775,10 @@
             <label class="adj-rate-label">🏠 $ extra storey</label>
             <input type="number" id="adj-storey" class="adj-rate-input" step="5000" value="120000" />
           </div>
+          <div class="adj-rate-item">
+            <label class="adj-rate-label">⛰ $ per slope %</label>
+            <input type="number" id="adj-slope" class="adj-rate-input" step="500" value="3000" title="Per-percentage-point of slope difference. Comps steeper than ref get a value bump (they sold cheaper because of slope)." />
+          </div>
         </div>
       </details>
     </div>
@@ -697,66 +796,21 @@
   <!-- Map -->
   <div id="map-card" class="card">
     <div class="card-title">🗺️ Map View</div>
-    <div class="zone-toggles">
-      <div class="zone-toggle" id="toggle-level-primary" onclick="toggleLevel('primary')">
-        <span class="zone-dot" style="background:#3b82f6"></span> 🏫 Primary Schools + Zones
-      </div>
-      <div class="zone-toggle" id="toggle-level-secondary" onclick="toggleLevel('secondary')">
-        <span class="zone-dot" style="background:#f59e0b"></span> 🎓 Secondary Schools + Zones (Yr 7)
-      </div>
-      <div class="zone-toggle" id="toggle-transport" onclick="toggleTransport()">
-        <span class="zone-dot" style="background:#dc2626"></span> 🚉 Public Transport
-      </div>
-      <div class="zone-toggle" id="toggle-overlay-flood" onclick="toggleOverlay('flood')">
-        <span class="zone-dot" style="background:#06b6d4"></span> 🌊 Flood
-      </div>
-      <div class="zone-toggle" id="toggle-overlay-heritage" onclick="toggleOverlay('heritage')">
-        <span class="zone-dot" style="background:#a16207"></span> 🏛️ Heritage
-      </div>
-      <div class="zone-toggle" id="toggle-overlay-bushfire" onclick="toggleOverlay('bushfire')">
-        <span class="zone-dot" style="background:#ea580c"></span> 🔥 Bushfire
-      </div>
+    <!-- Toggle pills — moved into the map's floating Leaflet control on _initMap.
+         Kept here in a hidden seed so the existing onclick handlers + IDs stay wired. -->
+    <div class="zone-toggles" id="zone-toggles-seed" style="display:none">
+      <div class="zone-toggle" id="toggle-level-primary"      onclick="toggleLevel('primary')">🏫 Primary</div>
+      <div class="zone-toggle" id="toggle-level-secondary"    onclick="toggleLevel('secondary')">🎓 Secondary</div>
+      <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Transport</div>
+      <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood</div>
+      <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
+      <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
+      <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
+      <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
+      <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
     </div>
-    <div class="map-legend" id="map-legend">
-      <div class="legend-row">
-        <span class="legend-label">📍 Props:</span>
-        <span class="legend-item"><span class="legend-pin" style="font-size:12px">📍</span>Ref</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#fbbf24;border-color:#78350f"></span>Sold (adj)</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#94a3b8;border-color:#1e293b"></span>Sold</span>
-      </div>
-      <div class="legend-row">
-        <span class="legend-label">🏫 Schools:</span>
-        <span class="legend-item"><span class="legend-emoji" style="font-size:12px">🏫</span>Gov</span>
-        <span class="legend-item"><span class="legend-emoji" style="font-size:12px">⛪</span>Cath</span>
-        <span class="legend-item"><span class="legend-emoji" style="font-size:12px">🎓</span>Ind</span>
-        <span class="legend-item" style="color:#94a3b8">· Ring=band</span>
-      </div>
-      <div class="legend-row">
-        <span class="legend-label">🚉 Transport:</span>
-        <span class="legend-item"><span class="legend-dot square" style="background:#dc2626"></span>Train</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#14b8a6"></span>Tram</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#6366f1"></span>Bus</span>
-      </div>
-      <div class="legend-row">
-        <span class="legend-label">⚠️ Risks:</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#06b6d4"></span>Flood</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#a16207"></span>Heritage</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Bushfire</span>
-      </div>
-      <div class="legend-row">
-        <span class="legend-label">📊 Zone:</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#7c3aed"></span>Best</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#166534"></span>Top</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#16a34a"></span>Strong</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#ca8a04"></span>Avg+</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#ea580c"></span>Avg</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#b91c1c"></span>Below</span>
-        <span class="legend-item"><span class="legend-fill" style="background:#6b7280"></span>—</span>
-      </div>
-      <div style="font-size:10px;color:#64748b;line-height:1.4">
-        Secondary=VCE median · Primary=Better Education score (top ~442 only; rest are grey) · <a href="https://www.acara.edu.au/contact-us/acara-data-access" target="_blank" style="color:#4f8ef7">ACARA DAP for full NAPLAN</a>
-      </div>
-    </div>
+    <!-- Legend is now rendered into a floating Leaflet control on the map. -->
+
     <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
   </div>
 
@@ -786,6 +840,7 @@
       <div class="results-count">
         <span id="result-count">0</span> sold properties found
         <span id="cache-badge" style="display:none;font-size:11px;color:#22c55e;background:#0a2a17;padding:3px 8px;border-radius:6px;margin-left:8px;font-weight:500"></span>
+        <a id="similar-badge" target="_blank" rel="noopener" style="display:none;font-size:11px;color:#fbbf24;background:#1e1b00;padding:3px 8px;border-radius:6px;margin-left:8px;font-weight:500;text-decoration:none"></a>
       </div>
       <div class="sort-wrap">
         Sort by:
@@ -813,8 +868,10 @@
             <th data-col="baths">Baths <span class="sort-arrow">↕</span></th>
             <th data-col="cars">Cars <span class="sort-arrow">↕</span></th>
             <th data-col="land">Land (m²) <span class="sort-arrow">↕</span></th>
+            <th data-col="bldg">Bldg (m²) <span class="sort-arrow">↕</span></th>
             <th data-col="pool">Pool <span class="sort-arrow">↕</span></th>
             <th data-col="storeys">Storey <span class="sort-arrow">↕</span></th>
+            <th data-col="slope">Slope <span class="sort-arrow">↕</span></th>
             <th data-col="dist">Dist (km) <span class="sort-arrow">↕</span></th>
           </tr>
         </thead>
@@ -1020,6 +1077,8 @@ async function runSearch(forceRefresh) {
         badge.style.display = 'inline-block';
       }
       renderResults();
+      // Also fire the "similar houses for sale" badge (official Domain API)
+      fetchSimilarListings();
     }
   };
 
@@ -1056,7 +1115,7 @@ function renderResults() {
   document.getElementById('result-count').textContent = allResults.length;
 
   if (!allResults.length) {
-    tbody.innerHTML = `<tr><td colspan="12">
+    tbody.innerHTML = `<tr><td colspan="14">
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
         <p>No sold properties found. Try increasing the radius or months.</p>
@@ -1084,12 +1143,24 @@ function renderResults() {
       ? `${r.sold_date}${ago ? `<div class="sub-muted">${ago}</div>` : ''}`
       : '—';
     const landHtml = r.land_area ? `${Math.round(r.land_area).toLocaleString()}` : '—';
+    const bldgHtml = r.building_m2 != null
+                   ? `<span class="feat-pill">${r.building_m2}</span>`
+                   : `<span class="sub-muted" data-extras-cell="bldg" data-row="${origIdx}">…</span>`;
     const poolHtml = r.pool === true ? '<span class="feat-pill">🏊 Yes</span>'
                    : r.pool === false ? '<span class="sub-muted">No</span>'
                    : `<span class="sub-muted" data-extras-cell="pool" data-row="${origIdx}">…</span>`;
     const storeyHtml = r.storeys === 2 ? '<span class="feat-pill">2️⃣</span>'
                      : r.storeys === 1 ? '<span class="feat-pill">1️⃣</span>'
                      : `<span class="sub-muted" data-extras-cell="storeys" data-row="${origIdx}">…</span>`;
+    const slopeHtml = r.slope_pct != null
+                    ? (() => {
+                        const s = formatSlope(r.slope_pct, true);
+                        // Mobile-friendly: show emoji + % + short label inline (no hover-only tooltip)
+                        const parts = s.split(' ');  // [icon, 'slope', '~X%', '(label)']
+                        const shortLabel = (parts[3] || '').replace(/[()]/g,'');
+                        return `<span class="feat-pill">${parts[0]} ${r.slope_pct}% ${shortLabel}</span>`;
+                      })()
+                    : `<span class="sub-muted" data-extras-cell="slope" data-row="${origIdx}">…</span>`;
     const adj = computeAdjusted(r, rates);
     const adjCls  = outlierIndices.has(origIdx) ? 'price-val adj-val-outlier' : 'price-val adj-val';
     const adjHtml = (adj.value != null && isFinite(adj.value))
@@ -1105,8 +1176,10 @@ function renderResults() {
       <td>${r.baths != null ? '<span class="feat-pill">🚿 ' + r.baths + '</span>' : '—'}</td>
       <td>${r.cars != null ? '<span class="feat-pill">🚗 ' + r.cars + '</span>' : '—'}</td>
       <td>${landHtml}</td>
+      <td>${bldgHtml}</td>
       <td>${poolHtml}</td>
       <td>${storeyHtml}</td>
+      <td>${slopeHtml}</td>
       <td>${distHtml}</td>
     </tr>`;
   }).join('');
@@ -1141,6 +1214,9 @@ function readAdjustmentRates() {
   // Storeys: null if ref left as unknown/empty
   const storeyEl = document.getElementById('ref-storeys');
   const refStoreys = (storeyEl && storeyEl.value !== '') ? parseInt(storeyEl.value, 10) : null;
+  // Slope (hidden field, set by fetchRefExtras from Open-Meteo); null if not yet fetched
+  const slopeEl = document.getElementById('ref-slope');
+  const refSlope = (slopeEl && slopeEl.value !== '') ? parseFloat(slopeEl.value) : null;
   return {
     refBeds:    num('ref-beds', 0),
     refBaths:   num('ref-baths', 0),
@@ -1148,13 +1224,15 @@ function readAdjustmentRates() {
     refLand:    num('ref-land', 0),
     refPool,
     refStoreys,
-    growth:     num('adj-growth', 0.4) / 100,
+    refSlope,
+    growth:     num('adj-growth', 0) / 100,
     bed:        num('adj-bed', 35000),
     bath:       num('adj-bath', 20000),
     car:        num('adj-car', 15000),
     landRate:   num('adj-land', 800),
     pool:       num('adj-pool', 40000),
     storey:     num('adj-storey', 120000),
+    slope:      num('adj-slope', 3000),
     iqrMult:    num('adj-iqr', 1.0),
   };
 }
@@ -1208,8 +1286,20 @@ function computeAdjusted(r, rates) {
     const storeyRate = isNaN(rates.storey) ? 25000 : rates.storey;
     dStorey = (rates.refStoreys - r.storeys) * storeyRate;
   }
+  // Slope: only adjust if BOTH known. Comp steeper than ref → comp sold cheaper
+  // because of slope, so bump comp's adjusted value UP. Comp flatter than ref →
+  // adjust DOWN (ref's steepness is a penalty).
+  let dSlope = 0;
+  let slopeNote = null;
+  if (rates.refSlope != null && r.slope_pct != null) {
+    dSlope = (r.slope_pct - rates.refSlope) * rates.slope;
+  } else if (rates.refSlope == null) {
+    slopeNote = `Slope (skipped — ref slope still loading)`;
+  } else if (r.slope_pct == null) {
+    slopeNote = `Slope (skipped — comp slope loading…)`;
+  }
 
-  const raw = timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey;
+  const raw = timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey + dSlope;
   if (!isFinite(raw)) {
     console.warn('computeAdjusted NaN debug:', {price: r.price_num, timeAdj, dBed, dBath, dCar, dLand, dPool, dStorey, rates});
     return { value: null, breakdown: 'Calculation error', deltaStr: '' };
@@ -1231,6 +1321,7 @@ function computeAdjusted(r, rates) {
     fmtLine('Land  ', dLand),
     dPool   !== 0 ? fmtLine('Pool  ', dPool)   : (poolNote || null),
     dStorey !== 0 ? fmtLine('Storey', dStorey) : null,
+    dSlope  !== 0 ? fmtLine('Slope ', dSlope)  : (slopeNote || null),
     `→ Adjusted: $${value.toLocaleString()}`,
   ].filter(Boolean).join('\n');
 
@@ -1261,8 +1352,83 @@ function _initMap() {
   L.control.layers(
     { '🗺️ Streets': streets, '🛰️ Satellite': satWithLabels },
     {},
-    { position: 'topright', collapsed: false }
+    { position: 'topright', collapsed: true }
   ).addTo(_map);
+
+  // ─ Floating layer-toggle control (top-right, collapsible) ──────────────
+  const layerCtrl = L.control({ position: 'topright' });
+  layerCtrl.onAdd = function() {
+    const div = L.DomUtil.create('div', 'leaflet-control layer-fab-wrapper');
+    div.innerHTML = `
+      <button class="layer-fab" id="layer-fab-btn">⊞ Layers</button>
+      <div class="layer-fab-panel" id="layer-fab-panel" style="display:none"></div>
+    `;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  };
+  layerCtrl.addTo(_map);
+  // Move existing toggle pills into the panel (preserves onclick handlers)
+  const togglesSeed = document.getElementById('zone-toggles-seed');
+  const panel = document.getElementById('layer-fab-panel');
+  if (togglesSeed && panel) {
+    while (togglesSeed.firstChild) panel.appendChild(togglesSeed.firstChild);
+  }
+  document.getElementById('layer-fab-btn').onclick = () => {
+    const p = document.getElementById('layer-fab-panel');
+    p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+  };
+  // Auto-refresh legend when any toggle's active class flips
+  const mo = new MutationObserver(updateMapLegend);
+  document.querySelectorAll('.zone-toggle').forEach(t =>
+    mo.observe(t, { attributes: true, attributeFilter: ['class'] }));
+
+  // ─ Floating legend control (bottom-left) — auto-updates per active layer ─
+  const legendCtrl = L.control({ position: 'bottomleft' });
+  legendCtrl.onAdd = function() {
+    const div = L.DomUtil.create('div', 'leaflet-control map-legend-floating empty');
+    div.id = 'map-legend-floating';
+    return div;
+  };
+  legendCtrl.addTo(_map);
+  updateMapLegend();
+}
+
+// Build legend HTML based on which layers are currently active
+function updateMapLegend() {
+  const el = document.getElementById('map-legend-floating');
+  if (!el) return;
+  const rows = [];
+  const SCH_BAND = ['#7c3aed','#166534','#16a34a','#ca8a04','#ea580c','#b91c1c','#6b7280'];
+  const CRIME_BAND = ['#166534','#16a34a','#84cc16','#ca8a04','#ea580c','#b91c1c'];
+  const swatches = (arr) => arr.map(c => `<span class="swatch" style="background:${c}"></span>`).join('');
+  if (allResults && allResults.length) {
+    rows.push(`<div class="row"><span class="lbl">Sold</span><span class="dot" style="background:#fbbf24;border-color:#78350f"></span>adj <span class="dot" style="background:#94a3b8;border-color:#1e293b"></span>none</div>`);
+  }
+  if (_zoneLayer && (_zoneLayer.primary || _schoolLayer.primary)) {
+    rows.push(`<div class="row"><span class="lbl">Primary</span>🏫⛪🎓 ${swatches(SCH_BAND)} best→worst (BE)</div>`);
+  }
+  if (_zoneLayer && (_zoneLayer.secondary || _schoolLayer.secondary)) {
+    rows.push(`<div class="row"><span class="lbl">Secondary</span>🏫⛪🎓 ${swatches(SCH_BAND)} best→worst (VCE)</div>`);
+  }
+  if (_transportLayer && (_transportLayer.trains || _transportLayer.trams || _transportLayer.buses)) {
+    rows.push(`<div class="row"><span class="lbl">Transport</span><span class="dot" style="background:#dc2626;border-radius:2px"></span>train <span class="dot" style="background:#14b8a6"></span>tram <span class="dot" style="background:#6366f1"></span>bus</div>`);
+  }
+  if (_overlayLayer && _overlayLayer.flood)    rows.push(`<div class="row"><span class="lbl">Flood</span><span class="swatch" style="background:#06b6d4"></span></div>`);
+  if (_overlayLayer && _overlayLayer.heritage) rows.push(`<div class="row"><span class="lbl">Heritage</span><span class="swatch" style="background:#a16207"></span></div>`);
+  if (_overlayLayer && _overlayLayer.bushfire) rows.push(`<div class="row"><span class="lbl">Bushfire</span><span class="swatch" style="background:#ea580c"></span></div>`);
+  if (_overlayLayer && _overlayLayer.crime)    rows.push(`<div class="row"><span class="lbl">Crime/100k</span>${swatches(CRIME_BAND)} safest→highest</div>`);
+  if (_overlayLayer && _overlayLayer.icsea)    rows.push(`<div class="row"><span class="lbl">ICSEA avg</span>${swatches(SCH_BAND.slice(0,6).reverse())} low→high (Melb %ile, 1000=AU avg)</div>`);
+  if (_overlayLayer && _overlayLayer.infra) {
+    const line = (color, dashed) =>
+      `<span style="display:inline-block;width:18px;height:0;border-top:3px ${dashed?'dashed':'solid'} ${color};vertical-align:middle;margin:0 2px"></span>`;
+    rows.push(`<div class="row"><span class="lbl">Future infra</span>` +
+              `🚆${line('#ff0080',false)}building ${line('#ff0080',true)}planned · ` +
+              `🛣${line('#8b5cf6',false)}building ${line('#8b5cf6',true)}planned</div>` +
+              `<div class="row" style="color:#94a3b8;font-size:9px">solid = under construction · dashed = announced (may not yet be funded/approved)</div>`);
+  }
+  el.innerHTML = rows.join('');
+  el.classList.toggle('empty', rows.length === 0);
 }
 
 function pinRefOnMap(lat, lng, address) {
@@ -1307,12 +1473,24 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
     }).addTo(_map);
     const priceStr = r.price_num ? '$' + r.price_num.toLocaleString() : (r.price || '—');
     const adjStr   = hasAdj ? `<div class="adj">Adj: $${adj.value.toLocaleString()}</div>` : '';
+    const slopeStr = formatSlope(r.slope_pct);
+    const rentStr  = formatRent(rentForSuburb(r.suburb || (r.address||'').split(',')[1]), r.price_num);
+    const demoStr  = formatDemographics(r.postcode || (r.address||'').match(/\b3\d{3}\b/)?.[0]);
+    const dims = [
+      r.land_area    ? `land ${Math.round(r.land_area)} m²` : '',
+      r.building_m2  ? `bldg ${r.building_m2} m²` : '',
+      r.storeys      ? (r.storeys === 2 ? '2-storey' : '1-storey') : '',
+      slopeStr,
+      rentStr,
+    ].filter(Boolean).join(' · ');
     circle.bindPopup(
       `<div class="comp-popup">
         <div class="addr">${r.address || ''}</div>
         <div class="price">${priceStr}</div>
         ${adjStr}
         <div style="font-size:11px;color:#94a3b8">${r.sold_date || ''} · ${r.type || ''}</div>
+        ${dims ? `<div style="font-size:11px;color:#cbd5e1;margin-top:2px">${dims}</div>` : ''}
+        ${demoStr ? `<div style="font-size:11px;color:#cbd5e1">${demoStr}</div>` : ''}
       </div>`
     );
   });
@@ -1322,10 +1500,107 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
     _map.fitBounds(pts, { padding: [40, 40], maxZoom: 15 });
   }
   setTimeout(() => _map.invalidateSize(), 100);
+  if (typeof updateMapLegend === 'function') updateMapLegend();
 }
 
 // Init map on page load
 document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
+
+// DFFH Rental Report — median weekly rent by suburb (loaded once)
+let _rentLookup = null;
+let _rentQuarter = '';
+fetch('/static/overlays/rent_by_suburb.json').then(r => r.json()).then(d => {
+  _rentLookup = d.rent || {};
+  _rentQuarter = d.latest_quarter || '';
+}).catch(() => {});
+
+// ABS Census 2021 G02 — demographics per postcode
+let _demoLookup = null;
+fetch('/static/overlays/demographics_by_postcode.json').then(r => r.json()).then(d => {
+  _demoLookup = d;
+}).catch(() => {});
+
+function demographicsFor(postcode) {
+  if (!_demoLookup || !postcode) return null;
+  return _demoLookup[String(postcode).trim()] || null;
+}
+
+function formatDemographics(postcode) {
+  const d = demographicsFor(postcode);
+  if (!d) return '';
+  const parts = [];
+  if (d.median_hhd_inc) parts.push(`hhd $${d.median_hhd_inc.toLocaleString()}/wk`);
+  if (d.median_age)     parts.push(`age ${d.median_age}`);
+  if (d.avg_hhd_size)   parts.push(`${d.avg_hhd_size}/home`);
+  return parts.length ? `👥 ${parts.join(' · ')}` : '';
+}
+
+// "Similar houses for sale" — official Domain API (500/day free; zero ban risk)
+async function fetchSimilarListings() {
+  const suburb   = document.getElementById('sel-suburb').value;
+  const state    = document.getElementById('sel-state').value;
+  const minBeds  = parseInt(document.getElementById('ref-beds').value) || 0;
+  const types    = [...document.querySelectorAll('.type-chip.selected')].map(c => c.dataset.type);
+  if (!suburb || !state) return;
+  const badge = document.getElementById('similar-badge');
+  badge.style.display = 'inline-block';
+  badge.textContent = '🏠 checking active listings…';
+  try {
+    const params = new URLSearchParams({ suburb, state });
+    if (minBeds) { params.set('min_beds', minBeds); params.set('max_beds', minBeds); }
+    types.forEach(t => params.append('types', t));
+    const resp = await fetch('/api/similar-listings?' + params.toString());
+    const data = await resp.json();
+    if (data.error || data.count == null) {
+      badge.textContent = '🏠 active listings: n/a';
+      return;
+    }
+    const beds = minBeds || '?';
+    const url = `https://www.domain.com.au/sale/${encodeURIComponent(suburb.toLowerCase().replace(/\s+/g,'-'))}-${state.toLowerCase()}-${document.getElementById('sel-postcode').value}/?bedrooms=${beds}-${beds}`;
+    badge.href = url;
+    badge.textContent = `🏠 ${data.count} similar ${beds}-bed for sale in ${suburb} (click to view on Domain)`;
+  } catch (e) {
+    badge.textContent = '🏠 active listings: error';
+  }
+}
+
+function rentForSuburb(suburb) {
+  if (!_rentLookup || !suburb) return null;
+  const key = String(suburb).toLowerCase().replace(/['",.\(\)\-\&\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+  // Direct match
+  if (_rentLookup[key] != null) return _rentLookup[key];
+  // DFFH often groups suburbs (e.g. "albert park middle park west st kilda")
+  // — find any DFFH suburb whose key contains this suburb word
+  const words = key.split(' ').filter(w => w.length >= 3);
+  for (const k of Object.keys(_rentLookup)) {
+    if (words.every(w => k.includes(w))) return _rentLookup[k];
+  }
+  return null;
+}
+
+function formatRent(rentWk, price) {
+  if (rentWk == null) return '';
+  let s = `🏘 ~$${rentWk}/wk`;
+  if (price && price > 0) {
+    const yieldPct = (rentWk * 52) / price * 100;
+    s += ` (yield ${yieldPct.toFixed(2)}%)`;
+  }
+  return s;
+}
+
+// Format slope % with intuitive label & emoji for property-buying impact.
+// Thresholds: <5% flat (no impact) · 5–10% gentle (minor) · 10–15% moderate
+// (retaining/build cost) · 15–20% notable (significant build cost) · >20% steep.
+function formatSlope(pct, withEmoji) {
+  if (pct == null) return '';
+  let label, icon;
+  if (pct < 5)       { label = 'flat';     icon = '🟢'; }
+  else if (pct < 10) { label = 'gentle';   icon = '🟢'; }
+  else if (pct < 15) { label = 'moderate'; icon = '🟡'; }
+  else if (pct < 20) { label = 'notable';  icon = '🟠'; }
+  else               { label = 'steep';    icon = '🔴'; }
+  return `${withEmoji ? icon + ' ' : ''}slope ${pct}% ${label}`;
+}
 
 // ── School Zones + Markers (combined per level) ─────────────────────────────
 const _levelCfg = {
@@ -1518,7 +1793,12 @@ async function toggleLevel(type) {
         return { color: _vceBandColor[p.vce_band], weight: 1.5, fillColor: _vceBandColor[p.vce_band], fillOpacity: 0.30 };
       }
       if (type === 'primary' && p.be_band) {
-        return { color: _vceBandColor[p.be_band], weight: 1.5, fillColor: _vceBandColor[p.be_band], fillOpacity: 0.30 };
+        return { color: _vceBandColor[p.be_band], weight: 1.5, fillColor: _vceBandColor[p.be_band], fillOpacity: 0.32 };
+      }
+      // Primary fallback when not in BE's top 442 — use real ICSEA from ACARA
+      // (lighter fill so users can distinguish "real perf data" from "proxy").
+      if (type === 'primary' && p.icsea_band) {
+        return { color: _vceBandColor[p.icsea_band], weight: 1, fillColor: _vceBandColor[p.icsea_band], fillOpacity: 0.18, dashArray: '4,3' };
       }
       return { color: cfg.color, weight: 1.5, fillColor: cfg.color, fillOpacity: 0.10 };
     },
@@ -1535,7 +1815,7 @@ async function toggleLevel(type) {
   _schoolLayer[type] = L.geoJSON(_schoolData[type], {
     pointToLayer(feature, latlng) {
       const p = feature.properties || {};
-      const band = (type === 'secondary' ? p.vce_band : p.be_band) || 0;
+      const band = (type === 'secondary' ? p.vce_band : (p.be_band || p.icsea_band)) || 0;
       return L.marker(latlng, { icon: _schoolIcon(p.sector, band) });
     },
     onEachFeature(feature, layer) {
@@ -1551,9 +1831,28 @@ const _overlayCfg = {
   flood:    { color: '#06b6d4', file: '/static/overlays/flood.geojson',    label: 'Flood (LSIO)',         schemeField: 'SCHEME' },
   heritage: { color: '#a16207', file: '/static/overlays/heritage.geojson', label: 'Heritage Overlay',     schemeField: 'SCHEME' },
   bushfire: { color: '#ea580c', file: '/static/overlays/bushfire.geojson', label: 'Bushfire Mgmt (BMO)',  schemeField: 'SCHEME' },
+  crime:    { color: '#b91c1c', file: '/static/overlays/crime_postcode.geojson', label: 'Crime rate (postcode)' },
+  infra:    { color: '#ec4899', file: '/static/overlays/infra.geojson',           label: 'Future infrastructure' },
+  icsea:    { color: '#7c3aed', file: '/static/overlays/icsea_postcode.geojson',  label: 'ICSEA (per postcode)' },
 };
-const _overlayData  = { flood: null, heritage: null, bushfire: null };
-const _overlayLayer = { flood: null, heritage: null, bushfire: null };
+const _overlayData  = { flood: null, heritage: null, bushfire: null, crime: null, infra: null, icsea: null };
+const _overlayLayer = { flood: null, heritage: null, bushfire: null, crime: null, infra: null, icsea: null };
+
+// Bright, non-OSM-palette colours so lines pop against streets/satellite tiles
+const _INFRA_RAIL = '#ff0080';   // hot magenta — extremely distinct from OSM
+const _INFRA_ROAD = '#8b5cf6';   // electric violet — distinct from OSM road yellow/orange
+const _infraStyle = {
+  rail_proposed:       { color: _INFRA_RAIL, weight: 4,   dashArray: '8,5', opacity: 1 },
+  rail_construction:   { color: _INFRA_RAIL, weight: 5,                       opacity: 1 },
+  road_proposed:       { color: _INFRA_ROAD, weight: 4,   dashArray: '7,5', opacity: 1 },
+  road_construction:   { color: _INFRA_ROAD, weight: 5,                       opacity: 1 },
+  station_construction:{ color: _INFRA_RAIL },
+};
+
+// Crime band colours — 1=safest (green), 6=highest (red). NOT the VCE palette
+// because here higher = worse, not better.
+const _crimeBandColor = { 1:'#166534', 2:'#16a34a', 3:'#84cc16', 4:'#ca8a04', 5:'#ea580c', 6:'#b91c1c', 0:'#6b7280' };
+const _crimeBandLabel = { 1:'Safest 10%', 2:'10–25%', 3:'25–50%', 4:'50–75%', 5:'75–90%', 6:'Highest 10%', 0:'No data' };
 
 async function toggleOverlay(name) {
   _initMap();
@@ -1581,21 +1880,88 @@ async function toggleOverlay(name) {
     btn.classList.remove('loading');
   }
 
-  _overlayLayer[name] = L.geoJSON(_overlayData[name], {
-    style: { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.25, dashArray: name === 'bushfire' ? '4,3' : null },
-    onEachFeature(feature, layer) {
-      const p = feature.properties || {};
-      const code = p.ZONE_CODE || p.OVERLAY || '';
-      const desc = p.ZONE_DESCRIPTION || '';
-      const lga  = p.LGA || '';
-      layer.bindPopup(
-        `<b>${cfg.label}</b>` +
-        (code ? `<br><span style="font-size:12px"><b>${code}</b></span>` : '') +
-        (desc && desc !== code ? `<br><span style="font-size:11px;color:#cbd5e1">${desc}</span>` : '') +
-        (lga ? `<br><span style="font-size:11px;color:#94a3b8">LGA: ${lga}</span>` : '')
-      );
-    }
-  }).addTo(_map);
+  if (name === 'icsea') {
+    const tierLabel = ['No data','Bot 10%','10–25%','25–50%','50–75%','75–90%','Top 10%'];
+    _overlayLayer[name] = L.geoJSON(_overlayData[name], {
+      style(feature) {
+        const b = feature.properties?.icsea_band || 0;
+        return { color: _vceBandColor[b], weight: 1.2, fillColor: _vceBandColor[b], fillOpacity: 0.35 };
+      },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const b = p.icsea_band || 0;
+        const c = _vceBandColor[b];
+        layer.bindPopup(
+          p.icsea_avg != null
+            ? `<b>🎓 ${p.postcode || ''}</b> <span style="background:${c};color:#fff;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700">${tierLabel[b]}</span><br>
+               <b style="color:${c};font-size:13px">ICSEA ${p.icsea_avg}</b> · avg of ${p.school_count} school${p.school_count===1?'':'s'} in postcode
+               <div style="font-size:9px;color:#64748b">ACARA 2025 · 1000=AU avg · Melbourne %ile</div>`
+            : `<b>🎓 ${p.postcode || ''}</b><br><span style="font-size:11px;color:#94a3b8">No schools in this postcode (commercial / industrial / PO box)</span>`
+        );
+      }
+    }).addTo(_map);
+  } else if (name === 'infra') {
+    _overlayLayer[name] = L.geoJSON(_overlayData[name], {
+      style(feature) {
+        const k = feature.properties?.kind || 'rail_proposed';
+        return _infraStyle[k] || _infraStyle.rail_proposed;
+      },
+      pointToLayer(feature, latlng) {
+        return L.circleMarker(latlng, { radius: 5, fillColor: '#ec4899', color: '#fff', weight: 1.5, fillOpacity: 0.95 });
+      },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const kindLabel = {
+          'rail_proposed': '🚆 Proposed rail',
+          'rail_construction': '🚆 Rail under construction',
+          'road_proposed': '🛣️ Proposed road',
+          'road_construction': '🛣️ Road under construction',
+          'station_construction': '🚉 New station',
+        }[p.kind] || p.kind;
+        layer.bindPopup(
+          `<b>${p.name || 'Planned'}</b><br>` +
+          `<span style="font-size:11px;color:#cbd5e1">${kindLabel}</span>` +
+          (p.operator ? `<br><span style="font-size:11px;color:#94a3b8">${p.operator}</span>` : '') +
+          `<div style="font-size:9px;color:#64748b;margin-top:3px">OSM proposed/construction tags</div>`
+        );
+      }
+    }).addTo(_map);
+  } else if (name === 'crime') {
+    _overlayLayer[name] = L.geoJSON(_overlayData[name], {
+      style(feature) {
+        const b = feature.properties?.crime_band || 0;
+        return { color: _crimeBandColor[b], weight: 1.2, fillColor: _crimeBandColor[b], fillOpacity: 0.35 };
+      },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const b = p.crime_band || 0;
+        const c = _crimeBandColor[b];
+        layer.bindPopup(
+          p.crime_rate != null
+            ? `<b>🚨 ${p.postcode || ''}</b> <span style="background:${c};color:#fff;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700">${_crimeBandLabel[b]}</span><br>
+               <b style="color:${c};font-size:13px">${p.crime_rate.toLocaleString(undefined,{maximumFractionDigits:0})}</b>/100k · ${(p.crime_count||0).toLocaleString()} offences · pop ${(p.population||0).toLocaleString()}
+               <div style="font-size:9px;color:#64748b">CSA Vic yr Dec 2025 · Melbourne %ile</div>`
+            : `<b>🚨 ${p.postcode || ''}</b><br><span style="font-size:11px;color:#94a3b8">No data</span>`
+        );
+      }
+    }).addTo(_map);
+  } else {
+    _overlayLayer[name] = L.geoJSON(_overlayData[name], {
+      style: { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.25, dashArray: name === 'bushfire' ? '4,3' : null },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const code = p.ZONE_CODE || p.OVERLAY || '';
+        const desc = p.ZONE_DESCRIPTION || '';
+        const lga  = p.LGA || '';
+        layer.bindPopup(
+          `<b>${cfg.label}</b>` +
+          (code ? `<br><span style="font-size:12px"><b>${code}</b></span>` : '') +
+          (desc && desc !== code ? `<br><span style="font-size:11px;color:#cbd5e1">${desc}</span>` : '') +
+          (lga ? `<br><span style="font-size:11px;color:#94a3b8">LGA: ${lga}</span>` : '')
+        );
+      }
+    }).addTo(_map);
+  }
   btn.classList.add('active');
 }
 
@@ -1727,6 +2093,60 @@ function renderEstimate(sorted, rates) {
 });
 
 // ── Auto-fill reference property when search starts ─────────────────────
+// Build a horizontal timeline: sale + lease events oldest→newest with current
+// estimate as the rightmost "today" chip. Scrolls horizontally on overflow.
+function renderRefTimeline(info) {
+  const el = document.getElementById('ref-timeline');
+  if (!el) return;
+  const events = [];
+  (info.sale_history  || []).forEach(s => events.push({date: s.date, price: s.price, kind: 'sale'}));
+  (info.lease_history || []).forEach(l => events.push({date: l.date, price: l.price, kind: 'lease'}));
+  events.sort((a, b) => a.date.localeCompare(b.date));  // oldest first
+  const fmtK = v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(2)}m`
+                  : v >= 1000      ? `$${Math.round(v/1000)}k`
+                  : `$${v}`;
+  const fmtDate = d => {
+    const [y, m] = (d || '').split('-');
+    if (!y) return '';
+    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m,10)-1] || '';
+    return `${M} ${y}`.trim();
+  };
+  const chips = [];
+  events.forEach(e => {
+    const cls = e.kind === 'sale' ? 'sale' : 'lease';
+    const priceTxt = e.kind === 'lease' ? `$${e.price}/wk` : fmtK(e.price);
+    const iconChar = e.kind === 'sale' ? '🏷' : '🏘';
+    chips.push(
+      `<span class="tl-event ${cls}" title="${e.kind}: ${e.date} — ${priceTxt}">` +
+      `<span class="tl-price">${iconChar} ${priceTxt}</span>` +
+      `<span class="tl-date">${fmtDate(e.date)}</span></span>`
+    );
+  });
+  if (info.estimate) {
+    const e = info.estimate;
+    const txt = (e.low && e.high) ? `${fmtK(e.low)}–${fmtK(e.high)}` : (e.mid ? fmtK(e.mid) : '');
+    if (txt) {
+      const rentBits = [];
+      if (e.rent_pw) rentBits.push(`$${e.rent_pw}/wk`);
+      if (e.rent_yield) rentBits.push(`${e.rent_yield}% yield`);
+      const sub = rentBits.length ? ` · ${rentBits.join(' · ')}` : '';
+      const confTip = e.confidence ? ` (${e.confidence} confidence)` : '';
+      chips.push(
+        `<span class="tl-event estimate" title="Domain price estimate${confTip}">` +
+        `<span class="tl-price">💰 ${txt}${sub}</span><span class="tl-date">today (est)</span></span>`
+      );
+    }
+  }
+  if (!chips.length) {
+    el.innerHTML = `<span class="tl-label">History</span><span style="font-size:11px;color:#64748b">Domain has no sale/lease/estimate history for this address (never listed on Domain, or new build).</span>`;
+    el.style.display = 'flex';
+    return;
+  }
+  const joined = chips.join(`<span class="tl-arrow">→</span>`);
+  el.innerHTML = `<span class="tl-label">History</span>${joined}`;
+  el.style.display = 'flex';
+}
+
 function applyRefSpecs(info) {
   const msg = document.getElementById('ref-fetch-msg');
   const set = (id, v) => { if (v != null && v !== '') document.getElementById(id).value = v; };
@@ -1734,6 +2154,7 @@ function applyRefSpecs(info) {
   set('ref-baths', info.baths);
   set('ref-cars',  info.cars);
   set('ref-land',  info.land_area);
+  set('ref-bldg',  info.building_m2);
   if (info.pool === true)  document.getElementById('ref-pool').value = 'yes';
   else if (info.pool === false) document.getElementById('ref-pool').value = 'no';
   if (info.storeys === 1 || info.storeys === 2) document.getElementById('ref-storeys').value = String(info.storeys);
@@ -1741,20 +2162,27 @@ function applyRefSpecs(info) {
   if (info.beds  != null) parts.push(`${info.beds} bed`);
   if (info.baths != null) parts.push(`${info.baths} bath`);
   if (info.cars  != null) parts.push(`${info.cars} car`);
-  if (info.land_area)     parts.push(`${Math.round(info.land_area)} m²`);
+  if (info.land_area)     parts.push(`land ${Math.round(info.land_area)} m²`);
+  if (info.building_m2)   parts.push(`bldg ${Math.round(info.building_m2)} m²`);
   if (info.pool === true) parts.push('🏊 pool');
   if (info.storeys === 1) parts.push('single storey');
   if (info.storeys === 2) parts.push('double storey');
-  msg.innerHTML = parts.length
+  // Direct Domain property-profile search link for the ref address
+  const refAddr = document.getElementById('sel-address').value || '';
+  const domainHref = info._source_url || info.url
+    || `https://www.domain.com.au/property-profile/?term=${encodeURIComponent(refAddr)}`;
+  const domainLink = ` <a href="${domainHref}" target="_blank" rel="noopener" style="color:#60a5fa;font-size:11px;text-decoration:underline;margin-left:6px">🔗 View on Domain</a>`;
+  msg.innerHTML = (parts.length
     ? `✅ Auto-filled from Domain: <strong>${parts.join(' · ')}</strong>`
-    : `⚠️ Domain didn't have specs for this address — please enter manually.`;
+    : `⚠️ Domain didn't have specs for this address — please enter manually.`) + domainLink;
+
+  // Horizontal timeline of past sales + leases + current estimate
+  renderRefTimeline(info);
   if (allResults.length) renderResults();
-  // If pool/storeys weren't in the Domain profile, fetch them via listing-extras
-  const poolEl = document.getElementById('ref-pool');
-  const storeyEl = document.getElementById('ref-storeys');
-  const poolUnknown   = !poolEl   || poolEl.value   === '';
-  const storeyUnknown = !storeyEl || storeyEl.value === '';
-  if ((poolUnknown || storeyUnknown) && refLat && refLng) {
+  // Always fetch OSM extras (building footprint + slope) — pool/storeys are
+  // only filled if Domain didn't already have them, but building+slope always
+  // come from OSM/Open-Meteo so we fetch them regardless.
+  if (refLat && refLng) {
     fetchRefExtras(refSearchAddress, refLat, refLng);
   }
 }
@@ -1772,12 +2200,35 @@ async function fetchRefExtras(address, lat, lng) {
     const storeyEl = document.getElementById('ref-storeys');
     if (data.pool != null && poolEl && poolEl.value === '') {
       poolEl.value = data.pool ? 'yes' : 'no';
-      const msg = document.getElementById('ref-fetch-msg');
-      const existing = msg ? msg.innerHTML : '';
-      if (msg) msg.innerHTML = existing.replace('</strong>', ` · 🏊 pool: ${data.pool ? 'Yes' : 'No'}</strong>`);
     }
     if (data.storeys != null && storeyEl && storeyEl.value === '') {
       storeyEl.value = String(data.storeys);
+    }
+    const bldgEl = document.getElementById('ref-bldg');
+    if (bldgEl && !bldgEl.value && data.building_m2 != null) {
+      bldgEl.value = String(data.building_m2);
+    }
+    // Save ref slope into hidden field so adjustment formula can use it
+    const slopeEl = document.getElementById('ref-slope');
+    if (slopeEl && data.slope_pct != null) slopeEl.value = String(data.slope_pct);
+    // Surface pool / storeys / building / slope via the message — rent +
+    // demographics were noise here (already in popups); keep ref message
+    // focused on what's about to be auto-filled into the editable fields.
+    const msg = document.getElementById('ref-fetch-msg');
+    if (msg) {
+      const extras = [
+        data.pool != null     ? `🏊 ${data.pool ? 'pool' : 'no pool'}`           : '',
+        data.storeys != null  ? (data.storeys === 2 ? '🏠 double storey' : '🏠 single storey') : '',
+        data.building_m2      ? `🏗 ${data.building_m2} m² bldg (OSM)`          : '',
+        formatSlope(data.slope_pct, true),
+      ].filter(Boolean).join(' · ');
+      if (extras) {
+        if (msg.innerHTML.includes('</strong>')) {
+          msg.innerHTML = msg.innerHTML.replace('</strong>', ` · ${extras}</strong>`);
+        } else {
+          msg.innerHTML += ' · ' + extras;
+        }
+      }
     }
     if (allResults.length) renderResults();
   } catch(e) { /* non-fatal */ }
@@ -1792,8 +2243,11 @@ function scheduleLazyExtras() {
   for (let i = 0; i < allResults.length; i++) {
     const r = allResults[i];
     if (lazyAttempted.has(i)) continue;
-    if (!r.url) continue;
-    if (r.pool != null && r.storeys != null) continue;
+    // Skip only when ALL four extras are already known (pool, storeys,
+    // building footprint, slope). Otherwise hit /api/listing-extras to fill
+    // whatever's missing — all four come from open data sources.
+    if (r.pool != null && r.storeys != null && r.building_m2 != null && r.slope_pct != null) continue;
+    if (!r.lat || !r.lng) continue;  // need coords for OSM/Open-Meteo lookups
     lazyAttempted.add(i);
     lazyQueue.push(i);
   }
@@ -1807,18 +2261,21 @@ function pumpLazyQueue() {
 }
 async function fetchExtrasFor(idx) {
   const r = allResults[idx];
-  if (!r || !r.url) return;
+  if (!r || (!r.lat && !r.url)) return;
   lazyInflight++;
   try {
-    const params = new URLSearchParams({ url: r.url });
+    const params = new URLSearchParams();
+    if (r.url) params.set('url', r.url);
     if (r.lat) params.set('lat', r.lat);
     if (r.lng) params.set('lng', r.lng);
     const resp = await fetch('/api/listing-extras?' + params.toString());
     if (resp.ok) {
       const data = await resp.json();
-      if (data && (data.pool != null || data.storeys != null)) {
+      if (data && (data.pool != null || data.storeys != null || data.building_m2 != null || data.slope_pct != null)) {
         if (r.pool == null && data.pool != null) r.pool = data.pool;
         if (r.storeys == null && data.storeys != null) r.storeys = data.storeys;
+        if (r.building_m2 == null && data.building_m2 != null) r.building_m2 = data.building_m2;
+        if (r.slope_pct   == null && data.slope_pct   != null) r.slope_pct   = data.slope_pct;
         // Update just the cells in this row instead of re-rendering everything
         updateRowExtras(idx);
       }
@@ -1844,6 +2301,17 @@ function updateRowExtras(idx) {
     storeyCell.outerHTML = r.storeys === 2
       ? '<span class="feat-pill">2️⃣</span>'
       : '<span class="feat-pill">1️⃣</span>';
+  }
+  const bldgCell = row.querySelector('[data-extras-cell="bldg"]');
+  if (bldgCell && r.building_m2 != null) {
+    bldgCell.outerHTML = `<span class="feat-pill">${r.building_m2}</span>`;
+  }
+  const slopeCell = row.querySelector('[data-extras-cell="slope"]');
+  if (slopeCell && r.slope_pct != null) {
+    const s = formatSlope(r.slope_pct, true);
+    const parts = s.split(' ');
+    const shortLabel = (parts[3] || '').replace(/[()]/g,'');
+    slopeCell.outerHTML = `<span class="feat-pill">${parts[0]} ${r.slope_pct}% ${shortLabel}</span>`;
   }
   // Recompute the adjusted-price cell since pool/storey changed
   const rates = readAdjustmentRates();

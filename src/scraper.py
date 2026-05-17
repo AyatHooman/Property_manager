@@ -372,17 +372,24 @@ def get_listing_pool_storeys(url: str, lat: Optional[float] = None,
     Storeys/pool already extracted from the sold-listings page JSON in
     _parse_sale_nearby — this endpoint is the fallback when those came back null.
     """
-    out = {"pool": None, "storeys": None}
+    out = {"pool": None, "storeys": None, "building_m2": None, "slope_pct": None}
     if not (lat and lng):
         return out
     try:
-        from src.features import osm_has_pool, osm_building_levels
+        from src.features import (osm_has_pool, osm_building_levels,
+                                  osm_building_area, terrain_slope_pct)
         osm_pool = osm_has_pool(lat, lng)
         if osm_pool is not None:
             out["pool"] = osm_pool
         levels = osm_building_levels(lat, lng)
         if levels is not None:
             out["storeys"] = 2 if levels >= 2 else 1
+        area = osm_building_area(lat, lng)
+        if area is not None:
+            out["building_m2"] = area
+        slope = terrain_slope_pct(lat, lng)
+        if slope is not None:
+            out["slope_pct"] = slope
     except Exception:
         pass
     return out
@@ -414,6 +421,8 @@ def _parse_features_from_html(html: str) -> Optional[dict]:
         "baths":    [r"^baths?$", r"^bathrooms?$"],
         "cars":     [r"^parking$", r"^carspaces?$", r"^parkingspaces?$"],
         "land":     [r"^landsize$", r"^landarea(\(.*\))?$"],
+        "bldg":     [r"^buildingsize$", r"^buildingarea$", r"^internalarea$",
+                     r"^floorarea$", r"^floorsize$"],
         "ptype":    [r"^propertytype(formatted)?$"],
     }
     import re as _re
@@ -482,6 +491,11 @@ def _parse_features_from_html(html: str) -> Optional[dict]:
     from src.features import parse_pool_storeys_from_html
     pool, storeys = parse_pool_storeys_from_html(html)
 
+    # Price estimate + sale/lease history — same JSON we already have, just
+    # more keys. No extra HTTP, no extra ban risk.
+    estimate = _find_price_estimate(data)
+    sale_hist, lease_hist = _find_history(data)
+
     return {
         "address":  address_str,
         "suburb":   suburb_s,
@@ -490,13 +504,137 @@ def _parse_features_from_html(html: str) -> Optional[dict]:
         "beds":     _safe_int(beds),
         "baths":    _safe_int(baths),
         "cars":     _safe_int(cars),
-        "land_area": _safe_float(land),
+        "land_area":  _safe_float(land),
+        "building_m2": _safe_float(feats.get("bldg")),
         "property_type": _as_str(feats.get("ptype", "")),
         "lat": addr.get("lat") or addr.get("latitude"),
         "lng": addr.get("lng") or addr.get("longitude"),
         "pool":    pool,
         "storeys": storeys,
+        "estimate":      estimate,     # {low, high, mid} or None
+        "sale_history":  sale_hist,    # list of {date, price} or []
+        "lease_history": lease_hist,   # list of {date, price_per_week} or []
     }
+
+
+# ── Property history + estimate parser (same __NEXT_DATA__ blob) ────────────
+
+def _find_price_estimate(data) -> Optional[dict]:
+    """Walk JSON for Domain's valuation block. Real Domain keys are
+    lowerPrice / midPrice / upperPrice inside a ``valuation`` object; also
+    weeklyRentEstimate inside ``rentalEstimate``."""
+    out = {'low': None, 'high': None, 'mid': None,
+           'rent_pw': None, 'rent_yield': None, 'confidence': None}
+    def walk(o):
+        if isinstance(o, dict):
+            kl_map = {str(k).lower(): v for k, v in o.items()}
+            # Valuation block — sale price estimate
+            if any(k in kl_map for k in ('lowerprice','midprice','upperprice')):
+                if isinstance(kl_map.get('lowerprice'), (int, float)) and not out['low']:
+                    out['low'] = int(kl_map['lowerprice'])
+                if isinstance(kl_map.get('midprice'), (int, float)) and not out['mid']:
+                    out['mid'] = int(kl_map['midprice'])
+                if isinstance(kl_map.get('upperprice'), (int, float)) and not out['high']:
+                    out['high'] = int(kl_map['upperprice'])
+                if isinstance(kl_map.get('priceconfidence'), str) and not out['confidence']:
+                    out['confidence'] = kl_map['priceconfidence']
+            # Rental estimate block
+            if 'weeklyrentestimate' in kl_map and isinstance(kl_map['weeklyrentestimate'], (int, float)):
+                if not out['rent_pw']: out['rent_pw'] = int(kl_map['weeklyrentestimate'])
+            if 'percentyieldrentestimate' in kl_map and isinstance(kl_map['percentyieldrentestimate'], (int, float)):
+                if not out['rent_yield']: out['rent_yield'] = round(float(kl_map['percentyieldrentestimate']), 2)
+            for v in o.values(): walk(v)
+        elif isinstance(o, list):
+            for v in o: walk(v)
+    walk(data)
+    if not any(out.values()): return None
+    return out
+
+
+def _find_history(data):
+    """Walk JSON for any list-of-event records with {price, date}-like fields.
+    Each event is classified as sale or lease by its own type field, by parent
+    key, or by price magnitude (rents are typically <$2k/wk, sales >$100k).
+    Catches Domain's varying shapes (salesHistory, propertyHistory, timeline,
+    events, priceHistory, transactions...).
+    """
+    sales, leases = [], []
+
+    def is_event_dict(d):
+        if not isinstance(d, dict): return False
+        kl = {str(k).lower() for k in d.keys()}
+        has_price = bool(kl & {'price','amount','saleprice','soldprice','rentprice','rent','soldamount','eventprice'})
+        has_date  = bool(kl & {'date','solddate','leasedate','contractdate','eventdate','soldon'})
+        return has_price and has_date
+
+    def parse_price(v):
+        if isinstance(v, (int, float)) and v > 0:
+            return int(v)
+        if isinstance(v, str):
+            s = v.lower().replace(',','').replace('$','').strip()
+            try:
+                if s.endswith('m'):  return int(float(s[:-1]) * 1_000_000)
+                if s.endswith('k'):  return int(float(s[:-1]) * 1000)
+                return int(float(s))
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    def classify(entry_type_str, parent_key, price):
+        """Return 'sale' or 'lease' or None to skip."""
+        t = (entry_type_str or '').lower()
+        p = (parent_key or '').lower()
+        if any(w in t for w in ('rent','lease','rental','tenant')): return 'lease'
+        if any(w in t for w in ('sale','sold','auction','transfer')): return 'sale'
+        if any(w in p for w in ('rent','lease','rental')): return 'lease'
+        if any(w in p for w in ('sale','sold','transaction','timeline','history','price','event')) and price and price > 5000:
+            return 'sale'
+        # Fallback by magnitude: under $5k → almost certainly a weekly rent
+        if price and price <= 5000: return 'lease'
+        if price and price > 5000:  return 'sale'
+        return None
+
+    def extract(items, parent_key):
+        for it in items:
+            if not isinstance(it, dict): continue
+            kl = {str(k).lower(): v for k, v in it.items()}
+            price = (parse_price(kl.get('price'))      or parse_price(kl.get('amount'))
+                  or parse_price(kl.get('saleprice'))  or parse_price(kl.get('soldprice'))
+                  or parse_price(kl.get('rentprice'))  or parse_price(kl.get('rent'))
+                  or parse_price(kl.get('soldamount')) or parse_price(kl.get('eventprice')))
+            date  = (kl.get('date') or kl.get('solddate') or kl.get('leasedate')
+                  or kl.get('contractdate') or kl.get('eventdate') or kl.get('soldon'))
+            ttype = kl.get('type') or kl.get('saletype') or kl.get('eventtype') or kl.get('category') or ''
+            # Domain's timeline events have saleMetadata.isSold which is the
+            # canonical "this was a sale" signal — prefer that over heuristics.
+            sm = kl.get('salemetadata')
+            if isinstance(sm, dict) and sm.get('isSold') is True and not ttype:
+                ttype = 'sale'
+            if not (price and date): continue
+            kind = classify(str(ttype), parent_key, price)
+            if not kind: continue
+            entry = {'date': str(date)[:10], 'price': price, 'type': str(ttype)}
+            (sales if kind == 'sale' else leases).append(entry)
+
+    def walk(o, parent_key=''):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if isinstance(v, list) and v and isinstance(v[0], dict) and is_event_dict(v[0]):
+                    extract(v, k)
+                walk(v, str(k))
+        elif isinstance(o, list):
+            for v in o: walk(v, parent_key)
+
+    walk(data)
+
+    def dedupe(lst):
+        seen = set(); out = []
+        for x in lst:
+            key = (x['date'], x['price'])
+            if key in seen: continue
+            seen.add(key); out.append(x)
+        return sorted(out, key=lambda x: x['date'], reverse=True)
+    return dedupe(sales), dedupe(leases)
 
 
 def _build_property_profile_slug(address: str, suburb: str, state: str, postcode: str) -> Optional[str]:

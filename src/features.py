@@ -32,6 +32,92 @@ _HTTP_HEADERS = {"User-Agent": "PropertyManager/1.0 (research)"}
 
 # ── OSM building:levels ─────────────────────────────────────────────────────
 
+_ELEV_URL = "https://api.open-meteo.com/v1/elevation"
+
+
+def terrain_slope_pct(lat: float, lng: float) -> Optional[float]:
+    """Estimate the steepest land slope (%) within ~30 m of the point.
+
+    Samples the elevation API at the centre + 4 cardinal neighbours and
+    returns the largest gradient as a percentage (rise / run × 100).
+    Zero ban risk — Open-Meteo is a free elevation API for non-commercial use.
+
+    Resolution caveat: the underlying DEM is ~30 m. Small flat lots in
+    hilly suburbs may register some slope from a neighbouring hillside;
+    big sloping blocks may average out to less than the visual steepness.
+    """
+    if not lat or not lng:
+        return None
+    import math
+    d_lat = 0.00027  # ~30 m
+    d_lng = 0.00034 / max(math.cos(math.radians(lat)), 0.1)
+    pts = [
+        (lat,           lng),
+        (lat + d_lat,   lng),
+        (lat - d_lat,   lng),
+        (lat,           lng + d_lng),
+        (lat,           lng - d_lng),
+    ]
+    lats = ",".join(f"{p[0]:.6f}" for p in pts)
+    lngs = ",".join(f"{p[1]:.6f}" for p in pts)
+    try:
+        with httpx.Client(headers=_HTTP_HEADERS, timeout=10) as client:
+            r = client.get(_ELEV_URL, params={"latitude": lats, "longitude": lngs})
+            r.raise_for_status()
+            elevs = r.json().get("elevation", [])
+        if not elevs or len(elevs) != 5:
+            return None
+        centre, *nbrs = elevs
+        max_diff = max(abs(centre - n) for n in nbrs)
+        return round((max_diff / 30.0) * 100, 1)
+    except Exception:
+        return None
+
+
+def osm_building_area(lat: float, lng: float, radius_m: int = 25) -> Optional[int]:
+    """Return building footprint area in m^2 for the nearest building (zero ban risk).
+
+    Uses Overpass turbo `out geom` so we receive the polygon coordinates
+    inline. Calculates planar area via the Shoelace formula on lat/lng
+    converted to local metres (good enough for residential lots; ~1m
+    precision at this latitude). Returns None on network error or no
+    building found.
+    """
+    if not lat or not lng:
+        return None
+    query = (
+        f"[out:json][timeout:10];"
+        f"way[\"building\"](around:{radius_m},{lat},{lng});"
+        f"out geom;"
+    )
+    try:
+        with httpx.Client(headers=_HTTP_HEADERS, timeout=12) as client:
+            r = client.post(_OVERPASS_URL, data={"data": query})
+            r.raise_for_status()
+            elements = r.json().get("elements", [])
+        import math
+        # Pick the largest building (often the house, ignoring sheds)
+        best = 0.0
+        for e in elements:
+            geom = e.get("geometry") or []
+            if len(geom) < 4:  # need closed ring
+                continue
+            # Convert lat/lng to local metres centered on the point
+            lat0 = sum(p["lat"] for p in geom) / len(geom)
+            cos = math.cos(math.radians(lat0))
+            xy = [((p["lon"] - lng) * 111320.0 * cos,
+                   (p["lat"] - lat)  * 111320.0) for p in geom]
+            # Shoelace
+            s = 0.0
+            for i in range(len(xy) - 1):
+                s += xy[i][0] * xy[i+1][1] - xy[i+1][0] * xy[i][1]
+            area = abs(s) / 2
+            if area > best: best = area
+        return int(best) if best > 0 else None
+    except Exception:
+        return None
+
+
 def osm_building_levels(lat: float, lng: float, radius_m: int = 25) -> Optional[int]:
     """Return building:levels for the nearest tagged building (zero ban risk).
 

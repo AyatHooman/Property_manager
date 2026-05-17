@@ -275,6 +275,49 @@ def api_listing_extras():
         return jsonify({"error": str(e), "pool": None, "storeys": None}), 500
 
 
+# ── API: similar houses currently for sale (official Domain API) ───────────────
+
+@app.route("/api/similar-listings")
+def api_similar_listings():
+    """Count active for-sale listings via the official Domain API
+    (500 req/day free tier; zero ban risk vs scraping).
+    Filters by suburb/state/type + bedroom range around the ref property.
+    """
+    suburb   = request.args.get("suburb", "").strip()
+    state    = request.args.get("state",  "").strip().upper()
+    try:
+        min_beds = max(int(request.args.get("min_beds", 0)) - 1, 1)
+        max_beds = int(request.args.get("max_beds", 0)) + 1 if int(request.args.get("max_beds", 0)) else None
+    except ValueError:
+        min_beds, max_beds = 1, None
+    types_raw = request.args.getlist("types")
+    if not suburb or not state:
+        return jsonify({"error": "suburb and state required"}), 400
+    try:
+        from src.api_client import DomainAPIClient
+        client = DomainAPIClient()
+        listings = client.search_listings(
+            suburb=suburb, state=state,
+            listing_type="Sale",
+            min_beds=min_beds, max_beds=max_beds,
+            property_types=types_raw or None,
+            page_size=50,
+        )
+        items = []
+        for l in listings:
+            items.append({
+                "address": getattr(l, 'address', ''),
+                "price":   getattr(l, 'price_display', '') or '',
+                "beds":    getattr(l, 'bedrooms', None),
+                "baths":   getattr(l, 'bathrooms', None),
+                "cars":    getattr(l, 'carspaces', None),
+                "url":     getattr(l, 'url', ''),
+            })
+        return jsonify({"count": len(items), "items": items, "suburb": suburb})
+    except Exception as e:
+        return jsonify({"error": str(e), "count": 0, "items": []}), 200
+
+
 # ── API: nearby sold properties (SSE streaming) ────────────────────────────────
 
 @app.route("/api/nearby-sales")
@@ -334,6 +377,8 @@ def api_nearby_sales():
                 "lng": r.lng,
                 "pool": r.pool,
                 "storeys": r.storeys,
+                "building_m2": getattr(r, 'building_m2', None),
+                "slope_pct":   getattr(r, 'slope_pct',   None),
             })
         return out
 

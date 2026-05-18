@@ -2,679 +2,1126 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Property Manager — Nearby Sales</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+    /* ════════════════════════════════════════════════════════════════════════
+       DESIGN TOKENS — tweak any of these to restyle the whole app at once.
+       Layout grid below uses named areas, so reorganising the app is a single
+       grid-template-areas change in `.app`.
+       ════════════════════════════════════════════════════════════════════════ */
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #22263a;
-      --border: #2e3350;
-      --accent: #4f8ef7;
-      --accent2: #7c5cfc;
-      --green: #22c55e;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --radius: 12px;
+      /* Surfaces (dark theme) */
+      --bg:           #0a0d14;
+      --bg-elev:      #131722;
+      --bg-elev-2:    #1a1f2e;
+      --bg-input:     #0f131c;
+      --bg-popover:   #1b2030;
+      /* Borders */
+      --border:       #232936;
+      --border-strong:#2a3142;
+      --border-focus: #5b9bff;
+      /* Brand */
+      --brand:        #5b9bff;
+      --brand-strong: #7aaeff;
+      --brand-soft:   rgba(91,155,255,.10);
+      --brand-grad:   linear-gradient(135deg, #5b9bff 0%, #7c5cfc 100%);
+      /* Semantic */
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger:  #ef4444;
+      --info:    #06b6d4;
+      /* Text */
+      --text:    #e6e9f0;
+      --text-2:  #a1a8b8;
+      --text-3:  #6b7280;
+      --text-4:  #4b5563;
+      /* Spacing scale (4 px base) */
+      --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+      --s-5: 20px;  --s-6: 24px;  --s-7: 32px;  --s-8: 48px;
+      /* Radii */
+      --r-sm: 6px;  --r-md: 8px;  --r-lg: 12px; --r-xl: 16px; --r-pill: 999px;
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+      --shadow-md: 0 4px 14px rgba(0,0,0,.45);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,.55);
+      /* Font scale */
+      --fs-2xs: 10px; --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px;
+      --fs-base: 14px; --fs-lg: 16px; --fs-xl: 20px; --fs-2xl: 28px; --fs-3xl: 36px;
+      /* Transitions */
+      --t-fast: 120ms ease;
+      --t-base: 180ms ease;
+      /* Layout sizes */
+      --topbar-h: 56px;
+      --sidebar-w: 380px;
+      --map-h: 480px;
+      --content-max-w: 1400px;
     }
 
+    /* ════════════════════════════════════════════════════════════════════════
+       RESET + BASE
+       ════════════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+      font-size: var(--fs-base);
+      line-height: 1.5;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { color: var(--brand-strong); }
+    button { font-family: inherit; }
+    input, select, textarea { font-family: inherit; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--r-pill); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       APP SHELL — single named-area grid; switch layouts by editing one line
+       ════════════════════════════════════════════════════════════════════════ */
+    .app {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);   /* minmax(0,...) lets grid item shrink below content */
+      grid-template-areas:
+        "topbar"
+        "search"
+        "config"
+        "estimate"
+        "map"
+        "results";
+      max-width: var(--content-max-w);
+      margin: 0 auto;
+    }
+    .app__topbar   { grid-area: topbar;   min-width: 0; }
+    .app__search   { grid-area: search;   min-width: 0; }
+    .app__config   { grid-area: config;   min-width: 0; padding: var(--s-5) var(--s-6) 0; }
+    .app__estimate { grid-area: estimate; min-width: 0; padding: 0 var(--s-6); }
+    .app__map      { grid-area: map;      min-width: 0; padding: var(--s-5) var(--s-6) 0; }
+    .app__results  { grid-area: results;  min-width: 0; padding: var(--s-6); }
+    @media (min-width: 1100px) {
+      /* Desktop: stacked layout — config full-width on top, then map, then results.
+         No sticky sidebar, so nothing overlays the search results when scrolling. */
+      .app {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+          "topbar"
+          "search"
+          "config"
+          "map"
+          "estimate"
+          "results";
+      }
+      .app__config { padding: var(--s-5) var(--s-6) 0; }
+      .app__map    { padding: var(--s-5) var(--s-6) 0; }
+      /* Two cards in the config row sit side-by-side at full width */
+      .app__config .config-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--s-5);
+      }
+    }
+    /* Fallback for narrower viewports — single column */
+    .app__config .config-grid { display: grid; grid-template-columns: 1fr; gap: var(--s-4); }
+    @media (max-width: 640px) {
+      .app__config, .app__map, .app__results, .app__estimate { padding-left: var(--s-3); padding-right: var(--s-3); }
     }
 
-    /* ── Header ── */
-    header {
-      background: linear-gradient(135deg, #1a1d27 0%, #12162a 100%);
+    /* ════════════════════════════════════════════════════════════════════════
+       TOP BAR — slim, sticky, brand left, room for status indicators right
+       ════════════════════════════════════════════════════════════════════════ */
+    .topbar {
+      height: var(--topbar-h);
+      background: rgba(10,13,20, .85);
+      backdrop-filter: saturate(140%) blur(10px);
+      -webkit-backdrop-filter: saturate(140%) blur(10px);
       border-bottom: 1px solid var(--border);
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--s-6);
+      position: sticky; top: 0;
+      z-index: 50;
     }
-    header .logo { font-size: 28px; }
-    header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
-
-    /* ── Layout ── */
-    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
-
-    /* ── Card ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-
-    /* ── Search input + autocomplete ── */
-    .search-wrap { position: relative; }
-    .search-input {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px 14px 44px;
-      font-size: 15px;
-      color: var(--text);
-      outline: none;
-      transition: border-color .2s;
-    }
-    .search-input:focus { border-color: var(--accent); }
-    .search-icon {
-      position: absolute;
-      left: 14px; top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
+    .topbar__brand { display: flex; align-items: center; gap: var(--s-3); }
+    .topbar__logo {
+      width: 32px; height: 32px; display: grid; place-items: center;
+      background: var(--brand-grad); border-radius: var(--r-md);
       font-size: 18px;
-      pointer-events: none;
     }
+    .topbar__title { font-weight: 700; font-size: var(--fs-lg); letter-spacing: -0.01em; }
+    .topbar__sub   { color: var(--text-3); font-size: var(--fs-sm); margin-top: -2px; display: block; }
+    @media (max-width: 560px) { .topbar__sub { display: none; } }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       SEARCH BAR — hero element, sticky below topbar, gradient accent
+       ════════════════════════════════════════════════════════════════════════ */
+    .searchbar {
+      padding: var(--s-5) var(--s-6) var(--s-4);
+      background: rgba(10,13,20, .92);
+      z-index: 40;
+      border-bottom: 1px solid transparent;
+    }
+    /* Mobile only: stick the searchbar under the topbar so it stays visible while scrolling results.
+       Desktop: it stays at top of document — frees vertical space and stops the "two frozen bars over results" overlap. */
+    @media (max-width: 1099px) {
+      .searchbar { position: sticky; top: var(--topbar-h); backdrop-filter: blur(8px); }
+    }
+    .searchbar__row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: var(--s-3);
+      align-items: stretch;
+    }
+    .searchbar .search-wrap { position: relative; }
+    .searchbar .search-input {
+      width: 100%; height: 48px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 0 var(--s-4) 0 44px;
+      color: var(--text);
+      font-size: var(--fs-base);
+      outline: none;
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .searchbar .search-input::placeholder { color: var(--text-3); }
+    .searchbar .search-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    .searchbar .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text-3); font-size: 18px; pointer-events: none;
+    }
+    @media (max-width: 640px) {
+      .searchbar { padding: var(--s-3); position: relative; top: auto; }
+      .searchbar__row { grid-template-columns: 1fr; }
+    }
+
+    /* Autocomplete dropdown */
     .autocomplete-list {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 0; right: 0;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+      background: var(--bg-popover);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
       z-index: 100;
       max-height: 320px;
       overflow-y: auto;
       display: none;
-      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      box-shadow: var(--shadow-lg);
     }
     .autocomplete-list.open { display: block; }
     .ac-item {
-      padding: 11px 16px;
+      padding: var(--s-3) var(--s-4);
       cursor: pointer;
-      font-size: 14px;
+      font-size: var(--fs-base);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: background .15s;
+      display: flex; align-items: center; gap: var(--s-3);
+      transition: background var(--t-fast);
     }
     .ac-item:last-child { border-bottom: none; }
-    .ac-item:hover, .ac-item.active { background: var(--surface); }
-    .ac-item .ac-icon { color: var(--accent); font-size: 16px; flex-shrink: 0; }
-    .ac-item .ac-label { flex: 1; }
-    .ac-item .ac-sub { font-size: 12px; color: var(--muted); }
-    .ac-loading { padding: 14px 16px; color: var(--muted); font-size: 13px; }
+    .ac-item:hover, .ac-item.active { background: var(--bg-elev-2); }
+    .ac-item .ac-icon { color: var(--brand); font-size: 16px; flex-shrink: 0; }
+    .ac-item .ac-label { flex: 1; min-width: 0; }
+    .ac-item .ac-sub { font-size: var(--fs-sm); color: var(--text-3); }
+    .ac-loading { padding: var(--s-3) var(--s-4); color: var(--text-3); font-size: var(--fs-md); }
 
-    /* ── Filters grid ── */
-    .filters { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-    @media (max-width: 700px) { .filters { grid-template-columns: 1fr; } }
-
-    label.field-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 8px;
-    }
-
-    /* Slider */
-    .slider-wrap { position: relative; }
-    input[type=range] {
-      width: 100%;
-      appearance: none;
-      height: 4px;
-      border-radius: 2px;
-      background: var(--border);
-      outline: none;
-      cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      appearance: none;
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-      border: 2px solid var(--bg);
-    }
-    .slider-val {
-      display: inline-block;
-      background: var(--accent);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
-      margin-left: 10px;
-      vertical-align: middle;
-    }
-
-    /* Months select */
-    select.field-select {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      color: var(--text);
-      font-size: 14px;
-      outline: none;
-      cursor: pointer;
-    }
-    select.field-select:focus { border-color: var(--accent); }
-
-    /* Property type checkboxes */
-    .type-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-    .type-chip {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all .15s;
-      user-select: none;
-    }
-    .type-chip.selected {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-      font-weight: 600;
-    }
-
-    /* ── Search button ── */
-    .btn-search {
-      width: 100%;
-      margin-top: 20px;
-      padding: 14px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: 0.3px;
-      transition: opacity .2s, transform .1s;
-    }
-    .btn-search:hover { opacity: .9; }
-    .btn-search:active { transform: scale(.99); }
-    .btn-search:disabled { opacity: .5; cursor: not-allowed; }
-    .search-row { display: flex; gap: 10px; margin-top: 20px; }
-    .search-row .btn-search { margin-top: 0; flex: 1; }
-    .btn-refresh {
-      padding: 14px 18px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 14px;
+    /* ════════════════════════════════════════════════════════════════════════
+       BUTTONS — primary / secondary / ghost variants
+       ════════════════════════════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+      height: 48px;
+      padding: 0 var(--s-5);
+      border-radius: var(--r-md);
+      font-size: var(--fs-base);
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
-      transition: background .15s, border-color .15s;
+      transition: opacity var(--t-fast), background var(--t-fast), border-color var(--t-fast), transform 80ms ease;
+      border: 1px solid transparent;
+      outline: none;
     }
-    .btn-refresh:hover { background: #2a3147; border-color: var(--accent); }
-    .btn-refresh:disabled { opacity: .5; cursor: not-allowed; }
+    .btn:active:not(:disabled) { transform: scale(.98); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn--primary {
+      background: var(--brand-grad);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 14px rgba(91,155,255,.25);
+    }
+    .btn--primary:hover:not(:disabled) { opacity: .9; }
+    .btn--ghost {
+      background: var(--bg-elev);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+    .btn--ghost:hover:not(:disabled) { background: var(--bg-elev-2); border-color: var(--border-focus); }
+    /* Legacy alias — existing JS uses #search-btn / #refresh-btn class names */
+    .btn-search  { /* same as .btn--primary, kept for class-name compatibility */ }
+    .btn-refresh { /* same as .btn--ghost */ }
 
-    /* ── Status bar ── */
-    #status-bar {
-      background: var(--surface2);
+    /* ════════════════════════════════════════════════════════════════════════
+       CARD — universal panel
+       ════════════════════════════════════════════════════════════════════════ */
+    .card {
+      background: var(--bg-elev);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 13px;
-      color: var(--muted);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .card + .card { margin-top: var(--s-4); }
+    .card__head {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--s-3);
+      padding: var(--s-3) var(--s-4);
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg-elev-2) 0%, var(--bg-elev) 100%);
+    }
+    .card__title {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-2);
+      display: flex; align-items: center; gap: var(--s-2);
+    }
+    .card__hint { color: var(--text-3); font-size: var(--fs-sm); }
+    .card__body { padding: var(--s-4); }
+    .card--flush .card__body { padding: 0; }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       FORM FIELDS — labels, inputs, selects, slider, chips
+       ════════════════════════════════════════════════════════════════════════ */
+    .field-label {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: var(--fs-xs);
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: var(--s-2);
+    }
+    select.field-select, .field-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: var(--fs-base);
+      outline: none;
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    select.field-select:focus, .field-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+
+    /* Filters grid: 3 wide everywhere there's room, 2 on tablet, 1 on phone. */
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--s-3);
+    }
+    @media (max-width: 700px) { .filters { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 420px) { .filters { grid-template-columns: 1fr; } }
+
+    /* Range slider */
+    input[type=range] {
+      width: 100%; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: var(--r-pill);
+      background: var(--border-strong);
+      outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--brand); cursor: pointer;
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--border-strong);
+    }
+    .slider-val {
+      display: inline-block;
+      background: var(--brand-soft);
+      color: var(--brand-strong);
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--r-pill);
+    }
+
+    /* Type chips */
+    .type-grid { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+    .type-chip {
+      display: inline-flex; align-items: center; gap: var(--s-1);
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-pill);
+      padding: var(--s-1) var(--s-3);
+      font-size: var(--fs-md);
+      cursor: pointer;
+      transition: all var(--t-fast);
+      user-select: none;
+    }
+    .type-chip:hover { border-color: var(--brand); color: var(--brand-strong); }
+    .type-chip.selected {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       REFERENCE PROPERTY PANEL — collapsible, fields auto-fit grid
+       ════════════════════════════════════════════════════════════════════════ */
+    .ref-panel { /* legacy alias kept for backwards compat — now mapped to .card */
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      min-width: 0;            /* allow shrinking inside grid/flex containers */
+      max-width: 100%;
+    }
+    .ref-panel-header {
+      display: flex; align-items: center; gap: var(--s-2);
+      padding: var(--s-3) var(--s-4);
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg-elev-2) 0%, var(--bg-elev) 100%);
+      flex-wrap: wrap;
+    }
+    .ref-panel-title {
+      font-size: var(--fs-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--brand-strong);
+      white-space: nowrap;
+    }
+    .ref-autofill-badge {
+      font-size: var(--fs-sm);
+      color: var(--text-3);
+      flex: 1;
+      min-width: 0;
+      line-height: 1.4;
+    }
+    .ref-autofill-badge strong { color: #a5f3fc; font-weight: 600; }
+
+    .ref-fields {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--bg-elev);
+    }
+    @media (max-width: 900px) { .ref-fields { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 560px) {
+      .ref-fields { grid-template-columns: repeat(4, 1fr); }
+      .ref-field { padding: 6px 6px; gap: 4px; min-width: 0; }
+      .ref-field-icon { font-size: 12px; }
+      .ref-field-body { min-width: 0; }
+      .ref-field-label { font-size: var(--fs-2xs); letter-spacing: .03em; }
+      .ref-field-input { font-size: var(--fs-sm); padding: 3px 4px; min-width: 0; }
+    }
+    @media (max-width: 420px) {
+      .ref-fields { grid-template-columns: repeat(4, 1fr); }
+      .ref-field { padding: 5px 4px; }
+      .ref-field-icon { display: none; }
+      .ref-field-input { font-size: var(--fs-sm); padding: 3px 3px; min-width: 0; }
+      .ref-field-input[type=number]::-webkit-inner-spin-button,
+      .ref-field-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+      .ref-field-input[type=number] { -moz-appearance: textfield; }
+    }
+    .ref-field {
+      display: flex; align-items: center; gap: var(--s-2);
+      padding: var(--s-3) var(--s-4);
+      border-right: 1px solid var(--border);
+      transition: background var(--t-fast);
+    }
+    .ref-field:last-child { border-right: none; }
+    .ref-field:hover { background: var(--bg-elev-2); }
+    .ref-field-icon { font-size: 16px; flex-shrink: 0; line-height: 1; opacity: .85; }
+    .ref-field-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .ref-field-label {
+      font-size: var(--fs-2xs);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+    .ref-field-input {
+      width: 100%; min-width: 0; box-sizing: border-box;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-size: var(--fs-base);
+      font-weight: 600;
+      padding: 4px 8px;
+      outline: none;
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .ref-field-input:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px var(--brand-soft);
+    }
+
+    /* History timeline */
+    .ref-timeline {
+      display: flex; align-items: center; gap: 0;
+      padding: var(--s-3) var(--s-4);
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      scrollbar-width: thin;
+      max-width: 100%;          /* never widen its container */
+      min-width: 0;
+    }
+    /* Slim scrollbar styling so the horizontal bar isn't ugly */
+    .ref-timeline::-webkit-scrollbar { height: 6px; }
+    .ref-timeline::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--r-pill); }
+    .ref-timeline .tl-label {
+      font-size: var(--fs-2xs);
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 700;
+      padding-right: var(--s-3);
+      flex-shrink: 0;
+    }
+    .ref-timeline .tl-event {
+      display: inline-flex; flex-direction: column; align-items: center;
+      padding: var(--s-1) var(--s-2);
+      border-radius: var(--r-sm);
+      font-size: var(--fs-xs); line-height: 1.2;
+      border: 1px solid; flex-shrink: 0;
+    }
+    .ref-timeline .tl-event.sale     { background: rgba(34,197,94,.10);  border-color: #16a34a; color: #86efac; }
+    .ref-timeline .tl-event.lease    { background: rgba(245,158,11,.10); border-color: #ca8a04; color: #fde047; }
+    .ref-timeline .tl-event.estimate { background: rgba(124,92,252,.10); border-color: #7c3aed; color: #c4b5fd; }
+    .ref-timeline .tl-event .tl-price { font-weight: 700; }
+    .ref-timeline .tl-event .tl-date  { font-size: 9px; opacity: .75; margin-top: 1px; }
+    .ref-timeline .tl-arrow { color: var(--text-4); padding: 0 var(--s-1); flex-shrink: 0; }
+    @media (max-width: 560px) {
+      .ref-timeline { padding: var(--s-2) var(--s-3); }
+      .ref-timeline .tl-event { font-size: var(--fs-2xs); padding: 2px 6px; }
+      .ref-timeline .tl-event .tl-date { font-size: 8px; }
+    }
+
+    /* Adjustment rates (collapsible) */
+    .adj-details { border-top: 1px solid var(--border); }
+    .adj-summary {
+      display: flex; align-items: center; gap: var(--s-2);
+      list-style: none;
+      padding: var(--s-3) var(--s-4);
+      cursor: pointer;
+      font-size: var(--fs-sm);
+      color: var(--text-3);
+      user-select: none;
+      transition: background var(--t-fast);
+    }
+    .adj-summary::-webkit-details-marker { display: none; }
+    .adj-summary::before { content: '▶'; font-size: 9px; transition: transform .2s; }
+    details[open] .adj-summary::before { transform: rotate(90deg); }
+    .adj-summary:hover { background: var(--bg-elev-2); color: var(--text); }
+    .adj-summary-hint { color: var(--text-4); font-size: var(--fs-xs); }
+    .adj-rates-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border);
+    }
+    @media (max-width: 700px) { .adj-rates-grid { grid-template-columns: repeat(2, 1fr); } }
+    .adj-rate-item {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: var(--s-3) var(--s-4);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .adj-rate-item:nth-child(4n) { border-right: none; }
+    .adj-rate-label {
+      font-size: var(--fs-xs);
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+    .adj-rate-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm);
+      color: var(--text);
+      font-size: var(--fs-md);
+      font-weight: 600;
+      padding: 5px 8px;
+      outline: none;
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .adj-rate-input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       STATUS BAR
+       ════════════════════════════════════════════════════════════════════════ */
+    #status-bar {
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: var(--s-3) var(--s-4);
+      font-size: var(--fs-md);
+      color: var(--text-2);
       display: none;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: var(--s-3);
+      margin: var(--s-4) 0 0;
     }
     #status-bar.visible { display: flex; }
     .spinner {
       width: 16px; height: 16px;
-      border: 2px solid var(--border);
-      border-top-color: var(--accent);
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--brand);
       border-radius: 50%;
       animation: spin .7s linear infinite;
       flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Ref property banner ── */
-    #ref-banner {
-      background: linear-gradient(135deg, rgba(79,142,247,.12), rgba(124,92,252,.12));
-      border: 1px solid rgba(79,142,247,.3);
-      border-radius: 8px;
-      padding: 14px 18px;
-      margin-bottom: 20px;
-      display: none;
-    }
-    #ref-banner.visible { display: block; }
-    #ref-banner .ref-label { font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
-    #ref-banner .ref-address { font-size: 15px; font-weight: 600; margin-top: 4px; }
-    #ref-banner .ref-coords { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    /* Reference banner — legacy element, kept hidden */
+    #ref-banner { display: none !important; }
 
+    /* ════════════════════════════════════════════════════════════════════════
+       ESTIMATE BANNER — headline CMA output
+       ════════════════════════════════════════════════════════════════════════ */
     #estimate-banner {
       display: none;
-      background: linear-gradient(135deg, #1e3a5f, #2a4a7f);
-      border: 1px solid var(--accent);
-      border-radius: 10px;
-      padding: 18px 22px;
-      margin-bottom: 16px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #312e81 100%);
+      border: 1px solid var(--brand);
+      border-radius: var(--r-lg);
+      padding: var(--s-5) var(--s-6);
+      margin-top: var(--s-4);
+      box-shadow: var(--shadow-md);
     }
     #estimate-banner.visible { display: block; }
-    .est-label { font-size: 13px; color: #b8d4ff; font-weight: 600; margin-bottom: 6px; }
-    .est-median { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
-    .est-range { font-size: 14px; color: #d0e2ff; margin-top: 4px; }
-    .adj-val { color: #6ee7b7 !important; cursor: help; border-bottom: 1px dashed #6ee7b740; }
-    .adj-val-outlier { color: #f97316 !important; cursor: help; border-bottom: 1px dashed #f9731660; }
+    .est-label { font-size: var(--fs-md); color: #b8d4ff; font-weight: 600; margin-bottom: var(--s-1); }
+    .est-median { font-size: var(--fs-3xl); font-weight: 800; color: #fff; letter-spacing: -.02em; }
+    .est-range { font-size: var(--fs-base); color: #d0e2ff; margin-top: 4px; }
+    .adj-val { color: #6ee7b7 !important; cursor: help; border-bottom: 1px dashed rgba(110,231,183,.25); }
+    .adj-val-outlier { color: #fb923c !important; cursor: help; border-bottom: 1px dashed rgba(251,146,60,.4); }
 
-    /* ── Reference property panel ─────────────────────────────────────────── */
-    .ref-panel {
-      margin-top: 20px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
+    /* ════════════════════════════════════════════════════════════════════════
+       MAP
+       ════════════════════════════════════════════════════════════════════════ */
+    #map-card { display: block; padding: 0; overflow: hidden; }
+    #map-card .card__body { padding: 0; }
+    #map {
+      height: var(--map-h);
+      width: 100%;
+      z-index: 0;
+      background: #1a1d27;
     }
-    .ref-panel-header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 16px 10px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(90deg, #1e293b 0%, var(--surface2) 100%);
+    @media (min-width: 1100px) {
+      #map { height: calc(100vh - var(--topbar-h) - var(--s-7) - 20px); min-height: 600px; }
     }
-    .ref-panel-title {
-      font-size: 13px; font-weight: 600; color: var(--accent);
-      letter-spacing: .03em; white-space: nowrap;
-    }
-    .ref-autofill-badge {
-      font-size: 12px; color: var(--muted); min-height: 16px; flex: 1;
-    }
-    .ref-autofill-badge strong { color: #a5f3fc; }
-    .ref-fields {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 0;
-    }
-    @media (max-width: 900px) { .ref-fields { grid-template-columns: repeat(4, 1fr); } }
-    @media (max-width: 560px) {
-      .ref-fields { grid-template-columns: repeat(4, 1fr); }
-      .ref-field { padding: 5px 4px; gap: 3px; min-width: 0; }
-      .ref-field-icon { font-size: 12px; }
-      .ref-field-body { min-width: 0; }
-      .ref-field-label { font-size: 8px; letter-spacing: .03em; }
-      .ref-field-input { font-size: 11px; padding: 2px 3px; min-width: 0; }
-    }
-    @media (max-width: 420px) {
-      .ref-fields { grid-template-columns: repeat(4, 1fr); }
-      .ref-field { padding: 4px 3px; }
-      .ref-field-icon { display: none; }  /* save horiz space on very narrow screens */
-      .ref-field-input { font-size: 11px; padding: 2px 2px; min-width: 0; }
-      /* Hide spinner buttons on number inputs to save width */
-      .ref-field-input[type=number]::-webkit-inner-spin-button,
-      .ref-field-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-      .ref-field-input[type=number] { -moz-appearance: textfield; }
-    }
-    .ref-field {
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 12px;
-      border-right: 1px solid var(--border);
-      transition: background .15s;
-    }
-    .ref-field:last-child { border-right: none; }
-    .ref-field:hover { background: #1e293b; }
-    .ref-field-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
-    .ref-field-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-    .ref-field-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
-    .ref-field-input {
-      width: 100%; min-width: 0; box-sizing: border-box;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 5px; color: var(--text); font-size: 14px; font-weight: 600;
-      padding: 4px 6px; outline: none; transition: border-color .15s;
-    }
-    .ref-field-input:focus { border-color: var(--accent); background: #0f172a; }
-
-    /* ── Reference property history timeline (horizontal) ──────────────── */
-    .ref-timeline {
-      display: flex; align-items: center; gap: 0;
-      padding: 8px 12px;
-      background: #0f172a;
-      border-top: 1px solid var(--border);
-      overflow-x: auto;
-      white-space: nowrap;
-      scrollbar-width: thin;
-    }
-    .ref-timeline .tl-label {
-      font-size: 10px; color: #94a3b8; text-transform: uppercase;
-      letter-spacing: .06em; font-weight: 600; padding-right: 8px;
-      flex-shrink: 0;
-    }
-    .ref-timeline .tl-event {
-      display: inline-flex; flex-direction: column; align-items: center;
-      padding: 3px 8px; border-radius: 6px;
-      font-size: 11px; line-height: 1.2;
-      border: 1px solid; flex-shrink: 0;
-    }
-    .ref-timeline .tl-event.sale  { background:#0a2a17; border-color:#16a34a; color:#86efac; }
-    .ref-timeline .tl-event.lease { background:#1e1b00; border-color:#ca8a04; color:#fde047; }
-    .ref-timeline .tl-event.estimate { background:#1e1b4b; border-color:#7c3aed; color:#c4b5fd; }
-    .ref-timeline .tl-event .tl-price { font-weight: 700; }
-    .ref-timeline .tl-event .tl-date  { font-size: 9px; opacity: .75; }
-    .ref-timeline .tl-arrow {
-      color: #475569; padding: 0 4px; flex-shrink: 0;
-    }
-    @media (max-width: 560px) {
-      .ref-timeline { padding: 6px 8px; }
-      .ref-timeline .tl-event { font-size: 10px; padding: 2px 6px; }
-      .ref-timeline .tl-event .tl-date { font-size: 8px; }
-    }
-
-    /* ── Adjustment rates (collapsible) ──────────────────────────────────── */
-    .adj-details { border-top: 1px solid var(--border); }
-    .adj-summary {
-      display: flex; align-items: center; gap: 6px;
-      list-style: none; padding: 9px 16px; cursor: pointer;
-      font-size: 12px; color: var(--muted); user-select: none;
-      transition: background .15s;
-    }
-    .adj-summary::-webkit-details-marker { display: none; }
-    .adj-summary::before { content: '▶'; font-size: 9px; transition: transform .2s; }
-    details[open] .adj-summary::before { transform: rotate(90deg); }
-    .adj-summary:hover { background: #1e293b; color: var(--text); }
-    .adj-summary-hint { color: #475569; font-size: 11px; }
-    .adj-rates-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-      border-top: 1px solid var(--border);
-    }
-    @media (max-width: 700px) { .adj-rates-grid { grid-template-columns: repeat(2, 1fr); } }
-    .adj-rate-item {
-      display: flex; flex-direction: column; gap: 3px;
-      padding: 10px 12px;
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .adj-rate-item:nth-child(4n) { border-right: none; }
-    .adj-rate-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
-    .adj-rate-input {
-      width: 100%; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 5px; color: var(--text); font-size: 13px; font-weight: 600;
-      padding: 5px 8px; outline: none; transition: border-color .15s;
-    }
-    .adj-rate-input:focus { border-color: var(--accent); background: #0f172a; }
-
-    /* ── Results ── */
-    #results-section { display: none; }
-    #results-section.visible { display: block; }
-    #map-card { display: block; margin-top: 16px; }
-    #map { height: 480px; border-radius: 10px; z-index: 0; }
+    @media (max-width: 640px) { #map { height: 60vh; min-height: 380px; } }
     .ref-map-marker { background: none; border: none; }
-    .comp-popup .price { font-weight: 700; font-size: 14px; }
-    .comp-popup .adj  { color: #6ee7b7; font-size: 12px; }
-    .comp-popup .addr { font-size: 12px; color: #94a3b8; }
-    .zone-toggles { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0 12px; }
-    .zone-toggle {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #1e293b; border: 1px solid var(--border);
-      border-radius: 8px; padding: 6px 12px;
-      cursor: pointer; font-size: 13px; color: var(--text);
-      user-select: none; transition: background .15s, border-color .15s;
+
+    /* Comp popups on the map */
+    .comp-popup .price { font-weight: 700; font-size: var(--fs-base); }
+    .comp-popup .adj  { color: #6ee7b7; font-size: var(--fs-sm); }
+    .comp-popup .addr { font-size: var(--fs-sm); color: var(--text-3); }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       LEAFLET FLOATING CONTROLS (layers FAB + dynamic legend)
+       ════════════════════════════════════════════════════════════════════════ */
+    .layer-fab {
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: var(--fs-md);
+      color: var(--text);
+      box-shadow: var(--shadow-md);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      user-select: none;
+      font-weight: 500;
     }
-    .zone-toggle:hover { background: #263349; }
-    .zone-toggle.active { border-color: var(--accent); background: #1a2a4a; }
+    .layer-fab:hover { background: var(--bg-elev-2); border-color: var(--brand); }
+    .layer-fab-panel {
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 6px;
+      margin-top: 5px;
+      width: 210px;
+      max-height: 80vh;            /* enough room for all 9 toggles */
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;     /* single vertical column, every label fully visible */
+      gap: 4px;
+      box-shadow: var(--shadow-lg);
+    }
+    .layer-fab-panel .zone-toggle {
+      margin: 0;
+      font-size: var(--fs-md);
+      padding: 6px 10px;
+      gap: 6px;
+      white-space: nowrap;       /* don't wrap; labels are short enough */
+      justify-content: flex-start;
+    }
+
+    .zone-toggles { display: flex; gap: var(--s-2); flex-wrap: wrap; padding: 0; }
+    .zone-toggle {
+      display: inline-flex; align-items: center; gap: var(--s-1);
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: var(--fs-md);
+      color: var(--text);
+      user-select: none;
+      transition: background var(--t-fast), border-color var(--t-fast);
+    }
+    .zone-toggle:hover { background: var(--bg-elev-2); border-color: var(--brand); }
+    .zone-toggle.active {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+      color: var(--brand-strong);
+      font-weight: 600;
+    }
     .zone-toggle.loading { opacity: .6; pointer-events: none; }
     .zone-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-    .map-legend {
-      padding: 4px 2px 8px;
-      font-size: 11px; color: var(--muted);
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .legend-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .legend-label { font-weight: 600; color: #cbd5e1; min-width: 80px; }
-    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
-    .legend-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      border: 1.5px solid #fff; flex-shrink: 0;
-    }
-    .legend-dot.square { border-radius: 2px; }
-    .legend-fill {
-      width: 14px; height: 10px; border-radius: 2px;
-      opacity: 0.45; flex-shrink: 0;
-      border: 1px solid currentColor;
-    }
-    .legend-pin { font-size: 14px; line-height: 1; }
-    /* ─ Floating layer-control on the map (Google Maps style) ──────────── */
-    .layer-fab {
-      background: #1a1d27; border: 1px solid #2e3350; border-radius: 6px;
-      padding: 6px 10px; cursor: pointer; font-size: 13px; color: #e2e8f0;
-      box-shadow: 0 2px 6px rgba(0,0,0,.4); display: inline-flex; align-items: center; gap: 5px;
-      user-select: none;
-    }
-    .layer-fab:hover { background: #263349; }
-    .layer-fab-panel {
-      background: #1a1d27; border: 1px solid #2e3350; border-radius: 6px;
-      padding: 8px; margin-top: 5px; max-width: 240px; max-height: 60vh;
-      overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.5);
-    }
-    .layer-fab-panel .zone-toggle { margin: 0; font-size: 12px; padding: 5px 9px; }
+
     .map-legend-floating {
-      background: rgba(20,23,32,0.93); border: 1px solid #2e3350;
-      border-radius: 6px; padding: 5px 8px; font-size: 10px; color: #cbd5e1;
-      max-width: 280px; line-height: 1.5; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 6px 10px;
+      font-size: 10px;
+      color: var(--text-2);
+      max-width: 320px;
+      line-height: 1.5;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(6px);
     }
     .map-legend-floating.empty { display: none; }
-    .map-legend-floating .row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-    .map-legend-floating .lbl { color: #cbd5e1; font-weight: 600; min-width: 60px; }
-    .map-legend-floating .swatch { width: 10px; height: 8px; border-radius: 2px; display: inline-block; vertical-align: middle; }
-    .map-legend-floating .dot    { width: 9px;  height: 9px; border-radius: 50%; display: inline-block; border: 1.5px solid #fff; vertical-align: middle; }
-    @media (max-width: 600px) {
-      .layer-fab-panel { max-width: 200px; }
-      .layer-fab-panel .zone-toggle { font-size: 11px; padding: 4px 7px; }
-      .map-legend-floating { max-width: 220px; font-size: 9px; }
+    .map-legend-floating .row {
+      display: flex; align-items: center; gap: var(--s-1); flex-wrap: wrap;
     }
+    .map-legend-floating .lbl { color: var(--text); font-weight: 600; min-width: 62px; }
+    .map-legend-floating .swatch { width: 10px; height: 8px; border-radius: 2px; display: inline-block; vertical-align: middle; }
+    .map-legend-floating .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; border: 1.5px solid #fff; vertical-align: middle; }
+    @media (max-width: 600px) {
+      .layer-fab-panel {
+        width: 190px;
+        padding: 5px;
+        gap: 3px;
+        max-height: 70vh;
+      }
+      .layer-fab-panel .zone-toggle {
+        font-size: 11px;
+        padding: 5px 8px;
+        line-height: 1.25;
+      }
+      .map-legend-floating { max-width: 240px; font-size: 9px; }
+    }
+    /* Legacy classes used by some popup HTML — kept for compatibility */
+    .legend-row { display: flex; align-items: center; gap: var(--s-1); flex-wrap: wrap; }
+    .legend-label { font-weight: 600; color: var(--text); }
+    .legend-item { display: inline-flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #fff; flex-shrink: 0; }
+    .legend-dot.square { border-radius: 2px; }
+    .legend-fill { width: 14px; height: 10px; border-radius: 2px; opacity: .45; flex-shrink: 0; border: 1px solid currentColor; }
+    .legend-pin { font-size: 14px; line-height: 1; }
     .legend-emoji { font-size: 14px; line-height: 1; display: inline-block; width: 18px; text-align: center; }
-    .legend-sep { color: #475569; padding: 0 4px; }
+    .legend-sep { color: var(--text-4); padding: 0 var(--s-1); }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       RESULTS HEADER + TABLE
+       ════════════════════════════════════════════════════════════════════════ */
+    #results-section { display: none; margin-top: var(--s-5); }
+    #results-section.visible { display: block; }
 
     .results-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: var(--s-4);
       flex-wrap: wrap;
-      gap: 10px;
+      gap: var(--s-3);
     }
     .results-count {
-      font-size: 18px;
+      font-size: var(--fs-xl);
       font-weight: 700;
+      display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2);
     }
-    .results-count span { color: var(--accent); }
-    .sort-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-    .sort-wrap select.field-select { width: auto; padding: 6px 10px; font-size: 13px; }
+    .results-count > span:first-child { color: var(--brand); }
+    .sort-wrap { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-md); color: var(--text-3); }
+    .sort-wrap select.field-select { width: auto; padding: 6px 10px; font-size: var(--fs-md); }
+
+    /* Cache + similar-listings inline badges */
+    #cache-badge, #similar-badge {
+      display: none;
+      font-size: var(--fs-xs); font-weight: 600;
+      padding: 3px 9px;
+      border-radius: var(--r-pill);
+      align-items: center; gap: var(--s-1);
+    }
+    #cache-badge { color: var(--success); background: rgba(34,197,94,.10); border: 1px solid rgba(34,197,94,.25); }
+    #similar-badge { color: var(--warning); background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.25); text-decoration: none; }
+    #similar-badge:hover { background: rgba(245,158,11,.18); }
 
     /* Table */
-    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: var(--fs-base); }
     thead th {
-      background: var(--surface2);
-      padding: 12px 16px;
+      background: var(--bg-elev-2);
+      padding: var(--s-3) var(--s-4);
       text-align: left;
-      font-size: 11px;
+      font-size: var(--fs-xs);
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.7px;
-      color: var(--muted);
+      letter-spacing: .07em;
+      color: var(--text-2);
       white-space: nowrap;
       cursor: pointer;
       user-select: none;
+      transition: color var(--t-fast);
+      border-bottom: 1px solid var(--border);
     }
     thead th:hover { color: var(--text); }
-    thead th .sort-arrow { margin-left: 4px; opacity: .4; }
-    thead th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
+    thead th .sort-arrow { margin-left: var(--s-1); opacity: .4; font-size: 9px; }
+    thead th.sorted .sort-arrow { opacity: 1; color: var(--brand); }
     tbody tr {
       border-top: 1px solid var(--border);
-      transition: background .1s;
+      transition: background var(--t-fast);
     }
-    tbody tr:hover { background: var(--surface2); }
-    tbody td { padding: 13px 16px; vertical-align: top; }
+    tbody tr:hover { background: var(--bg-elev-2); }
+    tbody td { padding: var(--s-3) var(--s-4); vertical-align: top; }
     .td-address { min-width: 200px; }
     .td-address a { color: var(--text); text-decoration: none; font-weight: 500; }
-    .td-address a:hover { color: var(--accent); text-decoration: underline; }
-    .td-address .addr-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .price-val { font-weight: 700; color: var(--green); }
-    .price-withheld { color: var(--muted); font-style: italic; }
+    .td-address a:hover { color: var(--brand); text-decoration: underline; }
+    .td-address .addr-sub { font-size: var(--fs-sm); color: var(--text-3); margin-top: 2px; }
+
+    .price-val { font-weight: 700; color: var(--success); }
+    .price-withheld { color: var(--text-3); font-style: italic; }
+
     .tag-type {
       display: inline-block;
-      background: rgba(79,142,247,.15);
-      color: var(--accent);
-      border-radius: 4px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      border-radius: var(--r-sm);
       padding: 2px 8px;
-      font-size: 12px;
+      font-size: var(--fs-sm);
       font-weight: 600;
       white-space: nowrap;
     }
     .dist-badge {
       display: inline-block;
       background: rgba(34,197,94,.12);
-      color: var(--green);
-      border-radius: 20px;
+      color: var(--success);
+      border-radius: var(--r-pill);
       padding: 3px 10px;
-      font-size: 13px;
+      font-size: var(--fs-md);
       font-weight: 700;
       white-space: nowrap;
     }
     .feat-pill {
       display: inline-block;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm);
       padding: 2px 7px;
-      font-size: 12px;
-      margin-right: 4px;
+      font-size: var(--fs-sm);
+      margin-right: 3px;
     }
     .sub-muted {
-      font-size: 11px;
-      color: var(--muted);
+      font-size: var(--fs-xs);
+      color: var(--text-3);
       margin-top: 2px;
     }
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
-      color: var(--muted);
+      padding: var(--s-8) var(--s-5);
+      color: var(--text-3);
     }
-    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-state p { font-size: 15px; }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: var(--s-3); }
+    .empty-state p { font-size: var(--fs-lg); }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       CLICK POPOVER — tap-to-open replacement for hover tooltips (mobile-friendly).
+       Desktop: floats near the click point. Mobile: bottom-sheet style.
+       ════════════════════════════════════════════════════════════════════════ */
+    .popover {
+      position: fixed;
+      background: var(--bg-popover);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-lg);
+      padding: var(--s-3) var(--s-4) var(--s-3) var(--s-4);
+      max-width: min(440px, calc(100vw - 24px));
+      max-height: 60vh;
+      overflow: auto;
+      z-index: 9999;
+      font-size: var(--fs-md);
+      color: var(--text);
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .popover.hidden { display: none; }
+    .popover__close {
+      position: absolute; top: 6px; right: 8px;
+      background: none; border: none;
+      color: var(--text-3); font-size: 20px; line-height: 1;
+      cursor: pointer; padding: 0 4px;
+    }
+    .popover__close:hover { color: var(--text); }
+    [data-popover] { cursor: pointer; }
+    /* Subtle dotted underline on clickable popover triggers (so they look interactive) */
+    .price-val.adj-val[data-popover],
+    .price-val.adj-val-outlier[data-popover] { border-bottom: 1px dashed currentColor; }
+    @media (max-width: 600px) {
+      .popover {
+        /* Bottom-sheet on mobile — full width minus 8px margins, anchored bottom */
+        left: 8px !important; right: 8px !important;
+        top: auto !important; bottom: 12px !important;
+        max-width: none;
+        max-height: 70vh;
+        padding: var(--s-4);
+        border-radius: var(--r-lg);
+      }
+    }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       MOBILE TUNING — small-screen overrides
+       Below ~700 px we transform the 14-column results table into a stack of
+       cards (one card per result). The same HTML powers both views; CSS just
+       repaints the table cells.
+       ════════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 700px) {
+      /* Tighter spacing throughout */
+      .app__results { padding: var(--s-3); }
+      .card__body  { padding: var(--s-3); }
+      .results-header { margin-bottom: var(--s-3); }
+      .results-count { font-size: var(--fs-lg); }
+      .sort-wrap { font-size: var(--fs-sm); }
+      .sort-wrap select.field-select { padding: 4px 8px; font-size: var(--fs-sm); }
+
+      /* Estimate banner — smaller hero number */
+      #estimate-banner { padding: var(--s-4); }
+      .est-median { font-size: var(--fs-2xl); }
+      .est-label, .est-range { font-size: var(--fs-sm); }
+
+      /* Hide table header — labels live inside each cell via data-label */
+      .table-wrap { border: none; background: transparent; overflow: visible; }
+      .table-wrap thead { display: none; }
+      .table-wrap table, .table-wrap tbody { display: block; }
+
+      /* Each table row becomes a card */
+      .table-wrap tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 12px;
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: var(--s-3);
+        margin-bottom: var(--s-3);
+      }
+      .table-wrap tbody tr:hover { background: var(--bg-elev); }
+
+      /* Each cell becomes a label : value block */
+      .table-wrap tbody td {
+        display: block;
+        padding: 0;
+        font-size: var(--fs-sm);
+        line-height: 1.35;
+        border: none;
+        min-width: 0;
+        word-break: break-word;
+      }
+      .table-wrap tbody td::before {
+        content: attr(data-label);
+        display: block;
+        color: var(--text-3);
+        text-transform: uppercase;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        margin-bottom: 2px;
+      }
+
+      /* Address spans both columns (it's the row title) */
+      .table-wrap tbody td.td-address {
+        grid-column: 1 / -1;
+        font-size: var(--fs-base);
+        padding-bottom: var(--s-2);
+        border-bottom: 1px solid var(--border);
+        margin-bottom: var(--s-1);
+      }
+      .table-wrap tbody td.td-address::before { display: none; }
+      .table-wrap tbody td.td-address a { font-weight: 600; }
+
+      /* Compact feat-pills inside cards */
+      .table-wrap tbody td .feat-pill {
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-right: 0;
+        font-size: var(--fs-sm);
+        font-weight: 600;
+      }
+      .table-wrap tbody td .sub-muted { font-size: 10px; }
+      .table-wrap tbody td .dist-badge { padding: 2px 8px; font-size: var(--fs-sm); }
+      .table-wrap tbody td .tag-type { padding: 2px 6px; font-size: var(--fs-sm); }
+
+      /* Hide the empty-state colspan trick gracefully */
+      .table-wrap tbody tr td[colspan] { grid-column: 1 / -1; padding: var(--s-5); }
+      .table-wrap tbody tr:has(td[colspan]) { display: block; padding: 0; }
+
+      /* Map a bit shorter on mobile when stacked with results below */
+      #map { height: 50vh; min-height: 320px; }
+      .searchbar { padding: var(--s-3); }
+      .searchbar .search-input { height: 44px; }
+      .btn { height: 44px; padding: 0 var(--s-3); font-size: var(--fs-md); }
+
+      /* Reduce vertical padding on cards/sections so things feel tighter */
+      .app__config { padding-top: var(--s-3); }
+      .app__map    { padding-top: var(--s-3); }
+      .app__estimate { padding-left: var(--s-3); padding-right: var(--s-3); }
+    }
+
+    /* Very small phones */
+    @media (max-width: 380px) {
+      .table-wrap tbody tr { grid-template-columns: 1fr; gap: 4px; }
+      .table-wrap tbody td.td-address { padding-bottom: var(--s-2); }
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">🏠</div>
-  <div>
-    <h1>Property Manager</h1>
-    <p>Find recently sold properties near any listing — powered by domain.com.au</p>
-  </div>
-</header>
+<div class="app">
 
-<div class="container">
-
-  <!-- Search card -->
-  <div class="card">
-    <div class="card-title">🔍 Find a Property</div>
-
-    <div class="search-wrap">
-      <span class="search-icon">📍</span>
-      <input
-        id="address-input"
-        type="text"
-        class="search-input"
-        placeholder="Start typing an address, e.g. 18/765 Malvern Road, Toorak…"
-        autocomplete="off"
-      />
-      <div id="ac-list" class="autocomplete-list"></div>
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TOP BAR
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__topbar topbar">
+    <div class="topbar__brand">
+      <div class="topbar__logo">🏠</div>
+      <div>
+        <div class="topbar__title">Property Manager</div>
+        <span class="topbar__sub">Nearby sales · CMA · School &amp; neighbourhood data</span>
+      </div>
     </div>
+  </div>
 
-    <!-- hidden fields — populated by Nominatim autocomplete -->
-    <input type="hidden" id="ref-slope" /><!-- populated from Open-Meteo -->
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       SEARCH BAR — sticky below the topbar
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__search searchbar">
+    <div class="searchbar__row">
+      <div class="search-wrap">
+        <span class="search-icon">📍</span>
+        <input
+          id="address-input"
+          type="text"
+          class="search-input"
+          placeholder="Search any Australian address — e.g. 18/765 Malvern Road, Toorak"
+          autocomplete="off"
+        />
+        <div id="ac-list" class="autocomplete-list"></div>
+      </div>
+      <button class="btn btn--primary btn-search" id="search-btn" disabled>
+        Search
+      </button>
+      <button class="btn btn--ghost btn-refresh" id="refresh-btn" disabled
+              title="Bypass cache and re-fetch fresh from Domain">
+        🔄 Refresh
+      </button>
+    </div>
+    <!-- hidden fields — populated by Nominatim autocomplete + Open-Meteo -->
+    <input type="hidden" id="ref-slope" />
     <input type="hidden" id="sel-lat" />
     <input type="hidden" id="sel-lng" />
     <input type="hidden" id="sel-suburb" />
     <input type="hidden" id="sel-state" />
     <input type="hidden" id="sel-postcode" />
     <input type="hidden" id="sel-address" />
+  </div>
 
-    <div class="filters" style="margin-top: 24px;">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       CONFIG COLUMN — filters, reference property, adjustment rates
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__config">
+    <div class="config-grid">
 
-      <!-- Radius -->
-      <div>
-        <label class="field-label">Radius <span class="slider-val" id="radius-val">3 km</span></label>
-        <input type="range" id="radius" min="0.5" max="20" step="0.5" value="3" />
+    <!-- Filters -->
+    <div class="card">
+      <div class="card__head">
+        <div class="card__title">Search filters</div>
       </div>
+      <div class="card__body">
+        <div class="filters">
+          <div>
+            <label class="field-label">
+              <span>Radius</span>
+              <span class="slider-val" id="radius-val">3 km</span>
+            </label>
+            <input type="range" id="radius" min="0.5" max="20" step="0.5" value="3" />
+          </div>
+          <div>
+            <label class="field-label">Sold within</label>
+            <select id="months" class="field-select">
+              <option value="1">1 month</option>
+              <option value="3">3 months</option>
+              <option value="6" selected>6 months</option>
+              <option value="12">12 months</option>
+              <option value="24">24 months</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Result pages</label>
+            <select id="pages" class="field-select">
+              <option value="1">1 page (~20)</option>
+              <option value="2">2 pages (~40)</option>
+              <option value="3" selected>3 pages (~60)</option>
+              <option value="5">5 pages (~100)</option>
+            </select>
+          </div>
+        </div>
 
-      <!-- Months back -->
-      <div>
-        <label class="field-label">Sold within</label>
-        <select id="months" class="field-select">
-          <option value="1">1 month</option>
-          <option value="3">3 months</option>
-          <option value="6" selected>6 months</option>
-          <option value="12">12 months</option>
-          <option value="24">24 months</option>
-        </select>
+        <div style="margin-top: var(--s-4);">
+          <label class="field-label">Property type <span style="text-transform:none;font-weight:500;color:var(--text-4)">(none = any)</span></label>
+          <div class="type-grid" id="type-grid">
+            <div class="type-chip" data-type="House">🏡 House</div>
+            <div class="type-chip" data-type="Apartment">🏢 Apt / Unit</div>
+            <div class="type-chip" data-type="Townhouse">🏘 Townhouse</div>
+            <div class="type-chip" data-type="Villa">🏠 Villa</div>
+            <div class="type-chip" data-type="Land">🌿 Land</div>
+            <div class="type-chip" data-type="Rural">🌾 Rural</div>
+          </div>
+        </div>
       </div>
-
-      <!-- Pages -->
-      <div>
-        <label class="field-label">Result pages</label>
-        <select id="pages" class="field-select">
-          <option value="1">1 page (~20)</option>
-          <option value="2">2 pages (~40)</option>
-          <option value="3" selected>3 pages (~60)</option>
-          <option value="5">5 pages (~100)</option>
-        </select>
-      </div>
-
     </div>
 
-    <!-- Property type filter -->
-    <div style="margin-top: 20px;">
-      <label class="field-label">Property type (leave all unselected = any)</label>
-      <div class="type-grid" id="type-grid">
-        <div class="type-chip" data-type="House">🏡 House</div>
-        <div class="type-chip" data-type="Apartment">🏢 Apartment / Unit</div>
-        <div class="type-chip" data-type="Townhouse">🏘 Townhouse</div>
-        <div class="type-chip" data-type="Villa">🏠 Villa</div>
-        <div class="type-chip" data-type="Land">🌿 Land</div>
-        <div class="type-chip" data-type="Rural">🌾 Rural</div>
-      </div>
-    </div>
-
-    <!-- Reference property specs (for adjusted-price CMA) -->
-    <div class="ref-panel">
+    <!-- Reference property panel (now styled like a card with custom header) -->
+    <div class="ref-panel" style="margin-top: var(--s-4);">
       <div class="ref-panel-header">
-        <span class="ref-panel-title">🎯 Reference Property</span>
+        <span class="ref-panel-title">🎯 Reference property</span>
         <span id="ref-fetch-msg" class="ref-autofill-badge"></span>
       </div>
 
-      <!-- Horizontal timeline of past sales + leases for this address -->
       <div id="ref-timeline" class="ref-timeline" style="display:none"></div>
 
       <div class="ref-fields">
-        <!-- Beds -->
         <div class="ref-field">
           <div class="ref-field-icon">🛏</div>
           <div class="ref-field-body">
@@ -682,7 +1129,6 @@
             <input type="number" id="ref-beds" class="ref-field-input" min="0" max="15" value="4" />
           </div>
         </div>
-        <!-- Baths -->
         <div class="ref-field">
           <div class="ref-field-icon">🚿</div>
           <div class="ref-field-body">
@@ -690,7 +1136,6 @@
             <input type="number" id="ref-baths" class="ref-field-input" min="0" max="15" value="2" />
           </div>
         </div>
-        <!-- Cars -->
         <div class="ref-field">
           <div class="ref-field-icon">🚗</div>
           <div class="ref-field-body">
@@ -698,7 +1143,6 @@
             <input type="number" id="ref-cars" class="ref-field-input" min="0" max="10" value="2" />
           </div>
         </div>
-        <!-- Land -->
         <div class="ref-field">
           <div class="ref-field-icon">📐</div>
           <div class="ref-field-body">
@@ -706,7 +1150,6 @@
             <input type="number" id="ref-land" class="ref-field-input" min="0" step="10" value="500" />
           </div>
         </div>
-        <!-- Building -->
         <div class="ref-field">
           <div class="ref-field-icon">🏗</div>
           <div class="ref-field-body">
@@ -714,25 +1157,23 @@
             <input type="number" id="ref-bldg" class="ref-field-input" min="0" step="10" placeholder="—" />
           </div>
         </div>
-        <!-- Pool -->
         <div class="ref-field">
           <div class="ref-field-icon">🏊</div>
           <div class="ref-field-body">
             <label class="ref-field-label" for="ref-pool">Pool</label>
             <select id="ref-pool" class="ref-field-input">
-              <option value="">Unknown</option>
+              <option value="">?</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
           </div>
         </div>
-        <!-- Storeys -->
         <div class="ref-field">
           <div class="ref-field-icon">🏠</div>
           <div class="ref-field-body">
             <label class="ref-field-label" for="ref-storeys">Storeys</label>
             <select id="ref-storeys" class="ref-field-input">
-              <option value="">Unknown</option>
+              <option value="">?</option>
               <option value="1">Single</option>
               <option value="2">Double</option>
             </select>
@@ -777,110 +1218,121 @@
           </div>
           <div class="adj-rate-item">
             <label class="adj-rate-label">⛰ $ per slope %</label>
-            <input type="number" id="adj-slope" class="adj-rate-input" step="500" value="3000" title="Per-percentage-point of slope difference. Comps steeper than ref get a value bump (they sold cheaper because of slope)." />
+            <input type="number" id="adj-slope" class="adj-rate-input" step="500" value="3000"
+                   title="Per-percentage-point of slope difference. Comps steeper than ref get a value bump (they sold cheaper because of slope)." />
           </div>
         </div>
       </details>
     </div>
 
-    <div class="search-row">
-      <button class="btn-search" id="search-btn" disabled>
-        Search Nearby Sold Properties
-      </button>
-      <button class="btn-refresh" id="refresh-btn" disabled title="Force re-fetch from Domain — bypasses cache">
-        🔄 Refresh
-      </button>
+    </div><!-- /.config-grid -->
+
+    <!-- Status bar (transient) -->
+    <div id="status-bar">
+      <div class="spinner"></div>
+      <span id="status-text">Loading…</span>
+    </div>
+
+    <!-- Legacy ref-banner (hidden) -->
+    <div id="ref-banner" style="display:none !important">
+      <div class="ref-label">📍 Reference property</div>
+      <div class="ref-address" id="ref-address"></div>
+      <div class="ref-coords" id="ref-coords"></div>
     </div>
   </div>
 
-  <!-- Map -->
-  <div id="map-card" class="card">
-    <div class="card-title">🗺️ Map View</div>
-    <!-- Toggle pills — moved into the map's floating Leaflet control on _initMap.
-         Kept here in a hidden seed so the existing onclick handlers + IDs stay wired. -->
-    <div class="zone-toggles" id="zone-toggles-seed" style="display:none">
-      <div class="zone-toggle" id="toggle-level-primary"      onclick="toggleLevel('primary')">🏫 Primary</div>
-      <div class="zone-toggle" id="toggle-level-secondary"    onclick="toggleLevel('secondary')">🎓 Secondary</div>
-      <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Transport</div>
-      <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood</div>
-      <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
-      <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
-      <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
-      <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
-      <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       ESTIMATE BANNER (CMA result) — full-width strip when visible
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__estimate">
+    <div id="estimate-banner">
+      <div class="est-label">🎯 Estimated value (from <span id="est-n">0</span> adjusted comps)</div>
+      <div class="est-median" id="est-median">—</div>
+      <div class="est-range">Likely range: <span id="est-range">—</span></div>
     </div>
-    <!-- Legend is now rendered into a floating Leaflet control on the map. -->
-
-    <div id="map" style="height:480px;width:100%;border-radius:10px;"></div>
   </div>
 
-  <!-- Status bar -->
-  <div id="status-bar">
-    <div class="spinner"></div>
-    <span id="status-text">Loading…</span>
-  </div>
-
-  <!-- Reference property banner (hidden — address already shown in search field) -->
-  <div id="ref-banner" style="display:none !important">
-    <div class="ref-label">📍 Reference property</div>
-    <div class="ref-address" id="ref-address"></div>
-    <div class="ref-coords" id="ref-coords"></div>
-  </div>
-
-  <!-- Estimated value (CMA result) -->
-  <div id="estimate-banner">
-    <div class="est-label">🎯 Estimated value (from <span id="est-n">0</span> adjusted comps)</div>
-    <div class="est-median" id="est-median">—</div>
-    <div class="est-range">Likely range: <span id="est-range">—</span></div>
-  </div>
-
-  <!-- Results -->
-  <div id="results-section">
-    <div class="results-header">
-      <div class="results-count">
-        <span id="result-count">0</span> sold properties found
-        <span id="cache-badge" style="display:none;font-size:11px;color:#22c55e;background:#0a2a17;padding:3px 8px;border-radius:6px;margin-left:8px;font-weight:500"></span>
-        <a id="similar-badge" target="_blank" rel="noopener" style="display:none;font-size:11px;color:#fbbf24;background:#1e1b00;padding:3px 8px;border-radius:6px;margin-left:8px;font-weight:500;text-decoration:none"></a>
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       MAP — full width on mobile, right column on desktop
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__map">
+    <div id="map-card" class="card card--flush">
+      <!-- Hidden seed for the floating layer-toggle pills (moved into the map's
+           Leaflet control on _initMap). Kept here so onclick handlers + IDs
+           are valid when toggles are wired. -->
+      <div class="zone-toggles" id="zone-toggles-seed" style="display:none">
+        <div class="zone-toggle" id="toggle-level-primary"      onclick="toggleLevel('primary')">🏫 Primary</div>
+        <div class="zone-toggle" id="toggle-level-secondary"    onclick="toggleLevel('secondary')">🎓 Secondary</div>
+        <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Transport</div>
+        <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood</div>
+        <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
+        <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
+        <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
+        <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
+        <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
       </div>
-      <div class="sort-wrap">
-        Sort by:
-        <select class="field-select" id="sort-by">
-          <option value="distance">Distance</option>
-          <option value="date">Sold Date</option>
-          <option value="price">Price</option>
-          <option value="adj">Adjusted Price</option>
-          <option value="pool">Pool</option>
-          <option value="storeys">Storeys</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table id="results-table">
-        <thead>
-          <tr>
-            <th data-col="address">Address <span class="sort-arrow">↕</span></th>
-            <th data-col="price">Price <span class="sort-arrow">↕</span></th>
-            <th data-col="adj">Adj. Price <span class="sort-arrow">↕</span></th>
-            <th data-col="date">Sold Date <span class="sort-arrow">↕</span></th>
-            <th data-col="type">Type <span class="sort-arrow">↕</span></th>
-            <th data-col="beds">Beds <span class="sort-arrow">↕</span></th>
-            <th data-col="baths">Baths <span class="sort-arrow">↕</span></th>
-            <th data-col="cars">Cars <span class="sort-arrow">↕</span></th>
-            <th data-col="land">Land (m²) <span class="sort-arrow">↕</span></th>
-            <th data-col="bldg">Bldg (m²) <span class="sort-arrow">↕</span></th>
-            <th data-col="pool">Pool <span class="sort-arrow">↕</span></th>
-            <th data-col="storeys">Storey <span class="sort-arrow">↕</span></th>
-            <th data-col="slope">Slope <span class="sort-arrow">↕</span></th>
-            <th data-col="dist">Dist (km) <span class="sort-arrow">↕</span></th>
-          </tr>
-        </thead>
-        <tbody id="results-body"></tbody>
-      </table>
+      <div id="map"></div>
     </div>
   </div>
 
-</div><!-- /container -->
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       RESULTS SECTION — count, badges, sort, table
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__results">
+    <div id="results-section">
+      <div class="results-header">
+        <div class="results-count">
+          <span id="result-count">0</span>
+          <span style="color:var(--text-3);font-weight:500;font-size:var(--fs-md);">sold properties</span>
+          <span id="cache-badge"></span>
+          <a id="similar-badge" target="_blank" rel="noopener"></a>
+        </div>
+        <div class="sort-wrap">
+          Sort by:
+          <select class="field-select" id="sort-by">
+            <option value="distance">Distance</option>
+            <option value="date">Sold Date</option>
+            <option value="price">Price</option>
+            <option value="adj">Adjusted Price</option>
+            <option value="pool">Pool</option>
+            <option value="storeys">Storeys</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th data-col="address">Address <span class="sort-arrow">↕</span></th>
+              <th data-col="price">Price <span class="sort-arrow">↕</span></th>
+              <th data-col="adj">Adj. Price <span class="sort-arrow">↕</span></th>
+              <th data-col="date">Sold Date <span class="sort-arrow">↕</span></th>
+              <th data-col="type">Type <span class="sort-arrow">↕</span></th>
+              <th data-col="beds">Beds <span class="sort-arrow">↕</span></th>
+              <th data-col="baths">Baths <span class="sort-arrow">↕</span></th>
+              <th data-col="cars">Cars <span class="sort-arrow">↕</span></th>
+              <th data-col="land">Land (m²) <span class="sort-arrow">↕</span></th>
+              <th data-col="bldg">Bldg (m²) <span class="sort-arrow">↕</span></th>
+              <th data-col="pool">Pool <span class="sort-arrow">↕</span></th>
+              <th data-col="storeys">Storey <span class="sort-arrow">↕</span></th>
+              <th data-col="slope">Slope <span class="sort-arrow">↕</span></th>
+              <th data-col="dist">Dist (km) <span class="sort-arrow">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- Click-popover (one global instance, content swapped per click) -->
+<div id="popover" class="popover hidden" role="dialog" aria-modal="false">
+  <button type="button" class="popover__close" onclick="closePopover()" aria-label="Close">×</button>
+  <div id="popover-content"></div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -888,6 +1340,54 @@
 let allResults = [];
 let acDebounce = null;
 let acIndex = -1;
+
+// ── Click popover (mobile-friendly replacement for hover tooltips) ─────────────
+function openPopover(target, raw) {
+  const pop  = document.getElementById('popover');
+  const body = document.getElementById('popover-content');
+  // Render: newlines → <br>, preserve other HTML
+  body.innerHTML = String(raw || '').replace(/\n/g, '<br>');
+  pop.classList.remove('hidden');
+  // Desktop: position near the target. Mobile CSS takes over to anchor bottom.
+  if (window.innerWidth > 600 && target && target.getBoundingClientRect) {
+    const r = target.getBoundingClientRect();
+    const popW = Math.min(320, window.innerWidth - 24);
+    const popH = pop.offsetHeight;
+    let left = r.left;
+    let top  = r.bottom + 8;
+    if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+    if (left < 12) left = 12;
+    if (top + popH > window.innerHeight - 12) top = Math.max(12, r.top - popH - 8);
+    pop.style.left = left + 'px';
+    pop.style.top  = top + 'px';
+    pop.style.bottom = 'auto'; pop.style.right = 'auto';
+  } else {
+    // Reset inline positioning so mobile CSS rules apply cleanly
+    pop.style.left = ''; pop.style.right = ''; pop.style.top = ''; pop.style.bottom = '';
+  }
+}
+function closePopover() {
+  document.getElementById('popover').classList.add('hidden');
+}
+// Auto-bind: any element with [data-popover] opens; clicks elsewhere close.
+document.addEventListener('click', (e) => {
+  const trigger = e.target.closest('[data-popover]');
+  if (trigger) {
+    e.preventDefault();
+    e.stopPropagation();
+    openPopover(trigger, trigger.getAttribute('data-popover'));
+    return;
+  }
+  // Don't close if clicking inside the popover itself
+  if (e.target.closest('#popover')) return;
+  closePopover();
+});
+// Escape closes it
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePopover(); });
+// Helper for safe attribute values (newlines preserved, quotes/HTML escaped)
+function popoverAttr(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 // ── DOM refs ───────────────────────────────────────────────────────────────────
 const addressInput = document.getElementById('address-input');
@@ -939,7 +1439,6 @@ function renderSuggestions(items, q) {
     const div = document.createElement('div');
     div.className = 'ac-item';
     const sub = [item.suburb, item.state, item.postcode].filter(Boolean).join(' ');
-    // Warn if suburb is missing (these won't search correctly)
     const missingSuburb = !item.suburb;
     div.innerHTML = `
       <span class="ac-icon">📍</span>
@@ -957,7 +1456,7 @@ function renderSuggestions(items, q) {
 
 function highlight(text, q) {
   const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return text.replace(re, '<strong style="color:var(--accent)">$1</strong>');
+  return text.replace(re, '<strong style="color:var(--brand)">$1</strong>');
 }
 
 function highlightAc(items) {
@@ -975,7 +1474,6 @@ function selectItem(item) {
   document.getElementById('sel-address').value = item.label;
   closeAc();
   updateSearchBtn();
-  // Immediately pin reference on map
   pinRefOnMap(parseFloat(item.lat), parseFloat(item.lng), item.label);
 }
 
@@ -1011,6 +1509,21 @@ document.querySelectorAll('.type-chip').forEach(chip => {
 searchBtn.addEventListener('click', () => runSearch(false));
 document.getElementById('refresh-btn').addEventListener('click', () => runSearch(true));
 
+// Mobile browsers (iOS Safari + Chrome Android) kill background SSE connections
+// after ~30s. If the user backgrounds the app mid-search we suppress the
+// "connection error" toast and quietly re-run the search when they return —
+// the server's disk cache will have the completed result by then, so it comes
+// back as an instant cache hit.
+let _searchInFlight = false;
+let _esCurrent = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;            // only act when coming BACK to foreground
+  if (!_searchInFlight) return;           // no search was in progress, nothing to do
+  if (_esCurrent) { try { _esCurrent.close(); } catch(_){} }
+  setStatus('loading', '🔄 Reconnecting after backgrounding… (cache should have it now)');
+  runSearch(false);                       // forceRefresh=false so we hit cache, not re-scrape
+});
+
 async function runSearch(forceRefresh) {
   const lat     = document.getElementById('sel-lat').value;
   const lng     = document.getElementById('sel-lng').value;
@@ -1025,19 +1538,20 @@ async function runSearch(forceRefresh) {
   const pages  = document.getElementById('pages').value;
   const types  = [...document.querySelectorAll('.type-chip.selected')].map(c => c.dataset.type);
 
-  // UI reset
-  setStatus('loading', forceRefresh ? '🔄 Force-refreshing from Domain (bypassing cache)…' : '🔍 Searching sold listings…');
+  setStatus('loading', forceRefresh ? '🔄 Force-refreshing from Domain (bypassing cache)…' : '🔍 Searching sold listings… ☕ (safe to background — we\'ll reconnect when you return)');
   document.getElementById('ref-banner').classList.remove('visible');
   document.getElementById('results-section').classList.remove('visible');
   allResults = [];
   searchBtn.disabled = true;
   document.getElementById('refresh-btn').disabled = true;
+  _searchInFlight = true;
 
   const params = new URLSearchParams({ lat, lng, suburb, state, postcode, address, radius, months, pages });
   types.forEach(t => params.append('types', t));
   if (forceRefresh) params.append('force', '1');
 
   const es = new EventSource(`/api/nearby-sales?${params}`);
+  _esCurrent = es;
 
   es.onmessage = (e) => {
     const data = JSON.parse(e.data);
@@ -1045,6 +1559,7 @@ async function runSearch(forceRefresh) {
     if (data.error) {
       setStatus('error', '❌ ' + data.error);
       es.close();
+      _searchInFlight = false; _esCurrent = null;
       searchBtn.disabled = false;
       document.getElementById('refresh-btn').disabled = false;
       return;
@@ -1064,6 +1579,7 @@ async function runSearch(forceRefresh) {
 
     if (data.status === 'done') {
       es.close();
+      _searchInFlight = false; _esCurrent = null;
       hideStatus();
       searchBtn.disabled = false;
       document.getElementById('refresh-btn').disabled = false;
@@ -1071,20 +1587,28 @@ async function runSearch(forceRefresh) {
       const badge = document.getElementById('cache-badge');
       if (data.cached) {
         badge.textContent = `📦 cached · ${data.cache_age_min}m ago`;
-        badge.style.display = 'inline-block';
+        badge.style.display = 'inline-flex';
       } else {
         badge.textContent = '🔄 fresh from Domain';
-        badge.style.display = 'inline-block';
+        badge.style.display = 'inline-flex';
       }
       renderResults();
-      // Also fire the "similar houses for sale" badge (official Domain API)
       fetchSimilarListings();
     }
   };
 
   es.onerror = () => {
-    setStatus('error', '❌ Connection error. Please try again.');
     es.close();
+    // If the page is currently hidden (user backgrounded the tab), don't show
+    // an error toast — the SSE was killed by mobile browser throttling, not
+    // a real failure. The visibilitychange listener will retry once they
+    // foreground the app, and the server's cache should serve the result.
+    if (document.hidden) {
+      // Keep _searchInFlight = true so visibilitychange knows to retry
+      return;
+    }
+    setStatus('error', '❌ Connection error. Please try again.');
+    _searchInFlight = false; _esCurrent = null;
     searchBtn.disabled = false;
     document.getElementById('refresh-btn').disabled = false;
   };
@@ -1155,32 +1679,41 @@ function renderResults() {
     const slopeHtml = r.slope_pct != null
                     ? (() => {
                         const s = formatSlope(r.slope_pct, true);
-                        // Mobile-friendly: show emoji + % + short label inline (no hover-only tooltip)
-                        const parts = s.split(' ');  // [icon, 'slope', '~X%', '(label)']
+                        const parts = s.split(' ');
                         const shortLabel = (parts[3] || '').replace(/[()]/g,'');
                         return `<span class="feat-pill">${parts[0]} ${r.slope_pct}% ${shortLabel}</span>`;
                       })()
                     : `<span class="sub-muted" data-extras-cell="slope" data-row="${origIdx}">…</span>`;
     const adj = computeAdjusted(r, rates);
     const adjCls  = outlierIndices.has(origIdx) ? 'price-val adj-val-outlier' : 'price-val adj-val';
-    const adjHtml = (adj.value != null && isFinite(adj.value))
-      ? `<span class="${adjCls}" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
-      : '—';
+    let adjHtml;
+    if (adj.value != null && isFinite(adj.value)) {
+      adjHtml = `<span class="${adjCls}" data-popover="${popoverAttr(adj.breakdown)}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`;
+    } else {
+      const b = adj.breakdown || '';
+      let why = 'n/a';
+      if (b === 'No price' || !r.price_num) why = 'price withheld';
+      else {
+        const m = b.match(/missing:\s*(.*)/);
+        if (m) why = 'missing ' + m[1];
+      }
+      adjHtml = `<span class="sub-muted" data-popover="${popoverAttr(b)}">— <span style="font-size:10px;color:var(--text-4);font-style:italic">${why}</span></span>`;
+    }
     return `<tr data-row="${origIdx}">
-      <td class="td-address">${addrHtml}</td>
-      <td>${priceHtml}</td>
-      <td>${adjHtml}</td>
-      <td>${dateHtml}</td>
-      <td><span class="tag-type">${r.type || '—'}</span></td>
-      <td>${r.beds != null ? '<span class="feat-pill">🛏 ' + r.beds + '</span>' : '—'}</td>
-      <td>${r.baths != null ? '<span class="feat-pill">🚿 ' + r.baths + '</span>' : '—'}</td>
-      <td>${r.cars != null ? '<span class="feat-pill">🚗 ' + r.cars + '</span>' : '—'}</td>
-      <td>${landHtml}</td>
-      <td>${bldgHtml}</td>
-      <td>${poolHtml}</td>
-      <td>${storeyHtml}</td>
-      <td>${slopeHtml}</td>
-      <td>${distHtml}</td>
+      <td class="td-address" data-label="Address">${addrHtml}</td>
+      <td data-label="Price">${priceHtml}</td>
+      <td data-label="Adj. Price">${adjHtml}</td>
+      <td data-label="Sold">${dateHtml}</td>
+      <td data-label="Type"><span class="tag-type">${r.type || '—'}</span></td>
+      <td data-label="Beds">${r.beds != null ? '<span class="feat-pill">🛏 ' + r.beds + '</span>' : '—'}</td>
+      <td data-label="Baths">${r.baths != null ? '<span class="feat-pill">🚿 ' + r.baths + '</span>' : '—'}</td>
+      <td data-label="Cars">${r.cars != null ? '<span class="feat-pill">🚗 ' + r.cars + '</span>' : '—'}</td>
+      <td data-label="Land m²">${landHtml}</td>
+      <td data-label="Bldg m²">${bldgHtml}</td>
+      <td data-label="Pool">${poolHtml}</td>
+      <td data-label="Storey">${storeyHtml}</td>
+      <td data-label="Slope">${slopeHtml}</td>
+      <td data-label="Distance">${distHtml}</td>
     </tr>`;
   }).join('');
 
@@ -1208,13 +1741,10 @@ function sortResults(arr) {
 // ── CMA: comparable-sales adjustment ────────────────────────────────────────────
 function readAdjustmentRates() {
   const num = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
-  // Pool: null if ref left as unknown, otherwise boolean
   const poolEl = document.getElementById('ref-pool');
   const refPool = (poolEl && poolEl.value !== '') ? (poolEl.value === 'yes') : null;
-  // Storeys: null if ref left as unknown/empty
   const storeyEl = document.getElementById('ref-storeys');
   const refStoreys = (storeyEl && storeyEl.value !== '') ? parseInt(storeyEl.value, 10) : null;
-  // Slope (hidden field, set by fetchRefExtras from Open-Meteo); null if not yet fetched
   const slopeEl = document.getElementById('ref-slope');
   const refSlope = (slopeEl && slopeEl.value !== '') ? parseFloat(slopeEl.value) : null;
   return {
@@ -1240,10 +1770,9 @@ function readAdjustmentRates() {
 function computeAdjusted(r, rates) {
   if (r.price_num == null) return { value: null, breakdown: 'No price', deltaStr: '' };
 
-  // All 4 fields are mandatory — if any is missing, no adjusted price
   const hasBeds  = (r.beds      != null && r.beds  > 0);
   const hasBaths = (r.baths     != null && r.baths > 0);
-  const hasCars  = (r.cars      != null);              // 0 cars IS valid (no parking)
+  const hasCars  = (r.cars      != null);
   const hasLand  = (r.land_area != null && r.land_area > 0);
 
   if (!hasBeds || !hasBaths || !hasCars || !hasLand) {
@@ -1269,7 +1798,6 @@ function computeAdjusted(r, rates) {
   const dCar  = (rates.refCars  - r.cars)      * rates.car;
   const dLand = (rates.refLand  - r.land_area) * rates.landRate;
 
-  // Pool: only adjust if BOTH ref and comp values are known
   let dPool = 0;
   let poolNote = null;
   if (rates.refPool !== null && (r.pool === true || r.pool === false)) {
@@ -1280,15 +1808,11 @@ function computeAdjusted(r, rates) {
   } else if (r.pool == null) {
     poolNote = `Pool  (skipped — comp pool unknown, loading…)`;
   }
-  // Storey: only adjust if BOTH known
   let dStorey = 0;
   if (rates.refStoreys != null && r.storeys != null) {
     const storeyRate = isNaN(rates.storey) ? 25000 : rates.storey;
     dStorey = (rates.refStoreys - r.storeys) * storeyRate;
   }
-  // Slope: only adjust if BOTH known. Comp steeper than ref → comp sold cheaper
-  // because of slope, so bump comp's adjusted value UP. Comp flatter than ref →
-  // adjust DOWN (ref's steepness is a penalty).
   let dSlope = 0;
   let slopeNote = null;
   if (rates.refSlope != null && r.slope_pct != null) {
@@ -1334,7 +1858,6 @@ let _refMarker = null;
 
 function _initMap() {
   if (_map) return;
-  // Default view: Melbourne CBD
   const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19
@@ -1355,7 +1878,6 @@ function _initMap() {
     { position: 'topright', collapsed: true }
   ).addTo(_map);
 
-  // ─ Floating layer-toggle control (top-right, collapsible) ──────────────
   const layerCtrl = L.control({ position: 'topright' });
   layerCtrl.onAdd = function() {
     const div = L.DomUtil.create('div', 'leaflet-control layer-fab-wrapper');
@@ -1368,7 +1890,6 @@ function _initMap() {
     return div;
   };
   layerCtrl.addTo(_map);
-  // Move existing toggle pills into the panel (preserves onclick handlers)
   const togglesSeed = document.getElementById('zone-toggles-seed');
   const panel = document.getElementById('layer-fab-panel');
   if (togglesSeed && panel) {
@@ -1378,12 +1899,10 @@ function _initMap() {
     const p = document.getElementById('layer-fab-panel');
     p.style.display = p.style.display === 'none' ? 'flex' : 'none';
   };
-  // Auto-refresh legend when any toggle's active class flips
   const mo = new MutationObserver(updateMapLegend);
   document.querySelectorAll('.zone-toggle').forEach(t =>
     mo.observe(t, { attributes: true, attributeFilter: ['class'] }));
 
-  // ─ Floating legend control (bottom-left) — auto-updates per active layer ─
   const legendCtrl = L.control({ position: 'bottomleft' });
   legendCtrl.onAdd = function() {
     const div = L.DomUtil.create('div', 'leaflet-control map-legend-floating empty');
@@ -1394,7 +1913,6 @@ function _initMap() {
   updateMapLegend();
 }
 
-// Build legend HTML based on which layers are currently active
 function updateMapLegend() {
   const el = document.getElementById('map-legend-floating');
   if (!el) return;
@@ -1434,7 +1952,6 @@ function updateMapLegend() {
 function pinRefOnMap(lat, lng, address) {
   _initMap();
   if (_refMarker) { _map.removeLayer(_refMarker); _refMarker = null; }
-  // Subtle ring marker — no popup, no big icon to obscure the property
   _refMarker = L.circleMarker([lat, lng], {
     radius: 8,
     fillColor: '#ef4444',
@@ -1451,10 +1968,8 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
   _initMap();
   if (refLat && refLng) pinRefOnMap(refLat, refLng, refAddress);
 
-  // Remove old comp markers (preserve the ref marker)
   _map.eachLayer(l => { if (l instanceof L.CircleMarker && l !== _refMarker) _map.removeLayer(l); });
 
-  // Comp sold properties
   const pts = [];
   if (refLat != null && refLng != null) pts.push([refLat, refLng]);
   results.forEach(r => {
@@ -1475,7 +1990,6 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
     const adjStr   = hasAdj ? `<div class="adj">Adj: $${adj.value.toLocaleString()}</div>` : '';
     const slopeStr = formatSlope(r.slope_pct);
     const rentStr  = formatRent(rentForSuburb(r.suburb || (r.address||'').split(',')[1]), r.price_num);
-    const demoStr  = formatDemographics(r.postcode || (r.address||'').match(/\b3\d{3}\b/)?.[0]);
     const dims = [
       r.land_area    ? `land ${Math.round(r.land_area)} m²` : '',
       r.building_m2  ? `bldg ${r.building_m2} m²` : '',
@@ -1490,12 +2004,10 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
         ${adjStr}
         <div style="font-size:11px;color:#94a3b8">${r.sold_date || ''} · ${r.type || ''}</div>
         ${dims ? `<div style="font-size:11px;color:#cbd5e1;margin-top:2px">${dims}</div>` : ''}
-        ${demoStr ? `<div style="font-size:11px;color:#cbd5e1">${demoStr}</div>` : ''}
       </div>`
     );
   });
 
-  // Zoom out to fit reference + all comps
   if (pts.length >= 2) {
     _map.fitBounds(pts, { padding: [40, 40], maxZoom: 15 });
   }
@@ -1503,10 +2015,9 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
   if (typeof updateMapLegend === 'function') updateMapLegend();
 }
 
-// Init map on page load
 document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
 
-// DFFH Rental Report — median weekly rent by suburb (loaded once)
+// DFFH Rental Report — median weekly rent by suburb
 let _rentLookup = null;
 let _rentQuarter = '';
 fetch('/static/overlays/rent_by_suburb.json').then(r => r.json()).then(d => {
@@ -1535,7 +2046,6 @@ function formatDemographics(postcode) {
   return parts.length ? `👥 ${parts.join(' · ')}` : '';
 }
 
-// "Similar houses for sale" — official Domain API (500/day free; zero ban risk)
 async function fetchSimilarListings() {
   const suburb   = document.getElementById('sel-suburb').value;
   const state    = document.getElementById('sel-state').value;
@@ -1543,7 +2053,7 @@ async function fetchSimilarListings() {
   const types    = [...document.querySelectorAll('.type-chip.selected')].map(c => c.dataset.type);
   if (!suburb || !state) return;
   const badge = document.getElementById('similar-badge');
-  badge.style.display = 'inline-block';
+  badge.style.display = 'inline-flex';
   badge.textContent = '🏠 checking active listings…';
   try {
     const params = new URLSearchParams({ suburb, state });
@@ -1558,7 +2068,7 @@ async function fetchSimilarListings() {
     const beds = minBeds || '?';
     const url = `https://www.domain.com.au/sale/${encodeURIComponent(suburb.toLowerCase().replace(/\s+/g,'-'))}-${state.toLowerCase()}-${document.getElementById('sel-postcode').value}/?bedrooms=${beds}-${beds}`;
     badge.href = url;
-    badge.textContent = `🏠 ${data.count} similar ${beds}-bed for sale in ${suburb} (click to view on Domain)`;
+    badge.textContent = `🏠 ${data.count} similar ${beds}-bed for sale (Domain →)`;
   } catch (e) {
     badge.textContent = '🏠 active listings: error';
   }
@@ -1567,10 +2077,7 @@ async function fetchSimilarListings() {
 function rentForSuburb(suburb) {
   if (!_rentLookup || !suburb) return null;
   const key = String(suburb).toLowerCase().replace(/['",.\(\)\-\&\/]+/g, ' ').replace(/\s+/g, ' ').trim();
-  // Direct match
   if (_rentLookup[key] != null) return _rentLookup[key];
-  // DFFH often groups suburbs (e.g. "albert park middle park west st kilda")
-  // — find any DFFH suburb whose key contains this suburb word
   const words = key.split(' ').filter(w => w.length >= 3);
   for (const k of Object.keys(_rentLookup)) {
     if (words.every(w => k.includes(w))) return _rentLookup[k];
@@ -1588,9 +2095,6 @@ function formatRent(rentWk, price) {
   return s;
 }
 
-// Format slope % with intuitive label & emoji for property-buying impact.
-// Thresholds: <5% flat (no impact) · 5–10% gentle (minor) · 10–15% moderate
-// (retaining/build cost) · 15–20% notable (significant build cost) · >20% steep.
 function formatSlope(pct, withEmoji) {
   if (pct == null) return '';
   let label, icon;
@@ -1618,8 +2122,6 @@ const _levelCfg = {
 const _sectorColor = { 'Government': '#3b82f6', 'Catholic': '#ef4444', 'Independent': '#22c55e' };
 const _sectorEmoji = { 'Government': '🏫', 'Catholic': '⛪', 'Independent': '🎓' };
 
-// Build a school divIcon — ring color = PERFORMANCE band; emoji = sector
-// (so purple ring 🏫 = elite Govt school; red ring ⛪ = below-band Catholic, etc.)
 function _schoolIcon(sector, band) {
   const ring = _vceBandColor[band || 0];
   const emoji = _sectorEmoji[sector] || '🏫';
@@ -1631,42 +2133,30 @@ function _schoolIcon(sector, band) {
   });
 }
 
-// Shared school popup — used by both school marker click AND zone polygon click
-// so clicking either gives the same detailed view.
 function buildSchoolPopup(p) {
   const name   = p.name || p.School_Name || p.Campus_Name || 'School';
   const sector = p.sector || '';
   const type   = p.type   || (p.Year_Level ? 'Secondary' : '');
   const q      = encodeURIComponent(`${name} ${p.town || ''}`);
   const isSec  = type === 'Secondary' || type === 'Pri/Sec' || p.vce_median != null;
-
-  // Bright text colours for dark background (separate from zone fill colours)
   const _tc = { 6:'#c4b5fd', 5:'#4ade80', 4:'#86efac', 3:'#fde047', 2:'#fb923c', 1:'#f87171', 0:'#94a3b8' };
-
   const A = (href, label) =>
     `<a href="${href}" target="_blank" rel="noopener" style="font-size:11px;color:#60a5fa;white-space:nowrap">${label}</a>`;
-
   const naplanUrl = p.acara_id
     ? `https://www.myschool.edu.au/school/${p.acara_id}/naplan/results`
     : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
-  // Direct per-school Better Education page — shows VCE results + ranking
   const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
-
   const links = [
     A(naplanUrl, '📊 NAPLAN'),
     A(beDirectUrl, isSec ? '🎓 VCE (Better Ed)' : '🏆 Better Ed'),
   ];
-
-  // Compact metric row: label | coloured value | short hint
   const R = (label, val, color, hint) =>
     `<tr>
        <td style="color:#94a3b8;padding:1px 8px 1px 0;white-space:nowrap;font-size:11px">${label}</td>
        <td style="font-weight:700;color:${color};font-size:13px" title="${hint}">${val}</td>
      </tr>`;
-
-  // Inline metric: short-label · coloured value (hint in tooltip)
   const M = (label, val, color, hint) =>
-    `<span title="${hint}" style="white-space:nowrap"><span style="color:#94a3b8">${label}</span> <b style="color:${color}">${val}</b></span>`;
+    `<span data-popover="${popoverAttr(label + ': ' + val + '\n\n' + hint)}" style="white-space:nowrap"><span style="color:#94a3b8">${label}</span> <b style="color:${color}">${val}</b></span>`;
 
   let block = '';
   if (p.vce_median != null) {
@@ -1698,7 +2188,7 @@ function buildSchoolPopup(p) {
       p.icsea    != null ? M(tierI + ' Melb', 'ICSEA ' + p.icsea, tcI, `Per-school ICSEA; AU pctile ${p.icsea_pctile || '?'}`) : '',
       p.be_score != null
         ? M('BE', p.be_score + '/100 (top ' + (p.be_pctile || '?') + '% VIC)', _tc[p.be_band || 0], 'Better Education composite — top 442 VIC primaries only')
-        : `<span style="color:#64748b" title="Not in Better Education's top 442 VIC primaries (~top 25%)">BE: unranked</span>`,
+        : `<span style="color:#64748b" data-popover="${popoverAttr('BE: unranked\n\nNot in Better Education\'s top 442 VIC primaries (i.e. not ranked in the top ~25% of VIC primaries).')}">BE: unranked</span>`,
     ].filter(Boolean).join('  ·  ');
     block =
       `<div style="margin-top:3px;padding:3px 6px;background:#0f172a;border-left:3px solid ${cI};border-radius:3px;font-size:12px;line-height:1.5">
@@ -1721,28 +2211,19 @@ function buildSchoolPopup(p) {
   </div>`;
 }
 
-// VCE band colours (1=below 28 .. 6=38+ elite; 0=no data)
 const _vceBandColor = {
-  6: '#7c3aed',  // Elite (38+)        — deep purple
-  5: '#166534',  // Top tier (35–37)   — dark green
-  4: '#16a34a',  // Strong (32–34)     — green
-  3: '#ca8a04',  // Above avg (30–31)  — yellow-amber
-  2: '#ea580c',  // Average (28–29)    — orange
-  1: '#b91c1c',  // Below (<28)        — red
-  0: '#6b7280',  // No data            — grey
+  6: '#7c3aed', 5: '#166534', 4: '#16a34a', 3: '#ca8a04',
+  2: '#ea580c', 1: '#b91c1c', 0: '#6b7280',
 };
 const _vceBandLabel = {
   6: 'Elite (38+)', 5: 'Top tier (35–37)', 4: 'Strong (32–34)',
   3: 'Above avg (30–31)', 2: 'Average (28–29)', 1: 'Below (<28)', 0: 'No data',
 };
 
-// Per-metric bands so each NUMBER gets its own colour based on its own merit
-// (e.g. median can be red while % ≥40 is green — schools have lopsided profiles)
 function _bandMedian(s)     { if (s==null) return 0; if (s>=38) return 6; if (s>=35) return 5; if (s>=32) return 4; if (s>=30) return 3; if (s>=28) return 2; return 1; }
 function _bandPct40(p)      { if (p==null) return 0; if (p>=30) return 6; if (p>=20) return 5; if (p>=10) return 4; if (p>=5)  return 3; if (p>=2)  return 2; return 1; }
 function _bandCompletion(p) { if (p==null) return 0; if (p>=99) return 6; if (p>=95) return 5; if (p>=90) return 4; if (p>=85) return 3; if (p>=80) return 2; return 1; }
 function _bandIcsea(i)      { if (i==null) return 0; if (i>=1200) return 6; if (i>=1100) return 5; if (i>=1050) return 4; if (i>=1000) return 3; if (i>=950)  return 2; return 1; }
-// Overall band = max of the three performance metrics (drives the marker ring + zone fill)
 function _bandOverall(p) {
   if (p.vce_median == null) return 0;
   return Math.max(_bandMedian(p.vce_median), _bandPct40(p.vce_pct40), _bandCompletion(p.vce_pct_compl));
@@ -1757,7 +2238,6 @@ async function toggleLevel(type) {
   const btn = document.getElementById('toggle-level-' + type);
   const cfg = _levelCfg[type];
 
-  // Already on → remove both layers
   if (_zoneLayer[type] || _schoolLayer[type]) {
     if (_zoneLayer[type])   { _map.removeLayer(_zoneLayer[type]);   _zoneLayer[type]   = null; }
     if (_schoolLayer[type]) { _map.removeLayer(_schoolLayer[type]); _schoolLayer[type] = null; }
@@ -1765,7 +2245,6 @@ async function toggleLevel(type) {
     return;
   }
 
-  // Lazy-load both files in parallel
   btn.classList.add('loading');
   try {
     const [zd, sd] = await Promise.all([
@@ -1781,11 +2260,6 @@ async function toggleLevel(type) {
   }
   btn.classList.remove('loading');
 
-  // Zones first (underneath).
-  // Secondary: colour by VCE band when available (real performance data).
-  // Primary:   colour by SEIFA IEO band — a CATCHMENT-WEALTH proxy, not school quality
-  //            (no public bulk NAPLAN — only path for real data is ACARA DAP application).
-  // Polygon click shows the SAME detailed popup as clicking the school marker.
   _zoneLayer[type] = L.geoJSON(_zoneData[type], {
     style(feature) {
       const p = feature.properties || {};
@@ -1795,8 +2269,6 @@ async function toggleLevel(type) {
       if (type === 'primary' && p.be_band) {
         return { color: _vceBandColor[p.be_band], weight: 1.5, fillColor: _vceBandColor[p.be_band], fillOpacity: 0.32 };
       }
-      // Primary fallback when not in BE's top 442 — use real ICSEA from ACARA
-      // (lighter fill so users can distinguish "real perf data" from "proxy").
       if (type === 'primary' && p.icsea_band) {
         return { color: _vceBandColor[p.icsea_band], weight: 1, fillColor: _vceBandColor[p.icsea_band], fillOpacity: 0.18, dashArray: '4,3' };
       }
@@ -1804,14 +2276,11 @@ async function toggleLevel(type) {
     },
     onEachFeature(feature, layer) {
       const p = feature.properties || {};
-      // Use same popup as school marker (zones already have vce_*/seifa_* fields embedded)
       const props = { ...p, name: p.School_Name || p.Campus_Name, type: type === 'secondary' ? 'Secondary' : 'Primary' };
       layer.bindPopup(buildSchoolPopup(props));
     }
   }).addTo(_map);
 
-  // Markers on top — emoji per sector inside a performance-coloured ring.
-  // Secondary uses vce_band (real VCE outcome); primary uses be_band (Better Education score).
   _schoolLayer[type] = L.geoJSON(_schoolData[type], {
     pointToLayer(feature, latlng) {
       const p = feature.properties || {};
@@ -1826,7 +2295,6 @@ async function toggleLevel(type) {
   btn.classList.add('active');
 }
 
-// ── Property risk overlays (flood / heritage / bushfire) ────────────────
 const _overlayCfg = {
   flood:    { color: '#06b6d4', file: '/static/overlays/flood.geojson',    label: 'Flood (LSIO)',         schemeField: 'SCHEME' },
   heritage: { color: '#a16207', file: '/static/overlays/heritage.geojson', label: 'Heritage Overlay',     schemeField: 'SCHEME' },
@@ -1838,9 +2306,8 @@ const _overlayCfg = {
 const _overlayData  = { flood: null, heritage: null, bushfire: null, crime: null, infra: null, icsea: null };
 const _overlayLayer = { flood: null, heritage: null, bushfire: null, crime: null, infra: null, icsea: null };
 
-// Bright, non-OSM-palette colours so lines pop against streets/satellite tiles
-const _INFRA_RAIL = '#ff0080';   // hot magenta — extremely distinct from OSM
-const _INFRA_ROAD = '#8b5cf6';   // electric violet — distinct from OSM road yellow/orange
+const _INFRA_RAIL = '#ff0080';
+const _INFRA_ROAD = '#8b5cf6';
 const _infraStyle = {
   rail_proposed:       { color: _INFRA_RAIL, weight: 4,   dashArray: '8,5', opacity: 1 },
   rail_construction:   { color: _INFRA_RAIL, weight: 5,                       opacity: 1 },
@@ -1849,8 +2316,6 @@ const _infraStyle = {
   station_construction:{ color: _INFRA_RAIL },
 };
 
-// Crime band colours — 1=safest (green), 6=highest (red). NOT the VCE palette
-// because here higher = worse, not better.
 const _crimeBandColor = { 1:'#166534', 2:'#16a34a', 3:'#84cc16', 4:'#ca8a04', 5:'#ea580c', 6:'#b91c1c', 0:'#6b7280' };
 const _crimeBandLabel = { 1:'Safest 10%', 2:'10–25%', 3:'25–50%', 4:'50–75%', 5:'75–90%', 6:'Highest 10%', 0:'No data' };
 
@@ -1965,7 +2430,6 @@ async function toggleOverlay(name) {
   btn.classList.add('active');
 }
 
-// ── Public Transport (train/tram/bus stops) ──────────────────────────────
 const _transportCfg = {
   trains: { color: '#dc2626', file: '/static/transport/trains.geojson', radius: 5, square: true  },
   trams:  { color: '#14b8a6', file: '/static/transport/trams.geojson',  radius: 3, square: false },
@@ -1973,14 +2437,13 @@ const _transportCfg = {
 };
 const _transportData  = { trains: null, trams: null, buses: null };
 const _transportLayer = { trains: null, trams: null, buses: null };
-let _busCanvas = null;  // shared canvas renderer for bus markers (perf)
+let _busCanvas = null;
 
 async function toggleTransport() {
   _initMap();
   const btn = document.getElementById('toggle-transport');
   const modes = ['trains', 'trams', 'buses'];
 
-  // Already on → remove all
   if (modes.some(m => _transportLayer[m])) {
     modes.forEach(m => {
       if (_transportLayer[m]) { _map.removeLayer(_transportLayer[m]); _transportLayer[m] = null; }
@@ -2007,7 +2470,6 @@ async function toggleTransport() {
 
   if (!_busCanvas) _busCanvas = L.canvas({ padding: 0.5 });
 
-  // Render buses first (under), then trams, then trains (on top)
   for (const m of modes) {
     const cfg = _transportCfg[m];
     _transportLayer[m] = L.geoJSON(_transportData[m], {
@@ -2022,8 +2484,23 @@ async function toggleTransport() {
         if (cfg.canvas) opts.renderer = _busCanvas;
         return L.circleMarker(latlng, opts);
       },
+      style(feature) {
+        // Only LineString/MultiLineString get this — Points use pointToLayer above.
+        if (feature.geometry && feature.geometry.type.includes('LineString')) {
+          return {
+            color: cfg.color,
+            weight: m === 'trains' ? 2.5 : (m === 'trams' ? 2 : 1.2),
+            opacity: m === 'buses' ? 0.55 : 0.85,
+          };
+        }
+        return {};
+      },
       onEachFeature(feature, layer) {
         const p = feature.properties || {};
+        if (p.kind === 'line') {
+          if (p.name) layer.bindTooltip(p.name, {sticky: true});
+          return;
+        }
         const icon = m === 'trains' ? '🚆' : (m === 'trams' ? '🚊' : '🚌');
         layer.bindPopup(`<b>${icon} ${p.name || ''}</b><br><span style="font-size:11px;color:#94a3b8">${p.mode || ''}</span>`);
       }
@@ -2033,49 +2510,36 @@ async function toggleTransport() {
   btn.classList.add('active');
 }
 
-// Global set of comp indices whose adjusted price is an outlier
 let outlierIndices = new Set();
 
 function renderEstimate(sorted, rates) {
   const banner = document.getElementById('estimate-banner');
   if (!banner) return;
-
-  // Build [{idx, value}] for all comps with a valid adjusted price
   const pairs = sorted.map((r, si) => {
     const origIdx = allResults.indexOf(r);
     const val = computeAdjusted(r, rates).value;
     return (val != null && isFinite(val)) ? { origIdx, val } : null;
   }).filter(Boolean);
-
   if (pairs.length < 3) { banner.classList.remove('visible'); outlierIndices = new Set(); return; }
-
-  // IQR outlier detection (user-controlled multiplier, default 1.0×)
   const vals = pairs.map(p => p.val).sort((a,b) => a-b);
   const q1 = vals[Math.floor(vals.length * 0.25)];
   const q3 = vals[Math.floor(vals.length * 0.75)];
   const iqr = q3 - q1;
   const lo  = q1 - (rates.iqrMult ?? 1.0) * iqr;
   const hi  = q3 + (rates.iqrMult ?? 1.0) * iqr;
-
   outlierIndices = new Set(pairs.filter(p => p.val < lo || p.val > hi).map(p => p.origIdx));
   const inliers  = pairs.filter(p => p.val >= lo && p.val <= hi).map(p => p.val);
-
   if (inliers.length < 2) { banner.classList.remove('visible'); return; }
-
-  // Average of inliers for the headline estimate
   const avg = Math.round(inliers.reduce((s,v) => s+v, 0) / inliers.length);
   inliers.sort((a,b) => a-b);
   const low  = inliers[Math.floor(inliers.length * 0.25)];
   const high = inliers[Math.floor(inliers.length * 0.75)];
-
   document.getElementById('est-median').textContent = '$' + avg.toLocaleString();
   document.getElementById('est-range').textContent  = '$' + low.toLocaleString() + ' – $' + high.toLocaleString();
   const nEl = document.getElementById('est-n');
   const excluded = pairs.length - inliers.length;
   nEl.textContent = inliers.length + (excluded > 0 ? ` (${excluded} outlier${excluded>1?'s':''} excluded)` : '');
   banner.classList.add('visible');
-
-  // Re-colour outlier cells in the already-rendered table
   document.querySelectorAll('.adj-val, .adj-val-outlier').forEach(el => {
     const row = el.closest('tr');
     if (!row) return;
@@ -2086,22 +2550,18 @@ function renderEstimate(sorted, rates) {
   });
 }
 
-// Re-render whenever the user tweaks reference specs or rates
 ['ref-beds','ref-baths','ref-cars','ref-land','ref-pool','ref-storeys','adj-growth','adj-bed','adj-bath','adj-car','adj-land','adj-pool','adj-storey','adj-iqr'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', () => { if (allResults.length) renderResults(); });
 });
 
-// ── Auto-fill reference property when search starts ─────────────────────
-// Build a horizontal timeline: sale + lease events oldest→newest with current
-// estimate as the rightmost "today" chip. Scrolls horizontally on overflow.
 function renderRefTimeline(info) {
   const el = document.getElementById('ref-timeline');
   if (!el) return;
   const events = [];
   (info.sale_history  || []).forEach(s => events.push({date: s.date, price: s.price, kind: 'sale'}));
   (info.lease_history || []).forEach(l => events.push({date: l.date, price: l.price, kind: 'lease'}));
-  events.sort((a, b) => a.date.localeCompare(b.date));  // oldest first
+  events.sort((a, b) => a.date.localeCompare(b.date));
   const fmtK = v => v >= 1_000_000 ? `$${(v/1_000_000).toFixed(2)}m`
                   : v >= 1000      ? `$${Math.round(v/1000)}k`
                   : `$${v}`;
@@ -2117,7 +2577,7 @@ function renderRefTimeline(info) {
     const priceTxt = e.kind === 'lease' ? `$${e.price}/wk` : fmtK(e.price);
     const iconChar = e.kind === 'sale' ? '🏷' : '🏘';
     chips.push(
-      `<span class="tl-event ${cls}" title="${e.kind}: ${e.date} — ${priceTxt}">` +
+      `<span class="tl-event ${cls}" data-popover="${popoverAttr(e.kind.toUpperCase() + '\n' + e.date + '\n' + priceTxt)}">` +
       `<span class="tl-price">${iconChar} ${priceTxt}</span>` +
       `<span class="tl-date">${fmtDate(e.date)}</span></span>`
     );
@@ -2136,7 +2596,7 @@ function renderRefTimeline(info) {
       const sub = rentBits.length ? ` · ${rentBits.join(' · ')}` : '';
       const confTip = e.confidence ? ` (${e.confidence} confidence)` : '';
       chips.push(
-        `<span class="tl-event estimate" title="Domain price estimate — median: ${midTxt}${confTip}">` +
+        `<span class="tl-event estimate" data-popover="${popoverAttr('Domain price estimate (today)\nMedian: ' + midTxt + (rangeTxt ? '\nRange: ' + rangeTxt : '') + confTip + (rentBits.length ? '\nRental est: ' + rentBits.join(' · ') : ''))}">` +
         `<span class="tl-price">💰 ${mainTxt}${sub}</span><span class="tl-date">today (est)</span></span>`
       );
     }
@@ -2171,7 +2631,6 @@ function applyRefSpecs(info) {
   if (info.pool === true) parts.push('🏊 pool');
   if (info.storeys === 1) parts.push('single storey');
   if (info.storeys === 2) parts.push('double storey');
-  // Direct Domain property-profile search link for the ref address
   const refAddr = document.getElementById('sel-address').value || '';
   const domainHref = info._source_url || info.url
     || `https://www.domain.com.au/property-profile/?term=${encodeURIComponent(refAddr)}`;
@@ -2179,13 +2638,8 @@ function applyRefSpecs(info) {
   msg.innerHTML = (parts.length
     ? `✅ Auto-filled from Domain: <strong>${parts.join(' · ')}</strong>`
     : `⚠️ Domain didn't have specs for this address — please enter manually.`) + domainLink;
-
-  // Horizontal timeline of past sales + leases + current estimate
   renderRefTimeline(info);
   if (allResults.length) renderResults();
-  // Always fetch OSM extras (building footprint + slope) — pool/storeys are
-  // only filled if Domain didn't already have them, but building+slope always
-  // come from OSM/Open-Meteo so we fetch them regardless.
   if (refLat && refLng) {
     fetchRefExtras(refSearchAddress, refLat, refLng);
   }
@@ -2193,10 +2647,7 @@ function applyRefSpecs(info) {
 
 async function fetchRefExtras(address, lat, lng) {
   try {
-    // Use the address as a search hint via Nominatim to get a Domain URL, or
-    // just call listing-extras with lat/lng only (OSM path)
     const params = new URLSearchParams({ lat, lng });
-    // lat/lng only path — triggers OSM pool check, no Domain scrape needed
     const resp = await fetch('/api/listing-extras?' + params.toString());
     if (!resp.ok) return;
     const data = await resp.json();
@@ -2212,12 +2663,8 @@ async function fetchRefExtras(address, lat, lng) {
     if (bldgEl && !bldgEl.value && data.building_m2 != null) {
       bldgEl.value = String(data.building_m2);
     }
-    // Save ref slope into hidden field so adjustment formula can use it
     const slopeEl = document.getElementById('ref-slope');
     if (slopeEl && data.slope_pct != null) slopeEl.value = String(data.slope_pct);
-    // Surface pool / storeys / building / slope via the message — rent +
-    // demographics were noise here (already in popups); keep ref message
-    // focused on what's about to be auto-filled into the editable fields.
     const msg = document.getElementById('ref-fetch-msg');
     if (msg) {
       const extras = [
@@ -2238,7 +2685,6 @@ async function fetchRefExtras(address, lat, lng) {
   } catch(e) { /* non-fatal */ }
 }
 
-// ── Lazy-load pool/storey for visible rows that don't have them yet ─────────
 let lazyInflight = 0;
 const LAZY_MAX_CONCURRENT = 4;
 const lazyQueue = [];
@@ -2247,11 +2693,8 @@ function scheduleLazyExtras() {
   for (let i = 0; i < allResults.length; i++) {
     const r = allResults[i];
     if (lazyAttempted.has(i)) continue;
-    // Skip only when ALL four extras are already known (pool, storeys,
-    // building footprint, slope). Otherwise hit /api/listing-extras to fill
-    // whatever's missing — all four come from open data sources.
     if (r.pool != null && r.storeys != null && r.building_m2 != null && r.slope_pct != null) continue;
-    if (!r.lat || !r.lng) continue;  // need coords for OSM/Open-Meteo lookups
+    if (!r.lat || !r.lng) continue;
     lazyAttempted.add(i);
     lazyQueue.push(i);
   }
@@ -2280,7 +2723,6 @@ async function fetchExtrasFor(idx) {
         if (r.storeys == null && data.storeys != null) r.storeys = data.storeys;
         if (r.building_m2 == null && data.building_m2 != null) r.building_m2 = data.building_m2;
         if (r.slope_pct   == null && data.slope_pct   != null) r.slope_pct   = data.slope_pct;
-        // Update just the cells in this row instead of re-rendering everything
         updateRowExtras(idx);
       }
     }
@@ -2317,17 +2759,15 @@ function updateRowExtras(idx) {
     const shortLabel = (parts[3] || '').replace(/[()]/g,'');
     slopeCell.outerHTML = `<span class="feat-pill">${parts[0]} ${r.slope_pct}% ${shortLabel}</span>`;
   }
-  // Recompute the adjusted-price cell since pool/storey changed
   const rates = readAdjustmentRates();
   const adj = computeAdjusted(r, rates);
   const adjTd = row.children[2];
   if (adjTd) {
     const adjCls = outlierIndices.has(idx) ? 'price-val adj-val-outlier' : 'price-val adj-val';
     adjTd.innerHTML = (adj.value != null && isFinite(adj.value))
-      ? `<span class="${adjCls}" title="${adj.breakdown}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
+      ? `<span class="${adjCls}" data-popover="${popoverAttr(adj.breakdown)}">$${adj.value.toLocaleString()}</span><div class="sub-muted">${adj.deltaStr}</div>`
       : '—';
   }
-  // Update overall estimate banner since one more comp now has data
   renderEstimate(sortResults([...allResults]), rates);
 }
 
@@ -2345,7 +2785,6 @@ document.querySelectorAll('thead th[data-col]').forEach(th => {
   });
 });
 
-// Format a YYYY-MM-DD sold date as "3 months ago" / "12 days ago" / "2 years ago".
 function soldAgo(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);

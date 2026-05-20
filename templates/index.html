@@ -2181,7 +2181,7 @@
   <div class="app__capital">
 
     <!-- Comparison verdict (top) -->
-    <div class="invest-summary" style="grid-template-columns: 1fr 1fr 1fr;">
+    <div class="invest-summary" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
       <div class="invest-summary__item">
         <span class="invest-summary__label">A · Keep home + invest</span>
         <span class="invest-summary__val" id="cap-a-total">—</span>
@@ -2190,8 +2190,12 @@
         <span class="invest-summary__label">B · Sell home + upgrade</span>
         <span class="invest-summary__val" id="cap-b-total">—</span>
       </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">C · Keep home, no new buy</span>
+        <span class="invest-summary__val" id="cap-c-total">—</span>
+      </div>
       <div class="invest-summary__item invest-summary__item--hero">
-        <span class="invest-summary__label" id="cap-verdict-label">Better pathway</span>
+        <span class="invest-summary__label" id="cap-verdict-label">Best pathway</span>
         <span class="invest-summary__val" id="cap-verdict">—</span>
       </div>
     </div>
@@ -2220,8 +2224,9 @@
             <div class="invest-row"><span class="invest-label">Earner 2 income</span><input class="invest-input" id="cap-p2" type="number" step="1000" value="88700" /></div>
             <div class="invest-row"><span class="invest-label">After-tax income (per yr)</span><span class="invest-out" id="cap-aftertax">—</span></div>
             <div class="invest-row"><span class="invest-label">Monthly living expenses</span><input class="invest-input" id="cap-living" type="number" step="100" value="6000" /><div class="invest-hint">EXCLUDES all property costs.</div></div>
-            <div class="invest-row"><span class="invest-label">Current home growth</span><input class="invest-input" id="cap-home-growth" type="number" step="0.1" value="3" /><div class="invest-hint">% per year (Scenario A keeps this home).</div></div>
+            <div class="invest-row"><span class="invest-label">Current home growth</span><input class="invest-input" id="cap-home-growth" type="number" step="0.1" value="3" /><div class="invest-hint">% per year (Scenario A &amp; C keep this home).</div></div>
             <div class="invest-row"><span class="invest-label">Loan term</span><input class="invest-input" id="cap-term" type="number" step="1" value="30" /><div class="invest-hint">Years (for loan repayment maths).</div></div>
+            <div class="invest-row"><span class="invest-label">Scenario C holding years</span><input class="invest-input" id="cap-c-years" type="number" step="1" value="10" /><div class="invest-hint">How many years before selling in Scenario C (no new purchase).</div></div>
             <div class="invest-hint" style="line-height:1.6;margin-top:4px">
               Scenario A is read from the <b>Investment tab</b> (the IP you buy) — you keep the current home too.<br>
               Scenario B is read from the <b>Owner-occupied tab</b> (the new home you buy after selling).<br>
@@ -2274,8 +2279,46 @@
           </div>
         </div>
 
+        <div class="invest-card invest-card--capital">
+          <div class="invest-card__head">🅲 Keep current home, no new purchase</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Monthly cash flow → savings</div>
+            <div class="invest-row"><span class="invest-label">After-tax income</span><span class="invest-out" id="cc-income">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Living expenses</span><span class="invest-out bad" id="cc-living">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Current home loan repayment</span><span class="invest-out bad" id="cc-homerepay">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="cc-surplus">—</span></div>
+            <div class="cgt-step">After holding years (sell home)</div>
+            <div class="invest-row"><span class="invest-label">Holding years</span><span class="invest-out muted" id="cc-years">—</span></div>
+            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="cc-savings-acc">—</span><div class="invest-hint">Starting cash + monthly savings × months. No property purchase cost.</div></div>
+            <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="cc-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining home loan.</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cc-home-loan-detail">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C)</span><span class="invest-out good" id="cc-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+          </div>
+        </div>
+
       </div>
       <!-- └─ /SCENARIO BREAKDOWNS ─────────────────────────────────────┘ -->
+
+      <!-- ┌─ SCENARIO C ────────────────────────────────────────────────┐ -->
+      <div style="grid-column:1/-1;">
+        <div class="invest-card invest-card--capital">
+          <div class="invest-card__head">🅲 Keep current home, buy nothing new</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Monthly cash flow → savings</div>
+            <div class="invest-row"><span class="invest-label">After-tax income</span><span class="invest-out" id="cc-income">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Living expenses</span><span class="invest-out bad" id="cc-living">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Current home loan repayment</span><span class="invest-out bad" id="cc-homerepay">—</span><div class="invest-hint">P&amp;I on the existing loan. No new property, no rent, no IP costs.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="cc-surplus">—</span></div>
+            <div class="cgt-step">After holding years (sell current home)</div>
+            <div class="invest-row"><span class="invest-label">Holding years</span><input class="invest-input" id="cc-years" type="number" step="1" min="1" max="40" value="10" /><div class="invest-hint">How long before you sell. Independent of the other scenarios.</div></div>
+            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="cc-savings-acc">—</span><div class="invest-hint">Starting cash + monthly savings × months. No deposit or upfront costs.</div></div>
+            <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="cc-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining loan (no CGT — main residence).</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cc-loan-detail">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C)</span><span class="invest-out good" id="cc-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- └─ /SCENARIO C ──────────────────────────────────────────────┘ -->
 
     </div>
   </div>
@@ -4553,18 +4596,51 @@ function recalcCapital() {
     _$('cb-total').classList.toggle('bad',  bTotal < 0);
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // SCENARIO C — keep current home, no new purchase
+  // ──────────────────────────────────────────────────────────────────────────
+  const cYears  = +_$('cap-c-years').value || 10;
+  const cMonths = cYears * 12;
+  const curRepayC = loanPaymentMo(curLoan, curRate, term);
+  const surplusC  = afterTaxMo - livingMo - curRepayC;
+  const cashSavingsC = cashNow + surplusC * cMonths;   // no property purchase deduction
+
+  const curHomeValEndC  = homeVal * Math.pow(1 + homeGrow, cYears);
+  const curHomeLoanEndC = loanBalanceAfter(curLoan, curRate, term, cMonths);
+  const curHomeEqEndC   = curHomeValEndC * (1 - agentPct) - curHomeLoanEndC;
+  const cTotal = cashSavingsC + curHomeEqEndC;
+
+  _$('cc-income').textContent          = fmtMoney(afterTaxMo) + '/mo';
+  _$('cc-living').textContent          = '−' + fmtMoney(livingMo) + '/mo';
+  _$('cc-homerepay').textContent       = '−' + fmtMoney(curRepayC) + '/mo';
+  _$('cc-surplus').textContent         = fmtMoney(surplusC) + '/mo';
+  _$('cc-surplus').classList.toggle('good', surplusC >= 0);
+  _$('cc-surplus').classList.toggle('bad',  surplusC < 0);
+  _$('cc-years').textContent           = cYears + ' yrs';
+  _$('cc-savings-acc').textContent     = fmtMoney(cashSavingsC);
+  _$('cc-home-eq').textContent         = fmtMoney(curHomeEqEndC);
+  _$('cc-home-loan-detail').textContent=
+    `${fmtMoney(curLoan)} → ${fmtMoney(curHomeLoanEndC)}  (paid off ${fmtMoney(curLoan - curHomeLoanEndC)})`;
+  _$('cc-total').textContent           = fmtMoney(cTotal);
+  _$('cc-total').classList.toggle('good', cTotal >= 0);
+  _$('cc-total').classList.toggle('bad',  cTotal < 0);
+
   // Top-of-tab verdict
   _$('cap-a-total').textContent = isFinite(aTotal) ? fmtMoney(aTotal) : '—';
   _$('cap-b-total').textContent = isFinite(bTotal) ? fmtMoney(bTotal) : '—';
-  if (isFinite(aTotal) && isFinite(bTotal)) {
-    const diff = Math.abs(aTotal - bTotal);
-    _$('cap-verdict-label').textContent = aTotal >= bTotal ? 'Investing wins by' : 'Upgrading wins by';
-    _$('cap-verdict').textContent = fmtMoney(diff);
-  }
+  _$('cap-c-total').textContent = fmtMoney(cTotal);
+  const scores = [
+    { label: 'A (keep home + invest)', val: isFinite(aTotal) ? aTotal : -Infinity },
+    { label: 'B (sell + upgrade)',     val: isFinite(bTotal) ? bTotal : -Infinity },
+    { label: 'C (keep, no buy)',       val: cTotal },
+  ];
+  const best = scores.reduce((a, b) => b.val > a.val ? b : a);
+  _$('cap-verdict-label').textContent = 'Best pathway';
+  _$('cap-verdict').textContent = best.label + '  ' + fmtMoney(best.val);
 }
 
 ['cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
- 'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term'].forEach(id => {
+ 'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years'].forEach(id => {
   const el = _$(id); if (el) el.addEventListener('input', recalcCapital);
 });
 

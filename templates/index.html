@@ -2248,7 +2248,9 @@
             <div class="invest-row"><span class="invest-label">Holding years (from Investment tab)</span><span class="invest-out muted" id="ca-years">—</span></div>
             <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="ca-savings-acc">—</span><div class="invest-hint">starting cash − money spent buying the IP + monthly savings × months.</div></div>
             <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="ca-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining home loan.</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="ca-home-loan-detail">—</span></div>
             <div class="invest-row"><span class="invest-label">Investment property equity at sale</span><span class="invest-out good" id="ca-ip-eq">—</span><div class="invest-hint">sale price − selling cost − remaining IP loan − CGT.</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ IP loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="ca-ip-loan-detail">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A)</span><span class="invest-out good" id="ca-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
           </div>
         </div>
@@ -2267,6 +2269,7 @@
             <div class="invest-row"><span class="invest-label">− New home deposit + upfront</span><span class="invest-out bad" id="cb-buycost">—</span></div>
             <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="cb-savings-acc">—</span><div class="invest-hint">leftover cash after buying + monthly savings × months.</div></div>
             <div class="invest-row"><span class="invest-label">New home equity at sale (no CGT)</span><span class="invest-out good" id="cb-home-eq">—</span><div class="invest-hint">sale price − selling cost − remaining loan.</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ new home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cb-home-loan-detail">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B)</span><span class="invest-out good" id="cb-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
           </div>
         </div>
@@ -4498,7 +4501,11 @@ function recalcCapital() {
     _$('ca-years').textContent      = aYears + ' yrs';
     _$('ca-savings-acc').textContent= fmtMoney(cashSavingsA);
     _$('ca-home-eq').textContent    = fmtMoney(curHomeEqEnd);
+    _$('ca-home-loan-detail').textContent =
+      `${fmtMoney(curLoan)} → ${fmtMoney(curHomeLoanEnd)}  (paid off ${fmtMoney(curLoan - curHomeLoanEnd)})`;
     _$('ca-ip-eq').textContent      = fmtMoney(ipEqEnd);
+    _$('ca-ip-loan-detail').textContent =
+      `${fmtMoney(inv.loan)} → ${fmtMoney(inv.remainingLoan)}  (paid off ${fmtMoney(inv.loan - inv.remainingLoan)})`;
     _$('ca-total').textContent      = fmtMoney(aTotal);
     _$('ca-total').classList.toggle('good', aTotal >= 0);
     _$('ca-total').classList.toggle('bad',  aTotal < 0);
@@ -4539,6 +4546,8 @@ function recalcCapital() {
     _$('cb-buycost').textContent    = '−' + fmtMoney(buyCostB);
     _$('cb-savings-acc').textContent= fmtMoney(cashSavingsB);
     _$('cb-home-eq').textContent    = fmtMoney(newHomeEqEnd);
+    _$('cb-home-loan-detail').textContent =
+      `${fmtMoney(own.loan)} → ${fmtMoney(own.remainingLoan)}  (paid off ${fmtMoney(own.loan - own.remainingLoan)})`;
     _$('cb-total').textContent      = fmtMoney(bTotal);
     _$('cb-total').classList.toggle('good', bTotal >= 0);
     _$('cb-total').classList.toggle('bad',  bTotal < 0);

@@ -633,6 +633,12 @@
     /* ════════════════════════════════════════════════════════════════════════
        LEAFLET FLOATING CONTROLS (layers FAB + dynamic legend)
        ════════════════════════════════════════════════════════════════════════ */
+    /* Wrapper renders button at bottom, panel above (column-reverse) so the
+       drop-up animation reads naturally from a bottom-left FAB. */
+    .layer-fab-wrapper {
+      display: flex;
+      flex-direction: column-reverse;
+    }
     .layer-fab {
       background: var(--bg-elev);
       border: 1px solid var(--border-strong);
@@ -653,24 +659,34 @@
       background: var(--bg-elev);
       border: 1px solid var(--border-strong);
       border-radius: var(--r-md);
-      padding: 6px;
-      margin-top: 5px;
-      width: 210px;
-      max-height: 80vh;            /* enough room for all 9 toggles */
+      padding: 3px;
+      margin-top: 0;
+      margin-bottom: 4px;        /* gap above the button (panel renders above it) */
+      width: 188px;
+      /* Cap to whichever is smaller: a sane fixed height that fits ~14 toggles,
+         OR the available viewport minus topbar/search/buffer. Smaller cap means
+         Leaflet's containing map (which clips overflow) never crops the panel. */
+      max-height: min(330px, calc(100vh - 160px));
       overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
-      flex-direction: column;     /* single vertical column, every label fully visible */
-      gap: 4px;
+      flex-direction: column;
+      gap: 1px;
       box-shadow: var(--shadow-lg);
     }
     .layer-fab-panel .zone-toggle {
       margin: 0;
-      font-size: var(--fs-md);
-      padding: 6px 10px;
-      gap: 6px;
-      white-space: nowrap;       /* don't wrap; labels are short enough */
+      font-size: 10.5px;
+      padding: 3px 6px;
+      gap: 4px;
+      white-space: nowrap;
       justify-content: flex-start;
+      line-height: 1.2;
     }
+    /* Custom scrollbar for the panel — slim, theme-matched */
+    .layer-fab-panel::-webkit-scrollbar { width: 6px; }
+    .layer-fab-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+    .layer-fab-panel::-webkit-scrollbar-track { background: transparent; }
 
     .zone-toggles { display: flex; gap: var(--s-2); flex-wrap: wrap; padding: 0; }
     .zone-toggle {
@@ -702,29 +718,44 @@
       padding: 6px 10px;
       font-size: 10px;
       color: var(--text-2);
-      max-width: 320px;
+      max-width: calc(100% - 90px);   /* leave room around basemap switcher on the right */
       line-height: 1.5;
       box-shadow: var(--shadow-md);
       backdrop-filter: blur(6px);
+      /* Top-centre of the .leaflet-container we were appended into.
+         Z-index above the tile layer but below popups. */
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+      z-index: 400;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: row;            /* multiple active layers sit side-by-side */
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 14px;
     }
     .map-legend-floating.empty { display: none; }
     .map-legend-floating .row {
-      display: flex; align-items: center; gap: var(--s-1); flex-wrap: wrap;
+      display: inline-flex; align-items: center; gap: var(--s-1);
+      flex-wrap: nowrap; white-space: nowrap;
     }
     .map-legend-floating .lbl { color: var(--text); font-weight: 600; min-width: 62px; }
     .map-legend-floating .swatch { width: 10px; height: 8px; border-radius: 2px; display: inline-block; vertical-align: middle; }
     .map-legend-floating .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; border: 1.5px solid #fff; vertical-align: middle; }
     @media (max-width: 600px) {
       .layer-fab-panel {
-        width: 190px;
-        padding: 5px;
-        gap: 3px;
-        max-height: 70vh;
+        width: 172px;
+        padding: 3px;
+        gap: 1px;
+        /* Mobile map is 50vh (~300-400px) — leave room above for the button. */
+        max-height: min(300px, calc(50vh - 50px));
       }
       .layer-fab-panel .zone-toggle {
-        font-size: 11px;
-        padding: 5px 8px;
-        line-height: 1.25;
+        font-size: 10px;
+        padding: 3px 5px;
+        line-height: 1.15;
       }
       .map-legend-floating { max-width: 240px; font-size: 9px; }
     }
@@ -1004,6 +1035,209 @@
       .table-wrap tbody tr { grid-template-columns: 1fr; gap: 4px; }
       .table-wrap tbody td.td-address { padding-bottom: var(--s-2); }
     }
+
+    /* ════════════════════════════════════════════════════════════════════════
+       TAB NAV + CITY FOCUS + INVESTMENT DASHBOARD
+       ════════════════════════════════════════════════════════════════════════ */
+    .topbar__focus {
+      display: inline-flex; background: var(--bg-elev-2);
+      border: 1px solid var(--border); border-radius: var(--r-pill);
+      padding: 2px; margin-left: auto; margin-right: var(--s-3);
+    }
+    .focus-btn {
+      background: transparent; border: 0; color: var(--text-3);
+      padding: 4px 12px; border-radius: var(--r-pill);
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      cursor: pointer; transition: background var(--t-fast), color var(--t-fast);
+    }
+    .focus-btn:hover { color: var(--text); }
+    .focus-btn.active { background: var(--brand); color: #fff; }
+    @media (max-width: 560px) {
+      .focus-btn { padding: 3px 8px; }
+    }
+
+    .topbar__tabs { display: flex; gap: var(--s-1); }
+    .tab-btn {
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-2); cursor: pointer;
+      padding: 6px 14px; border-radius: var(--r-pill);
+      font-size: var(--fs-md); font-weight: 600;
+      transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+    }
+    .tab-btn:hover { color: var(--text); background: var(--bg-elev); }
+    .tab-btn.active {
+      color: #fff; background: var(--brand-soft);
+      border-color: var(--brand);
+    }
+    @media (max-width: 560px) {
+      .tab-btn { padding: 5px 10px; font-size: var(--fs-sm); }
+    }
+
+    /* When the investment tab is active, hide all search-mode panels */
+    .app.invest-mode .app__search, .app.invest-mode .app__config, .app.invest-mode .app__map, .app.invest-mode .app__estimate, .app.invest-mode .app__results,
+    .app.owner-mode  .app__search, .app.owner-mode  .app__config, .app.owner-mode  .app__map, .app.owner-mode  .app__estimate, .app.owner-mode  .app__results,
+    .app.capital-mode .app__search, .app.capital-mode .app__config, .app.capital-mode .app__map, .app.capital-mode .app__estimate, .app.capital-mode .app__results { display: none !important; }
+    .app__invest, .app__owner, .app__capital { display: none; }
+    .app.invest-mode  .app__invest  { display: block; }
+    .app.owner-mode   .app__owner   { display: block; }
+    .app.capital-mode .app__capital { display: block; }
+    .app__owner, .app__capital { grid-column: 1 / -1; padding: var(--s-6); max-width: var(--content-max-w); }
+    @media (max-width: 640px) { .app__owner, .app__capital { padding: var(--s-3); } }
+
+    .app__invest {
+      grid-column: 1 / -1;
+      padding: var(--s-6);
+      max-width: var(--content-max-w);
+    }
+    @media (max-width: 640px) { .app__invest { padding: var(--s-3); } }
+
+    /* Summary bar — sticky at top of the Investment tab */
+    .invest-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--s-3);
+      margin-bottom: var(--s-5);
+      position: sticky; top: var(--topbar-h); z-index: 30;
+    }
+    .invest-summary__item {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: var(--s-3) var(--s-4);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .invest-summary__item--hero {
+      background: var(--brand-soft); border-color: var(--brand);
+    }
+    .invest-summary__label {
+      font-size: var(--fs-sm); color: var(--text-2);
+      text-transform: uppercase; letter-spacing: .03em;
+    }
+    .invest-summary__val {
+      font-size: var(--fs-xl); font-weight: 800; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .invest-summary__item--hero .invest-summary__val { color: var(--brand-strong); }
+    .invest-summary__val.good { color: var(--success); }
+    .invest-summary__val.bad  { color: var(--danger); }
+    @media (max-width: 760px) {
+      .invest-summary { grid-template-columns: 1fr 1fr; gap: var(--s-2); position: static; }
+      .invest-summary__val { font-size: var(--fs-lg); }
+    }
+
+    /* Income-tax output fields dim when NG is off (still computed; just unused there) */
+    .invest-row .invest-out.unused { opacity: .45; }
+
+    /* The headline "total capital" card gets a brand accent */
+    .invest-card--capital { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand) inset; }
+    .invest-card--capital .invest-card__head { background: var(--brand-soft); color: var(--brand-strong); }
+
+    /* CGT method picker + step section headers */
+    .cgt-method {
+      display: flex; flex-direction: column; gap: 4px;
+      background: var(--bg-elev-2); border-radius: var(--r-md);
+      padding: var(--s-2) var(--s-3); margin-bottom: var(--s-2);
+    }
+    .cgt-method label { display: flex; align-items: center; gap: 6px; font-size: var(--fs-md); cursor: pointer; }
+    .cgt-method__sub { color: var(--text-3); font-size: var(--fs-sm); }
+    .cgt-step {
+      font-size: var(--fs-sm); font-weight: 700; color: var(--brand-strong);
+      text-transform: uppercase; letter-spacing: .04em;
+      margin: var(--s-2) 0 2px; padding-top: var(--s-2);
+      border-top: 1px solid var(--border);
+    }
+    .cgt-step:first-of-type { border-top: none; padding-top: 0; }
+
+    .invest-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+      gap: var(--s-5);
+    }
+    @media (max-width: 900px) { .invest-grid { grid-template-columns: 1fr; } }
+
+    .invest-card {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: var(--r-lg); overflow: hidden;
+    }
+    .invest-card__head {
+      padding: var(--s-3) var(--s-4);
+      background: var(--bg-elev-2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-weight: 700; font-size: var(--fs-md);
+      letter-spacing: .02em; text-transform: uppercase; color: var(--text-2);
+    }
+    .invest-card__body { padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-3); }
+
+    /* A single input row: label + input on left, optional unit suffix */
+    .invest-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px 12px;
+      align-items: center;
+    }
+    .invest-row .invest-label {
+      color: var(--text);
+      font-size: var(--fs-md);
+      line-height: 1.3;
+    }
+    .invest-row .invest-hint {
+      grid-column: 1 / -1;
+      color: var(--text-3); font-size: var(--fs-sm); line-height: 1.4;
+      margin-top: -4px;
+    }
+    .invest-row input.invest-input {
+      width: 140px; max-width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm);
+      padding: 7px 10px; color: var(--text);
+      font-size: var(--fs-md);
+      font-variant-numeric: tabular-nums;
+      text-align: right; outline: none;
+      transition: border-color var(--t-fast), box-shadow var(--t-fast);
+    }
+    .invest-row input.invest-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+    .invest-row input.invest-input:disabled {
+      background: var(--bg); color: var(--text-3); cursor: not-allowed; opacity: .55;
+    }
+
+    /* Read-only calculated value */
+    .invest-row .invest-out {
+      width: 140px; max-width: 100%; padding: 7px 10px;
+      background: transparent; border: 1px dashed var(--border);
+      border-radius: var(--r-sm);
+      color: var(--brand-strong); font-weight: 700;
+      font-size: var(--fs-md); font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    .invest-row .invest-out.muted { color: var(--text-3); font-weight: 500; }
+    .invest-row .invest-out.bad   { color: var(--danger); }
+    .invest-row .invest-out.good  { color: var(--success); }
+
+    /* Toggle switch */
+    .ng-toggle {
+      display: flex; align-items: center; gap: var(--s-2);
+      padding: var(--s-2) var(--s-3);
+      background: var(--bg-elev-2); border-radius: var(--r-md);
+      cursor: pointer; user-select: none;
+    }
+    .ng-toggle input { appearance: none; -webkit-appearance: none;
+      width: 38px; height: 22px; background: var(--border-strong);
+      border-radius: 99px; position: relative; cursor: pointer;
+      transition: background var(--t-fast);
+    }
+    .ng-toggle input::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; background: #fff; border-radius: 50%;
+      transition: transform var(--t-fast);
+    }
+    .ng-toggle input:checked { background: var(--brand); }
+    .ng-toggle input:checked::after { transform: translateX(16px); }
+    .ng-toggle .ng-label { font-weight: 600; color: var(--text); }
+
+    /* When NG is disabled, dim its body */
+    .invest-card[data-ng-off="true"] .invest-card__body > *:not(.ng-toggle) {
+      opacity: .4; pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -1011,7 +1245,7 @@
 <div class="app">
 
   <!-- ═══════════════════════════════════════════════════════════════════════
-       TOP BAR
+       TOP BAR — brand + tab nav
        ═══════════════════════════════════════════════════════════════════════ -->
   <div class="app__topbar topbar">
     <div class="topbar__brand">
@@ -1021,6 +1255,16 @@
         <span class="topbar__sub">Nearby sales · CMA · School &amp; neighbourhood data</span>
       </div>
     </div>
+    <div class="topbar__focus" role="group" aria-label="City focus">
+      <button class="focus-btn" data-focus="mel" type="button" title="Focus on Greater Melbourne">MEL</button>
+      <button class="focus-btn" data-focus="per" type="button" title="Focus on Greater Perth">PER</button>
+    </div>
+    <nav class="topbar__tabs">
+      <button class="tab-btn active" data-tab="search" type="button">📍 Search</button>
+      <button class="tab-btn"        data-tab="invest" type="button">💰 Investment</button>
+      <button class="tab-btn"        data-tab="owner"  type="button">🏡 Owner-occupied</button>
+      <button class="tab-btn"        data-tab="capital" type="button">💎 Capital</button>
+    </nav>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -1270,6 +1514,11 @@
         <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
         <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
         <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
+        <div class="zone-toggle" id="toggle-overlay-avm_median" onclick="togglePriceMetric('avm_median')">🏠 Current price</div>
+        <div class="zone-toggle" id="toggle-overlay-hvi_3"      onclick="togglePriceMetric('hvi_3')">📈 Price · 3mo</div>
+        <div class="zone-toggle" id="toggle-overlay-hvi_12"     onclick="togglePriceMetric('hvi_12')">📈 Price · 12mo</div>
+        <div class="zone-toggle" id="toggle-overlay-rent_cur"   onclick="togglePriceMetric('rent_cur')">💰 Current rent</div>
+        <div class="zone-toggle" id="toggle-overlay-rent_1y"    onclick="togglePriceMetric('rent_1y')">📊 Rent · 12mo</div>
       </div>
       <div id="map"></div>
     </div>
@@ -1323,6 +1572,708 @@
           <tbody id="results-body"></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       INVESTMENT TAB — cash-flow analyser (hidden until tab clicked)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__invest">
+
+    <!-- ── Summary bar (spans full width, sticky at top of tab) ── -->
+    <div class="invest-summary" id="invest-summary">
+      <div class="invest-summary__item invest-summary__item--hero">
+        <span class="invest-summary__label">Net benefit after CGT</span>
+        <span class="invest-summary__val" id="s-final">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">Upfront cost (non-recoverable)</span>
+        <span class="invest-summary__val" id="s-upfront-cost">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">Total upfront payment</span>
+        <span class="invest-summary__val" id="s-upfront-total">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">Net monthly cost (excl. principal)</span>
+        <span class="invest-summary__val" id="s-monthly">—</span>
+      </div>
+    </div>
+
+    <div class="invest-grid">
+
+      <!-- ┌─ INPUTS ─────────────────────────────────────────────────────┐ -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+
+        <div class="invest-card">
+          <div class="invest-card__head">🏷 Property &amp; loan</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Loan amount</span>
+              <input class="invest-input" id="i-loan" type="number" step="1000" value="720000" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">LVR (loan-to-value)</span>
+              <input class="invest-input" id="i-lvr" type="number" step="1" min="50" max="100" value="95" />
+              <div class="invest-hint">Loan as a % of house price. 95% means you borrow 95% — sheet default.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Annual interest rate</span>
+              <input class="invest-input" id="i-rate" type="number" step="0.01" value="6.5" />
+              <div class="invest-hint">Variable home-loan rate (%) used for P&amp;I over 30 years.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Holding period (years)</span>
+              <input class="invest-input" id="i-years" type="number" step="1" min="1" max="30" value="10" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Stamp duty rate</span>
+              <input class="invest-input" id="i-stamp-pct" type="number" step="0.1" value="5.5" />
+              <div class="invest-hint">% of purchase price. VIC ~4%, WA ~5.5%, NSW ~4%.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Lender's Mortgage Insurance (LMI)</span>
+              <input class="invest-input" id="i-lmi" type="number" step="500" value="23000" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Legal &amp; conveyancing fees</span>
+              <input class="invest-input" id="i-legal" type="number" step="100" value="1800" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Buyer's agent fees</span>
+              <input class="invest-input" id="i-buyer-agent" type="number" step="500" value="0" />
+              <div class="invest-hint">Optional. Counts toward the CGT cost base.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Capital improvements (reno/extension)</span>
+              <input class="invest-input" id="i-reno" type="number" step="1000" value="0" />
+              <div class="invest-hint">Major works only (not repairs). Adds to the CGT cost base.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">💵 Income &amp; running costs (monthly)</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Rent received</span>
+              <input class="invest-input" id="i-rent" type="number" step="10" value="2000" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">House &amp; contents insurance</span>
+              <input class="invest-input" id="i-insurance" type="number" step="10" value="120" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Council rates</span>
+              <input class="invest-input" id="i-council" type="number" step="10" value="180" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Land tax</span>
+              <input class="invest-input" id="i-land-tax" type="number" step="10" value="200" />
+              <div class="invest-hint">Investment-only — your own home is exempt.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Repairs &amp; maintenance</span>
+              <input class="invest-input" id="i-repairs" type="number" step="10" value="200" />
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">📈 Growth, inflation &amp; sale</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Estimated annual growth</span>
+              <input class="invest-input" id="i-growth" type="number" step="0.1" value="7" />
+              <div class="invest-hint">% per year — used to estimate sale price after the holding period.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Inflation rate</span>
+              <input class="invest-input" id="i-inflation" type="number" step="0.1" value="2.5" />
+              <div class="invest-hint">% per year. Used to split the capital gain into a real gain vs the inflationary (paper) portion.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Selling costs (agent commission)</span>
+              <input class="invest-input" id="i-sell-pct" type="number" step="0.1" value="2" />
+              <div class="invest-hint">Agent's share, typically 1.5–2% of sale price. Deducted from BOTH your profit and the CGT proceeds.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">👥 Household income &amp; spending</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Earner&nbsp;1 — gross income</span>
+              <input class="invest-input" id="i-p1-income" type="number" step="1000" value="115000" />
+              <div class="invest-hint">Pre-tax annual income. Used for negative gearing, capital-gains tax and the total-capital projection.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Earner&nbsp;1 — income tax</span>
+              <span class="invest-out" id="o-p1-tax">—</span>
+              <div class="invest-hint">Auto-calculated (2024-25 ATO Stage-3 brackets, no Medicare).</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Earner&nbsp;2 — gross income</span>
+              <input class="invest-input" id="i-p2-income" type="number" step="1000" value="88700" />
+              <div class="invest-hint">Set to 0 if single-income household.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Earner&nbsp;2 — income tax</span>
+              <span class="invest-out" id="o-p2-tax">—</span>
+              <div class="invest-hint">Auto-calculated (2024-25 ATO Stage-3 brackets, no Medicare).</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card" id="ng-card" data-ng-off="true">
+          <div class="invest-card__head">
+            🧮 Negative gearing
+          </div>
+          <div class="invest-card__body">
+            <label class="ng-toggle">
+              <input type="checkbox" id="i-ng-on" />
+              <span class="ng-label">Apply negative-gearing tax benefit</span>
+            </label>
+            <div class="invest-hint" id="ng-note" style="margin-top:var(--s-2)">
+              Off: the household-income tax fields above are shown muted (not used here).
+              On: the annual rental loss reduces each earner's taxable income.
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- └─ /INPUTS ───────────────────────────────────────────────────┘ -->
+
+      <!-- ┌─ OUTPUTS ────────────────────────────────────────────────────┐ -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+
+        <div class="invest-card">
+          <div class="invest-card__head">💼 Upfront costs</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">House price</span>
+              <span class="invest-out" id="o-price">—</span>
+              <div class="invest-hint">Implied purchase price = loan ÷ LVR. With 95% LVR, $720,000 loan implies $757,894.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Deposit</span>
+              <span class="invest-out" id="o-deposit">—</span>
+              <div class="invest-hint">The portion you pay from savings: house price − loan.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Stamp duty</span>
+              <span class="invest-out" id="o-stamp">—</span>
+              <div class="invest-hint">Stamp-duty rate × house price.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Total cash needed up-front</span>
+              <span class="invest-out" id="o-upfront" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Deposit + stamp duty + LMI + legal/conveyancing.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">📊 Monthly cash-flow</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Monthly mortgage (P&amp;I)</span>
+              <span class="invest-out" id="o-pmt">—</span>
+              <div class="invest-hint">Principal + interest payment on a 30-year loan at the rate above.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Avg monthly interest (first n yrs)</span>
+              <span class="invest-out" id="o-avg-int">—</span>
+              <div class="invest-hint">The interest portion only, averaged over the holding period. This is what gets compared against rent for the loss calc — principal repayments build your equity so they aren't "lost".</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Total monthly expenses</span>
+              <span class="invest-out" id="o-exp">—</span>
+              <div class="invest-hint">Avg interest + insurance + land tax + repairs.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Total monthly income</span>
+              <span class="invest-out" id="o-inc">—</span>
+              <div class="invest-hint">Currently just the rent.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Monthly loss (before NG)</span>
+              <span class="invest-out bad" id="o-loss">—</span>
+              <div class="invest-hint">Expenses − income. Positive = you're feeding the property each month.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Monthly NG tax refund</span>
+              <span class="invest-out muted" id="o-ng-refund">—</span>
+              <div class="invest-hint">Annual NG benefit ÷ 12. Zero when negative gearing is OFF.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Net monthly out-of-pocket</span>
+              <span class="invest-out bad" id="o-net" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">What it really costs you per month after the tax refund: monthly loss − monthly NG refund.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">⏳ Hold-period totals</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Net out-of-pocket over n years</span>
+              <span class="invest-out bad" id="o-hold-net">—</span>
+              <div class="invest-hint">Net monthly × 12 × years. Cash you'll have fed the property.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Total cost incl. upfront fees</span>
+              <span class="invest-out bad" id="o-hold-total" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Holding cost + stamp duty + LMI + legal + agent sell cost. (Deposit &amp; principal excluded — recoverable equity.)</div>
+            </div>
+            <div class="invest-hint" id="o-cost-words" style="margin-top:4px;line-height:1.5"></div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">🧾 Negative-gearing detail</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Annual rental loss</span>
+              <span class="invest-out" id="o-ng-loss">—</span>
+              <div class="invest-hint">12 × monthly loss before NG.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Combined NG income-reduction %</span>
+              <span class="invest-out" id="o-ng-pct">—</span>
+              <div class="invest-hint">Annual loss ÷ (Earner 1 + Earner 2 income). The share each earner deducts from their taxable income.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Earner 1 — tax before / after</span>
+              <span class="invest-out" id="o-ng-p1">— / —</span>
+              <div class="invest-hint">ATO 2024-25 brackets, income-tax only (no Medicare levy) — matches your sheet.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Earner 2 — tax before / after</span>
+              <span class="invest-out" id="o-ng-p2">— / —</span>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Annual NG benefit</span>
+              <span class="invest-out good" id="o-ng-benefit" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Sum of (old tax − new tax) across both earners. Zero when NG toggle is off.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">🚀 Capital growth &amp; exit</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Annual price growth needed to break even</span>
+              <span class="invest-out" id="o-min-growth-fixed">—</span>
+              <div class="invest-hint">total cost ÷ (house price × years). The yearly % the property's value must rise so the capital gain over n years just covers all your holding + upfront costs. Anything above this is profit.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Estimated growth over n years</span>
+              <span class="invest-out" id="o-grow-pct">—</span>
+              <div class="invest-hint">Simple growth: rate × years (matches your sheet — no compounding).</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Estimated profit on sale (your view)</span>
+              <span class="invest-out good" id="o-profit" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Capital gain (price × growth %) − total holding+upfront cost − agent selling cost. Your real economic profit before capital-gains tax.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">🏛️ Capital gains tax</div>
+          <div class="invest-card__body">
+
+            <!-- Method picker -->
+            <div class="cgt-method">
+              <label><input type="radio" name="cgt-method" value="discount"> 50% discount <span class="cgt-method__sub">(current rule, sale before Jul 2027)</span></label>
+              <label><input type="radio" name="cgt-method" value="index" checked> Inflation indexing <span class="cgt-method__sub">(new rule, from 1 Jul 2027)</span></label>
+            </div>
+
+            <!-- STEP 1 — proceeds -->
+            <div class="cgt-step">Step 1 · What you sell for</div>
+            <div class="invest-row"><span class="invest-label">Sale price (after n yrs)</span><span class="invest-out" id="o-cgt-saleprice">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Selling costs (agent)</span><span class="invest-out bad" id="o-cgt-sellcost">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Net sale proceeds</span><span class="invest-out" id="o-cgt-proceeds">—</span></div>
+
+            <!-- STEP 2 — cost base -->
+            <div class="cgt-step">Step 2 · Your cost base</div>
+            <div class="invest-hint" style="margin:-2px 0 2px">Edit any of these amounts in the “🏷 Property &amp; loan” card on the left.</div>
+            <div class="invest-row"><span class="invest-label">Purchase price</span><span class="invest-out muted" id="o-cgt-cb-price">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Stamp duty</span><span class="invest-out muted" id="o-cgt-cb-stamp">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Legal / conveyancing</span><span class="invest-out muted" id="o-cgt-cb-legal">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Buyer's agent</span><span class="invest-out muted" id="o-cgt-cb-buyer">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Capital improvements</span><span class="invest-out muted" id="o-cgt-cb-reno">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Cost base</span><span class="invest-out" id="o-cgt-costbase">—</span>
+              <div class="invest-hint">LMI &amp; holding costs (interest, rates, insurance, repairs) are excluded — they're deductible/borrowing expenses, not CGT cost-base items.</div>
+            </div>
+            <div class="invest-row" id="row-cgt-indexed" style="display:none">
+              <span class="invest-label" style="font-weight:700">= Indexed cost base</span><span class="invest-out" id="o-cgt-indexed">—</span>
+              <div class="invest-hint">New rule: cost base × (1 + inflation)^years. Inflating the cost base shrinks the taxable gain instead of halving it.</div>
+            </div>
+
+            <!-- STEP 3 — taxable gain -->
+            <div class="cgt-step">Step 3 · Taxable capital gain</div>
+            <div class="invest-row"><span class="invest-label" id="lbl-cgt-gain">Capital gain</span><span class="invest-out" id="o-cgt-gain">—</span>
+              <div class="invest-hint" id="hint-cgt-gain">Net sale proceeds − cost base.</div>
+            </div>
+            <div class="invest-row" id="row-cgt-discount">
+              <span class="invest-label">− 50% discount (held ≥ 1 yr)</span><span class="invest-out muted" id="o-cgt-disc">—</span>
+            </div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Taxable gain</span><span class="invest-out" id="o-cgt-taxable">—</span>
+              <div class="invest-hint" id="hint-cgt-taxable">Old rule: gain × 50%. New rule: gain measured against the inflation-indexed cost base (no discount).</div>
+            </div>
+
+            <!-- STEP 4 — tax on the gain -->
+            <div class="cgt-step">Step 4 · Tax on the gain (added to your salary)</div>
+            <div class="invest-row"><span class="invest-label">Gain added per earner (50/50)</span><span class="invest-out" id="o-cgt-share">—</span></div>
+            <div class="invest-row"><span class="invest-label">Earner 1 — tax before → after</span><span class="invest-out" id="o-cgt-p1">—</span></div>
+            <div class="invest-row"><span class="invest-label">Earner 2 — tax before → after</span><span class="invest-out" id="o-cgt-p2">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Total capital gains tax</span><span class="invest-out bad" id="o-cgt-total" style="border-style:solid;border-color:var(--brand);">—</span></div>
+
+            <!-- STEP 5 — net -->
+            <div class="cgt-step">Step 5 · Bottom line</div>
+            <div class="invest-row"><span class="invest-label">Your profit on sale (from above)</span><span class="invest-out" id="o-cgt-profit">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Net profit after CGT</span><span class="invest-out good" id="o-cgt-net" style="border-style:solid;border-color:var(--brand);">—</span></div>
+          </div>
+        </div>
+
+
+      </div>
+      <!-- └─ /OUTPUTS ──────────────────────────────────────────────────┘ -->
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       OWNER-OCCUPIED TAB — self-contained; no link to Search/Investment.
+       Main residence: capital gain is CGT-EXEMPT, interest is NOT deductible.
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__owner">
+
+    <div class="invest-summary" id="owner-summary">
+      <div class="invest-summary__item invest-summary__item--hero">
+        <span class="invest-summary__label">Net benefit on sale</span>
+        <span class="invest-summary__val" id="oo-s-final">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">Upfront cost (non-recoverable)</span>
+        <span class="invest-summary__val" id="oo-s-upfront-cost">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">Total upfront payment</span>
+        <span class="invest-summary__val" id="oo-s-upfront-total">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">Net monthly cost (excl. principal)</span>
+        <span class="invest-summary__val" id="oo-s-monthly">—</span>
+      </div>
+    </div>
+
+    <div class="invest-grid">
+
+      <!-- ┌─ INPUTS ─────────────────────────────────────────────────────┐ -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+
+        <div class="invest-card">
+          <div class="invest-card__head">🏷 Property &amp; loan</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Property price</span>
+              <input class="invest-input" id="oo-price" type="number" step="1000" value="1200000" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">LVR (loan-to-value)</span>
+              <input class="invest-input" id="oo-lvr" type="number" step="1" min="0" max="100" value="80" />
+              <div class="invest-hint">Loan as a % of price. 80% avoids LMI; above 80% usually incurs it.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Loan amount</span>
+              <span class="invest-out" id="oo-o-loan">—</span>
+              <div class="invest-hint">Price × LVR (auto).</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Deposit</span>
+              <span class="invest-out" id="oo-o-deposit-calc">—</span>
+              <div class="invest-hint">Price − loan (auto).</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Annual interest rate</span>
+              <input class="invest-input" id="oo-rate" type="number" step="0.01" value="6.5" />
+              <div class="invest-hint">% — P&amp;I over 30 years. (Owner-occupier interest is NOT tax-deductible.)</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Stamp duty rate</span>
+              <input class="invest-input" id="oo-stamp-pct" type="number" step="0.1" value="5.5" />
+              <div class="invest-hint">% of price. Owner-occupiers often get concessions — adjust as needed.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Stamp duty (auto)</span>
+              <span class="invest-out" id="oo-o-stamp">—</span>
+              <div class="invest-hint">Stamp-duty rate × price.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Lender's Mortgage Insurance</span>
+              <input class="invest-input" id="oo-lmi" type="number" step="500" value="0" />
+              <div class="invest-hint">Usually $0 if deposit ≥ 20%.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Legal &amp; conveyancing</span>
+              <input class="invest-input" id="oo-legal" type="number" step="100" value="1800" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Buyer's agent fees</span>
+              <input class="invest-input" id="oo-buyer-agent" type="number" step="500" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">💵 Running costs (monthly)</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Council rates</span>
+              <input class="invest-input" id="oo-rates" type="number" step="10" value="180" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Home &amp; contents insurance</span>
+              <input class="invest-input" id="oo-insurance" type="number" step="10" value="120" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Maintenance / repairs</span>
+              <input class="invest-input" id="oo-maint" type="number" step="10" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">📈 Growth, inflation &amp; sale</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Estimated annual growth</span>
+              <input class="invest-input" id="oo-growth" type="number" step="0.1" value="6" />
+              <div class="invest-hint">% per year.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Inflation rate</span>
+              <input class="invest-input" id="oo-inflation" type="number" step="0.1" value="0" />
+              <div class="invest-hint">% per year — used to show the real (above-inflation) gain.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Holding period (years)</span>
+              <input class="invest-input" id="oo-years" type="number" step="1" min="1" max="40" value="10" />
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Selling costs (agent commission)</span>
+              <input class="invest-input" id="oo-sell-pct" type="number" step="0.1" value="2" />
+              <div class="invest-hint">Agent's share, typically 1.5–2% of sale price.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- └─ /INPUTS ───────────────────────────────────────────────────┘ -->
+
+      <!-- ┌─ OUTPUTS ────────────────────────────────────────────────────┐ -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+
+        <div class="invest-card">
+          <div class="invest-card__head">💼 Upfront costs</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Deposit</span>
+              <span class="invest-out" id="oo-o-deposit">—</span>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Stamp duty</span>
+              <span class="invest-out" id="oo-o-stamp2">—</span>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Total cash needed up-front</span>
+              <span class="invest-out" id="oo-o-upfront" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Deposit + stamp duty + LMI + legal + buyer's agent.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">📊 Holding costs (over n years)</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Monthly mortgage (P&amp;I)</span>
+              <span class="invest-out" id="oo-o-pmt">—</span>
+              <div class="invest-hint">Full repayment = principal + interest.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">— avg monthly interest (cost)</span>
+              <span class="invest-out bad" id="oo-o-int-mo">—</span>
+              <div class="invest-hint">The true cost — builds no equity. Not tax-deductible for a home.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">— avg monthly principal (equity)</span>
+              <span class="invest-out muted" id="oo-o-prin-mo">—</span>
+              <div class="invest-hint">Pays down your loan = recoverable equity. NOT counted as a cost.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Total interest paid (first n yrs)</span>
+              <span class="invest-out bad" id="oo-o-interest">—</span>
+              <div class="invest-hint">Sum of the interest portion over the period — this is what counts toward holding cost. Principal repayments are excluded.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Rates + insurance + maintenance</span>
+              <span class="invest-out bad" id="oo-o-running">—</span>
+              <div class="invest-hint">(rates + insurance + maintenance) × 12 × years.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Total holding cost</span>
+              <span class="invest-out bad" id="oo-o-holdtotal" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Interest + rates + insurance + maintenance over the period. (Principal excluded — recoverable equity.)</div>
+            </div>
+            <div class="invest-hint" id="oo-cost-words" style="margin-top:4px;line-height:1.5"></div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">🚀 Sale &amp; net benefit</div>
+          <div class="invest-card__body">
+            <div class="invest-row">
+              <span class="invest-label">Estimated sale price (after n yrs)</span>
+              <span class="invest-out" id="oo-o-saleprice">—</span>
+              <div class="invest-hint">Price × (1 + growth% × years).</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">− Selling costs</span>
+              <span class="invest-out bad" id="oo-o-sellcost">—</span>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Capital gain (CGT-exempt)</span>
+              <span class="invest-out good" id="oo-o-gain">—</span>
+              <div class="invest-hint">Sale price − purchase price. Your main residence is exempt from capital gains tax, so the whole gain is yours.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">— real gain (above inflation)</span>
+              <span class="invest-out" id="oo-o-realgain">—</span>
+              <div class="invest-hint">Gain adjusted for inflation over the holding period — your true purchasing-power gain.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label" style="font-weight:700">Net benefit on sale</span>
+              <span class="invest-out good" id="oo-o-net" style="border-style:solid;border-color:var(--brand);">—</span>
+              <div class="invest-hint">Capital gain − selling costs − holding costs − acquisition fees. Deposit &amp; principal repayments are excluded (recoverable equity). Capital gain is CGT-free for your home. Also excludes the rent you'd otherwise pay — owning's hidden bonus.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- └─ /OUTPUTS ──────────────────────────────────────────────────┘ -->
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       CAPITAL TAB — compares two pathways after the holding period:
+       A) keep current home + buy an investment property
+       B) sell current home now + buy a bigger owner-occupied home
+       Models the offset account month-by-month for both.
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="app__capital">
+
+    <!-- Comparison verdict (top) -->
+    <div class="invest-summary" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">A · Keep home + invest</span>
+        <span class="invest-summary__val" id="cap-a-total">—</span>
+      </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">B · Sell home + upgrade</span>
+        <span class="invest-summary__val" id="cap-b-total">—</span>
+      </div>
+      <div class="invest-summary__item invest-summary__item--hero">
+        <span class="invest-summary__label" id="cap-verdict-label">Better pathway</span>
+        <span class="invest-summary__val" id="cap-verdict">—</span>
+      </div>
+    </div>
+
+    <div class="invest-grid">
+
+      <!-- ┌─ INPUTS ─────────────────────────────────────────────────────┐ -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+        <div class="invest-card">
+          <div class="invest-card__head">📍 Today: current home + savings</div>
+          <div class="invest-card__body">
+            <div class="invest-row"><span class="invest-label">Current home value</span><input class="invest-input" id="cap-home-value" type="number" step="1000" value="900000" /></div>
+            <div class="invest-row"><span class="invest-label">Agent fee to sell</span><input class="invest-input" id="cap-agent" type="number" step="0.1" value="2" /><div class="invest-hint">%</div></div>
+            <div class="invest-row"><span class="invest-label">Current home loan</span><input class="invest-input" id="cap-cur-loan" type="number" step="1000" value="700000" /></div>
+            <div class="invest-row"><span class="invest-label">Current home loan rate</span><input class="invest-input" id="cap-cur-rate" type="number" step="0.01" value="6.05" /><div class="invest-hint">% — P&amp;I over the loan term.</div></div>
+            <div class="invest-row"><span class="invest-label">Equity if sold today</span><span class="invest-out" id="cap-equity-now">—</span><div class="invest-hint">value × (1 − agent) − loan.</div></div>
+            <div class="invest-row"><span class="invest-label">Cash savings now</span><input class="invest-input" id="cap-savings" type="number" step="1000" value="120000" /></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">Total capital today</span><span class="invest-out" id="cap-total-now">—</span></div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">👥 Income, living &amp; growth</div>
+          <div class="invest-card__body">
+            <div class="invest-row"><span class="invest-label">Earner 1 income</span><input class="invest-input" id="cap-p1" type="number" step="1000" value="115000" /></div>
+            <div class="invest-row"><span class="invest-label">Earner 2 income</span><input class="invest-input" id="cap-p2" type="number" step="1000" value="88700" /></div>
+            <div class="invest-row"><span class="invest-label">After-tax income (per yr)</span><span class="invest-out" id="cap-aftertax">—</span></div>
+            <div class="invest-row"><span class="invest-label">Monthly living expenses</span><input class="invest-input" id="cap-living" type="number" step="100" value="6000" /><div class="invest-hint">EXCLUDES all property costs.</div></div>
+            <div class="invest-row"><span class="invest-label">Current home growth</span><input class="invest-input" id="cap-home-growth" type="number" step="0.1" value="3" /><div class="invest-hint">% per year (Scenario A keeps this home).</div></div>
+            <div class="invest-row"><span class="invest-label">Loan term</span><input class="invest-input" id="cap-term" type="number" step="1" value="30" /><div class="invest-hint">Years (for loan repayment maths).</div></div>
+            <div class="invest-hint" style="line-height:1.6;margin-top:4px">
+              Scenario A is read from the <b>Investment tab</b> (the IP you buy) — you keep the current home too.<br>
+              Scenario B is read from the <b>Owner-occupied tab</b> (the new home you buy after selling).<br>
+              <b>Offset interest savings are NOT modelled yet</b> — surplus just accumulates as plain savings.
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- └─ /INPUTS ───────────────────────────────────────────────────┘ -->
+
+      <!-- ┌─ SCENARIO BREAKDOWNS ───────────────────────────────────────┐ -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+
+        <div class="invest-card invest-card--capital">
+          <div class="invest-card__head">🅰 Keep home + buy investment</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Monthly cash flow → savings</div>
+            <div class="invest-row"><span class="invest-label">After-tax income</span><span class="invest-out" id="ca-income">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Living expenses</span><span class="invest-out bad" id="ca-living">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Investment property cash cost</span><span class="invest-out bad" id="ca-ipcost">—</span><div class="invest-hint">IP mortgage P&amp;I + insurance/council + land tax + repairs − rent − NG refund (from the Investment tab).</div></div>
+            <div class="invest-row"><span class="invest-label">− Current home loan repayment</span><span class="invest-out bad" id="ca-homerepay">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="ca-surplus">—</span></div>
+            <div class="cgt-step">After holding years (sell both)</div>
+            <div class="invest-row"><span class="invest-label">Holding years (from Investment tab)</span><span class="invest-out muted" id="ca-years">—</span></div>
+            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="ca-savings-acc">—</span><div class="invest-hint">starting cash − money spent buying the IP + monthly savings × months.</div></div>
+            <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="ca-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining home loan.</div></div>
+            <div class="invest-row"><span class="invest-label">Investment property equity at sale</span><span class="invest-out good" id="ca-ip-eq">—</span><div class="invest-hint">sale price − selling cost − remaining IP loan − CGT.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A)</span><span class="invest-out good" id="ca-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+          </div>
+        </div>
+
+        <div class="invest-card invest-card--capital">
+          <div class="invest-card__head">🅱 Sell home + buy bigger home</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Monthly cash flow → savings</div>
+            <div class="invest-row"><span class="invest-label">After-tax income</span><span class="invest-out" id="cb-income">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Living expenses</span><span class="invest-out bad" id="cb-living">—</span></div>
+            <div class="invest-row"><span class="invest-label">− New home cash cost</span><span class="invest-out bad" id="cb-homecost">—</span><div class="invest-hint">New-home mortgage P&amp;I + rates + insurance + maintenance (from the Owner-occupied tab). No rent.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="cb-surplus">—</span></div>
+            <div class="cgt-step">After holding years (sell home)</div>
+            <div class="invest-row"><span class="invest-label">Holding years (from Owner tab)</span><span class="invest-out muted" id="cb-years">—</span></div>
+            <div class="invest-row"><span class="invest-label">Cash from selling current home + savings</span><span class="invest-out" id="cb-startcash">—</span></div>
+            <div class="invest-row"><span class="invest-label">− New home deposit + upfront</span><span class="invest-out bad" id="cb-buycost">—</span></div>
+            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="cb-savings-acc">—</span><div class="invest-hint">leftover cash after buying + monthly savings × months.</div></div>
+            <div class="invest-row"><span class="invest-label">New home equity at sale (no CGT)</span><span class="invest-out good" id="cb-home-eq">—</span><div class="invest-hint">sale price − selling cost − remaining loan.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B)</span><span class="invest-out good" id="cb-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+          </div>
+        </div>
+
+      </div>
+      <!-- └─ /SCENARIO BREAKDOWNS ─────────────────────────────────────┘ -->
+
     </div>
   </div>
 
@@ -1871,14 +2822,15 @@ function _initMap() {
     { attribution: '', maxZoom: 19, opacity: 0.9 }
   );
   const satWithLabels = L.layerGroup([satellite, labels]);
-  _map = L.map('map', { layers: [streets] }).setView([-37.8136, 144.9631], 11);
+  const cf = getCityFocus();
+  _map = L.map('map', { layers: [streets] }).setView(cf.center, cf.zoom);
   L.control.layers(
     { '🗺️ Streets': streets, '🛰️ Satellite': satWithLabels },
     {},
     { position: 'topright', collapsed: true }
   ).addTo(_map);
 
-  const layerCtrl = L.control({ position: 'topright' });
+  const layerCtrl = L.control({ position: 'bottomleft' });
   layerCtrl.onAdd = function() {
     const div = L.DomUtil.create('div', 'leaflet-control layer-fab-wrapper');
     div.innerHTML = `
@@ -1903,13 +2855,18 @@ function _initMap() {
   document.querySelectorAll('.zone-toggle').forEach(t =>
     mo.observe(t, { attributes: true, attributeFilter: ['class'] }));
 
-  const legendCtrl = L.control({ position: 'bottomleft' });
-  legendCtrl.onAdd = function() {
-    const div = L.DomUtil.create('div', 'leaflet-control map-legend-floating empty');
-    div.id = 'map-legend-floating';
-    return div;
-  };
-  legendCtrl.addTo(_map);
+  // Append the legend directly to the map's root container (not via L.control).
+  // L.control wraps it in a narrow corner box (.leaflet-top.leaflet-left), so
+  // `left: 50%` would resolve to ~0 relative to that corner, not to the map.
+  // By skipping the wrapper we can pin the legend to the true top-centre of
+  // the map and let it grow horizontally without wrapping prematurely.
+  const legendDiv = document.createElement('div');
+  legendDiv.id = 'map-legend-floating';
+  legendDiv.className = 'map-legend-floating empty';
+  // Block Leaflet from interpreting clicks/scroll on the legend as map gestures.
+  L.DomEvent.disableClickPropagation(legendDiv);
+  L.DomEvent.disableScrollPropagation(legendDiv);
+  _map.getContainer().appendChild(legendDiv);
   updateMapLegend();
 }
 
@@ -2142,13 +3099,27 @@ function buildSchoolPopup(p) {
   const _tc = { 6:'#c4b5fd', 5:'#4ade80', 4:'#86efac', 3:'#fde047', 2:'#fb923c', 1:'#f87171', 0:'#94a3b8' };
   const A = (href, label) =>
     `<a href="${href}" target="_blank" rel="noopener" style="font-size:11px;color:#60a5fa;white-space:nowrap">${label}</a>`;
+  // State-aware. Properties expose `state` ('VIC'/'WA') from the build scripts;
+  // fall back to VIC for any legacy feature that doesn't carry it.
+  const stateCode = (p.state || 'VIC').toUpperCase();
+  const gsearch = (terms) => `https://www.google.com/search?q=${encodeURIComponent(terms)}`;
+  // MySchool deep-links work ONLY with a valid ACARA SML id (which we have for
+  // VIC schools, not WA). MySchool's own search endpoint 500s for bots, so for
+  // schools without an acara_id we hand off to a Google search that lands on
+  // the right MySchool profile.
   const naplanUrl = p.acara_id
-    ? `https://www.myschool.edu.au/school/${p.acara_id}/naplan/results`
-    : `https://www.myschool.edu.au/school/search?schoolName=${encodeURIComponent(name)}&state=VIC`;
-  const beDirectUrl = `https://bettereducation.com.au/QuerySchool.aspx?Name=${encodeURIComponent(name)}&State=VIC`;
+    ? `https://myschool.edu.au/school/${p.acara_id}`
+    : gsearch(`myschool ${name} ${stateCode}`);
+  // BetterEducation has no stable per-school deep-link (QuerySchool.aspx is
+  // dead, slug pages 302 to an error). A Google search reliably resolves to
+  // the school's BE page; the per-state top-list page is the fallback.
+  const beUrl = gsearch(`bettereducation ${name} ${stateCode} school`);
+  const beLabel = isSec
+    ? (stateCode === 'WA' ? '🎓 WACE (Better Ed)' : '🎓 VCE (Better Ed)')
+    : '🏆 Better Ed';
   const links = [
     A(naplanUrl, '📊 NAPLAN'),
-    A(beDirectUrl, isSec ? '🎓 VCE (Better Ed)' : '🏆 Better Ed'),
+    A(beUrl, beLabel),
   ];
   const R = (label, val, color, hint) =>
     `<tr>
@@ -2178,8 +3149,25 @@ function buildSchoolPopup(p) {
            Med=median study score (0–50; 30=avg, 38+=elite) · ≥40=% scores ≥40 (5% typical, 20%+ strong) · Compl=% finishing VCE · ICSEA=catchment SES (1000=AU avg)
          </div>
        </div>`;
+  } else if (isSec && p.be_score != null) {
+    // WA secondary: no VCE; show BetterEducation composite + percentile if we
+    // managed to match this school against the BE top-25% WA list.
+    const cBE  = _vceBandColor[p.be_band || 0];
+    const tcBE = _tc[p.be_band || 0] || '#94a3b8';
+    const tierBE = (p.be_pctile != null && p.be_pctile <= 25)
+      ? `Top ${Math.ceil(p.be_pctile)}% WA` : 'Ranked WA';
+    block =
+      `<div style="margin-top:3px;padding:3px 6px;background:#0f172a;border-left:3px solid ${cBE};border-radius:3px;font-size:12px;line-height:1.5">
+         <span style="background:${cBE};color:#fff;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700">${tierBE}</span>
+         <span style="font-size:10px;color:#94a3b8"> Better Education WA</span><br>
+         ${M('BE', p.be_score + '/100', tcBE, 'BetterEducation composite based on WACE/ATAR + NAPLAN — top 98 WA secondaries')}
+         ${p.be_rank != null ? '  ·  ' + M('Rank', '#' + p.be_rank, tcBE, 'BE rank among WA secondaries listed') : ''}
+         <div style="font-size:9px;color:#64748b;margin-top:2px;line-height:1.3">
+           WA has no VCE — BE score blends WACE/ATAR + NAPLAN. Only top 98 schools are ranked publicly.
+         </div>
+       </div>`;
   } else if (isSec) {
-    block = `<div style="margin-top:3px;font-size:10px;color:#64748b">No VCE data (junior secondary / IB / specialist)</div>`;
+    block = `<div style="margin-top:3px;font-size:10px;color:#64748b">No VCE/BE data (junior secondary / IB / specialist / unranked)</div>`;
   } else if (p.icsea != null || p.be_score != null) {
     const cI  = _vceBandColor[p.icsea_band || 0];
     const tcI = _tc[p.icsea_band || 0] || '#94a3b8';
@@ -2263,8 +3251,12 @@ async function toggleLevel(type) {
   _zoneLayer[type] = L.geoJSON(_zoneData[type], {
     style(feature) {
       const p = feature.properties || {};
+      // VIC secondary uses VCE; WA secondary falls back to BetterEducation band.
       if (type === 'secondary' && p.vce_band) {
         return { color: _vceBandColor[p.vce_band], weight: 1.5, fillColor: _vceBandColor[p.vce_band], fillOpacity: 0.30 };
+      }
+      if (type === 'secondary' && p.be_band) {
+        return { color: _vceBandColor[p.be_band], weight: 1.5, fillColor: _vceBandColor[p.be_band], fillOpacity: 0.30 };
       }
       if (type === 'primary' && p.be_band) {
         return { color: _vceBandColor[p.be_band], weight: 1.5, fillColor: _vceBandColor[p.be_band], fillOpacity: 0.32 };
@@ -2401,18 +3393,35 @@ async function toggleOverlay(name) {
         const p = feature.properties || {};
         const b = p.crime_band || 0;
         const c = _crimeBandColor[b];
-        layer.bindPopup(
-          p.crime_rate != null
-            ? `<b>🚨 ${p.postcode || ''}</b> <span style="background:${c};color:#fff;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700">${_crimeBandLabel[b]}</span><br>
-               <b style="color:${c};font-size:13px">${p.crime_rate.toLocaleString(undefined,{maximumFractionDigits:0})}</b>/100k · ${(p.crime_count||0).toLocaleString()} offences · pop ${(p.population||0).toLocaleString()}
-               <div style="font-size:9px;color:#64748b">CSA Vic yr Dec 2025 · Melbourne %ile</div>`
-            : `<b>🚨 ${p.postcode || ''}</b><br><span style="font-size:11px;color:#94a3b8">No data</span>`
-        );
+        // Suburb-level openstats data for both VIC + WA. Bands are state-relative
+        // (Melbourne suburbs banded against Melbourne, Perth against Perth) so
+        // colour contrast stays useful regardless of which city you're viewing.
+        const stateRel = p.state === 'WA' ? 'Perth' : 'Melbourne';
+        let body;
+        if (p.crime_index == null) {
+          body = `<b>🚨 ${p.suburb || ''}</b><br><span style="font-size:11px;color:#94a3b8">No data</span>`;
+        } else {
+          const fmt = v => v == null ? '—' : v.toFixed(0) + '%ile';
+          body = `<b>🚨 ${p.suburb || ''}</b> <span style="background:${c};color:#fff;padding:0 5px;border-radius:3px;font-size:10px;font-weight:700">${_crimeBandLabel[b]}</span><br>
+            <b style="color:${c};font-size:13px">Composite ${p.crime_index.toFixed(0)}%ile</b> <span style="font-size:11px;color:#94a3b8">(national rank, higher = worse)</span>
+            <div style="font-size:11px;margin-top:3px">
+              Violent: <b>${fmt(p.violent_pct)}</b><br>
+              Break-ins: <b>${fmt(p.dwelling_pct)}</b><br>
+              Motor vehicle: <b>${fmt(p.motor_pct)}</b>
+            </div>
+            <div style="font-size:9px;color:#64748b;margin-top:3px">openstats.com.au · ABS ${p.year || 'FY 2022-24'} · ${stateRel}-relative bands</div>`;
+        }
+        layer.bindPopup(body);
       }
     }).addTo(_map);
   } else {
     _overlayLayer[name] = L.geoJSON(_overlayData[name], {
-      style: { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.25, dashArray: name === 'bushfire' ? '4,3' : null },
+      // Bushfire: faint fill (12%) so users can clearly see inside vs outside
+      // designated areas, plus a dashed outline. Light enough that overlapping
+      // designations don't compound into a dark mess at our zoom levels.
+      style: name === 'bushfire'
+        ? { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.12, dashArray: '4,3' }
+        : { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.22 },
       onEachFeature(feature, layer) {
         const p = feature.properties || {};
         const code = p.ZONE_CODE || p.OVERLAY || '';
@@ -2438,6 +3447,120 @@ const _transportCfg = {
 const _transportData  = { trains: null, trams: null, buses: null };
 const _transportLayer = { trains: null, trams: null, buses: null };
 let _busCanvas = null;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MARKET METRIC OVERLAYS — sourced from CoreLogic "Mapping the Market AU v5"
+//   hvi_3     = 3-month House Value Index change %
+//   hvi_12    = 12-month House Value Index change %
+//   rent_cur  = current median weekly rent ($)
+//   rent_1y   = 12-month rent growth %
+// Toggle buttons share one data file (market_metrics_suburb.geojson). Only one
+// metric can be active at a time; switching swaps the polygon colours.
+// ══════════════════════════════════════════════════════════════════════════════
+const PRICE_METRICS = {
+  avm_median: { label: 'Current median price',    suffix: '',     good: 'high', icon: '🏠', isPct: false, prefix: '$' },
+  hvi_3:      { label: 'Price growth · 3 months',  suffix: '%',    good: 'high', icon: '📈', isPct: true },
+  hvi_12:     { label: 'Price growth · 12 months', suffix: '%',    good: 'high', icon: '📈', isPct: true },
+  rent_cur:   { label: 'Current median rent',      suffix: '/wk',  good: 'high', icon: '💰', isPct: false, prefix: '$' },
+  rent_1y:    { label: 'Rent growth · 12 months',  suffix: '%',    good: 'high', icon: '📊', isPct: true },
+};
+let _priceData = null;          // cached fetch
+let _priceLayer = null;         // current Leaflet layer
+let _priceActiveMetric = null;  // 'yield' | 'growth_1y' | ...
+// 6-step diverging colour scale (low to high, since "high" is good for these metrics)
+const PRICE_BAND_COLOR = { 1:'#ef4444', 2:'#f97316', 3:'#eab308', 4:'#84cc16', 5:'#22c55e', 6:'#16a34a', 0:'#6b7280' };
+
+function _priceBands(values) {
+  const vals = values.filter(v => v != null && isFinite(v)).sort((a,b) => a - b);
+  const n = vals.length;
+  if (n < 6) return null;
+  return [vals[Math.floor(n*0.1)], vals[Math.floor(n*0.25)],
+          vals[Math.floor(n*0.5)],  vals[Math.floor(n*0.75)],
+          vals[Math.floor(n*0.9)]];
+}
+function _bandOf(v, cuts) {
+  if (v == null || !isFinite(v)) return 0;
+  for (let i = 0; i < cuts.length; i++) if (v < cuts[i]) return i + 1;
+  return 6;
+}
+
+async function togglePriceMetric(metric) {
+  _initMap();
+  const btn = document.getElementById('toggle-overlay-' + metric);
+  // If clicking the active metric: turn off
+  if (_priceActiveMetric === metric) {
+    if (_priceLayer) { _map.removeLayer(_priceLayer); _priceLayer = null; }
+    btn.classList.remove('active');
+    _priceActiveMetric = null;
+    return;
+  }
+  // Clear any other active price-metric button (some metrics live only in
+  // popups and have no toggle button — skip those silently).
+  for (const m of Object.keys(PRICE_METRICS)) {
+    const el = document.getElementById('toggle-overlay-' + m);
+    if (el) el.classList.remove('active');
+  }
+  if (_priceLayer) { _map.removeLayer(_priceLayer); _priceLayer = null; }
+
+  // Fetch once, cache forever
+  if (!_priceData) {
+    btn.classList.add('loading');
+    try {
+      const r = await fetch('/static/overlays/market_metrics_suburb.geojson');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      _priceData = await r.json();
+    } catch (e) {
+      btn.classList.remove('loading');
+      alert('Failed to load market metrics: ' + e.message);
+      return;
+    }
+    btn.classList.remove('loading');
+  }
+
+  // Compute bands across all features for this metric
+  const values = _priceData.features.map(f => f.properties?.[metric]);
+  const cuts = _priceBands(values) || [0, 0, 0, 0, 0];
+  const meta = PRICE_METRICS[metric];
+
+  _priceLayer = L.geoJSON(_priceData, {
+    style(feature) {
+      const v = feature.properties?.[metric];
+      const b = _bandOf(v, cuts);
+      const c = PRICE_BAND_COLOR[b];
+      return { color: c, weight: 0.7, fillColor: c, fillOpacity: v == null ? 0.05 : 0.55 };
+    },
+    onEachFeature(feature, layer) {
+      const p = feature.properties || {};
+      const v = p[metric];
+      const label = `${p.suburb || ''}${p.state ? ` (${p.state})` : ''}`;
+      // Format a single value according to its metric type (% or $/wk).
+      const fmtMetric = (mKey, val) => {
+        if (val == null || !isFinite(val)) return '<span style="color:#64748b">—</span>';
+        const cfg = PRICE_METRICS[mKey];
+        if (cfg.isPct) {
+          const sign = val > 0 ? '+' : '';
+          return `<b>${sign}${val.toFixed(2)}${cfg.suffix}</b>`;
+        }
+        return `<b>${cfg.prefix || ''}${Math.round(val).toLocaleString()}${cfg.suffix}</b>`;
+      };
+      const valStr = fmtMetric(metric, v);
+      // Skip the median context line when the active metric IS the median price
+      // (would just duplicate the headline value).
+      const medianStr = (p.avm_median && metric !== 'avm_median')
+        ? `<div style="font-size:11px;color:#94a3b8">Current median price: $${Math.round(p.avm_median).toLocaleString()}</div>`
+        : '';
+      const allMetrics = Object.keys(PRICE_METRICS)
+        .map(m => p[m] != null
+          ? `<div style="font-size:11px">${PRICE_METRICS[m].icon} ${PRICE_METRICS[m].label}: ${fmtMetric(m, p[m])}</div>`
+          : '')
+        .filter(Boolean).join('');
+      const cite = `<div style="font-size:9px;color:#f59e0b;margin-top:3px">⚠ Cotality "Mapping the Market AU v5" · Houses · refreshed Jan 2025 (v6 token-locked)<br><a href="https://storymaps.arcgis.com/stories/73cf706f64484856aa2ef514531edfad" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">↗ Check current numbers on the May-2026 story map</a></div>`;
+      layer.bindPopup(`<b>${meta.icon} ${label}</b><br>${meta.label}: ${valStr}${medianStr}${allMetrics ? '<hr style="margin:5px 0;border-color:#374151">'+allMetrics : ''}${cite}`);
+    },
+  }).addTo(_map);
+  btn.classList.add('active');
+  _priceActiveMetric = metric;
+}
 
 async function toggleTransport() {
   _initMap();
@@ -2797,6 +3920,645 @@ function soldAgo(dateStr) {
   const y = Math.floor(days/365), rem = Math.floor((days%365)/30);
   return rem ? `${y}y ${rem}mo ago` : `${y} year${y>1?'s':''} ago`;
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CITY FOCUS — Melbourne / Perth toggle persisted in localStorage
+//   Used by: map default view, default stamp-duty rate on Investment tab,
+//   default postcode prefix when filtering overlays.
+// ══════════════════════════════════════════════════════════════════════════════
+const CITY_FOCUS_CFG = {
+  mel: { center: [-37.8136, 144.9631], zoom: 11, stampPct: 4.0, label: 'Melbourne' },
+  per: { center: [-31.9505, 115.8605], zoom: 11, stampPct: 5.5, label: 'Perth' },
+};
+function getCityFocus() {
+  const key = localStorage.getItem('cityFocus') || 'mel';
+  return CITY_FOCUS_CFG[key] || CITY_FOCUS_CFG.mel;
+}
+function setCityFocus(key) {
+  if (!CITY_FOCUS_CFG[key]) return;
+  localStorage.setItem('cityFocus', key);
+  document.querySelectorAll('.focus-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.focus === key));
+  const cf = CITY_FOCUS_CFG[key];
+  // Recenter map if it's already initialised
+  if (typeof _map !== 'undefined' && _map) {
+    _map.setView(cf.center, cf.zoom);
+    setTimeout(() => _map.invalidateSize(), 100);
+  }
+  // Update default stamp duty on Investment tab (only if the user hasn't already touched it)
+  const stamp = document.getElementById('i-stamp-pct');
+  if (stamp && !stamp.dataset.userTouched) {
+    stamp.value = cf.stampPct.toString();
+    if (typeof recalcInvest === 'function') recalcInvest();
+  }
+}
+document.querySelectorAll('.focus-btn').forEach(btn => {
+  btn.addEventListener('click', () => setCityFocus(btn.dataset.focus));
+});
+// Highlight the saved focus on page load
+(function initCityFocus() {
+  const key = localStorage.getItem('cityFocus') || 'mel';
+  document.querySelectorAll('.focus-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.focus === key));
+})();
+// Mark stamp duty as user-touched once the user edits it
+document.addEventListener('DOMContentLoaded', () => {
+  const stamp = document.getElementById('i-stamp-pct');
+  if (stamp) stamp.addEventListener('input', () => stamp.dataset.userTouched = '1');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TAB SWITCHING — Search / Investment
+// ══════════════════════════════════════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    const app = document.querySelector('.app');
+    app.classList.toggle('invest-mode',  tab === 'invest');
+    app.classList.toggle('owner-mode',   tab === 'owner');
+    app.classList.toggle('capital-mode', tab === 'capital');
+    if (tab === 'invest')  recalcInvest();
+    if (tab === 'owner')   recalcOwner();
+    if (tab === 'capital') recalcCapital();
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INVESTMENT CALCULATOR
+// Spreadsheet origin: 1e5B4KoXZU9Mt8fI_BHIVvoMq2AiRk5NLofj0ZvEM5iM (sheet "VIC").
+// All formulas match the sheet 1:1 unless noted; tax uses 2024-25 ATO Stage-3
+// brackets WITHOUT Medicare levy (matches the sheet's hardcoded $25,288 / $17,398).
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Excel-equivalent PMT: monthly payment (positive number for amortising loan)
+function pmt(rate, nper, pv) {
+  if (rate === 0) return pv / nper;
+  return (pv * rate) / (1 - Math.pow(1 + rate, -nper));
+}
+
+// Excel-equivalent CUMIPMT: total interest paid between period `start` and `end` (inclusive)
+function cumipmt(rate, nper, pv, start, end) {
+  let balance = pv;
+  let totalInterest = 0;
+  const monthlyPmt = pmt(rate, nper, pv);
+  for (let i = 1; i <= end; i++) {
+    const interest = balance * rate;
+    const principal = monthlyPmt - interest;
+    if (i >= start && i <= end) totalInterest += interest;
+    balance -= principal;
+  }
+  return totalInterest;
+}
+
+// 2024-25 ATO Stage-3 resident brackets, income tax ONLY (no Medicare).
+// Verified: $115,000 -> $25,288   /   $88,700 -> $17,398   (matches sheet exactly)
+function ato_tax_2024(income) {
+  if (income <= 0) return 0;
+  let tax = 0;
+  if (income > 18200)  tax += (Math.min(income, 45000)  - 18200) * 0.16;
+  if (income > 45000)  tax += (Math.min(income, 135000) - 45000) * 0.30;
+  if (income > 135000) tax += (Math.min(income, 190000) - 135000) * 0.37;
+  if (income > 190000) tax += (income - 190000) * 0.45;
+  return tax;
+}
+
+const _$ = id => document.getElementById(id);
+const fmtMoney = v => isFinite(v) ? '$' + Math.round(v).toLocaleString('en-AU') : '—';
+const fmtPct   = v => isFinite(v) ? (v * 100).toFixed(2) + '%' : '—';
+
+function recalcInvest() {
+  // ── Inputs ──
+  const loan    = +_$('i-loan').value      || 0;
+  const lvr     = (+_$('i-lvr').value      || 0) / 100;
+  const rateA   = (+_$('i-rate').value     || 0) / 100;
+  const years   = +_$('i-years').value     || 0;
+  const stampPct= (+_$('i-stamp-pct').value|| 0) / 100;
+  const lmi     = +_$('i-lmi').value       || 0;
+  const legal   = +_$('i-legal').value     || 0;
+  const rent    = +_$('i-rent').value      || 0;
+  const ins     = +_$('i-insurance').value || 0;
+  const council = +_$('i-council').value   || 0;
+  const landTax = +_$('i-land-tax').value  || 0;
+  const repairs = +_$('i-repairs').value   || 0;
+  const growthA = (+_$('i-growth').value   || 0) / 100;
+  const inflA   = (+_$('i-inflation').value|| 0) / 100;
+  const sellPct = (+_$('i-sell-pct').value || 0) / 100;
+  const buyerAgent = +_$('i-buyer-agent').value || 0;
+  const reno    = +_$('i-reno').value      || 0;
+  const ngOn    = _$('i-ng-on').checked;
+  const p1inc   = +_$('i-p1-income').value || 0;
+  const p2inc   = +_$('i-p2-income').value || 0;
+
+  // ── Upfront ──
+  const price   = lvr > 0 ? loan / lvr : 0;       // sheet: B2 = B1/0.95
+  const deposit = price - loan;                    // B5
+  const stamp   = stampPct * price;                // B7
+  const upfront = deposit + stamp + lmi + legal;   // B10
+
+  _$('o-price').textContent   = fmtMoney(price);
+  _$('o-deposit').textContent = fmtMoney(deposit);
+  _$('o-stamp').textContent   = fmtMoney(stamp);
+  _$('o-upfront').textContent = fmtMoney(upfront);
+
+  // ── Monthly cashflow ──
+  const rateM = rateA / 12;
+  const nper  = 30 * 12;
+  const monthlyPmt = loan > 0 ? pmt(rateM, nper, loan) : 0;          // F2
+  const avgInt = (loan > 0 && years > 0)
+    ? cumipmt(rateM, nper, loan, 1, years * 12) / (years * 12)        // F4
+    : 0;
+  const expensesM = avgInt + ins + council + landTax + repairs;       // F15 (+council rates)
+  const incomeM   = rent;                                              // F16
+  const lossM     = expensesM - incomeM;                               // F17
+
+  // ── Negative gearing ──
+  const annualLoss = lossM * 12;                                       // I21
+  let ngPct = 0, p1taxOld = 0, p2taxOld = 0, p1taxNew = 0, p2taxNew = 0, ngAnnual = 0;
+  if (ngOn && (p1inc + p2inc) > 0) {
+    ngPct    = annualLoss / (p1inc + p2inc);                           // J22
+    p1taxOld = ato_tax_2024(p1inc);
+    p2taxOld = ato_tax_2024(p2inc);
+    p1taxNew = ato_tax_2024(p1inc * (1 - ngPct));
+    p2taxNew = ato_tax_2024(p2inc * (1 - ngPct));
+    ngAnnual = (p1taxOld - p1taxNew) + (p2taxOld - p2taxNew);          // I27, but without the *0
+  }
+  const ngRefundM = ngAnnual / 12;                                     // F11
+  const netM      = lossM - ngRefundM;                                  // F19
+
+  _$('o-pmt').textContent       = fmtMoney(monthlyPmt);
+  _$('o-avg-int').textContent   = fmtMoney(avgInt);
+  _$('o-exp').textContent       = fmtMoney(expensesM);
+  _$('o-inc').textContent       = fmtMoney(incomeM);
+  _$('o-loss').textContent      = fmtMoney(lossM);
+  _$('o-ng-refund').textContent = fmtMoney(ngRefundM);
+  _$('o-net').textContent       = fmtMoney(netM);
+
+  // Auto-calculated income tax per earner. Always reflects the entered salary
+  // (used for both NG and CGT). When NG is off they're shown muted, since the
+  // NG benefit isn't using them — but they're still live for the CGT card.
+  const p1taxGross = ato_tax_2024(p1inc);
+  const p2taxGross = ato_tax_2024(p2inc);
+  _$('o-p1-tax').textContent = p1inc > 0 ? fmtMoney(p1taxGross) : '—';
+  _$('o-p2-tax').textContent = p2inc > 0 ? fmtMoney(p2taxGross) : '—';
+  _$('o-p1-tax').classList.toggle('unused', !ngOn);
+  _$('o-p2-tax').classList.toggle('unused', !ngOn);
+
+  _$('o-ng-loss').textContent   = fmtMoney(annualLoss);
+  _$('o-ng-pct').textContent    = ngOn ? fmtPct(ngPct) : '—';
+  _$('o-ng-p1').textContent     = ngOn ? `${fmtMoney(p1taxOld)} / ${fmtMoney(p1taxNew)}` : '— / —';
+  _$('o-ng-p2').textContent     = ngOn ? `${fmtMoney(p2taxOld)} / ${fmtMoney(p2taxNew)}` : '— / —';
+  _$('o-ng-benefit').textContent= fmtMoney(ngAnnual);
+
+  // ── Hold-period totals ──
+  const holdNet   = netM * 12 * years;                                  // F24
+  const holdTotal = holdNet + stamp + lmi + legal;                      // F25 (matches sheet: F24 + B9 + B8 + B7)
+  _$('o-hold-net').textContent   = fmtMoney(holdNet);
+  _$('o-hold-total').textContent = fmtMoney(holdTotal);
+
+  // ── Capital growth & exit ──
+  const growthOverN  = growthA * years;                                  // F33
+  const salePriceEst = price * (1 + growthOverN);                        // estimated sale price
+  const sellCostsEst = salePriceEst * sellPct;                           // agent commission + advertising
+  const breakEvenA = (price > 0 && years > 0)
+                       ? (holdTotal + sellCostsEst) / (price * years)     // include sell costs in break-even
+                       : 0;
+  // Profit now nets off the agent's selling cost (your real, non-government view).
+  const profit = price * growthOverN - holdTotal - sellCostsEst;
+
+  _$('o-min-growth-fixed').textContent = fmtPct(breakEvenA);
+  _$('o-grow-pct').textContent         = fmtPct(growthOverN);
+  _$('o-profit').textContent           = fmtMoney(profit);
+
+  // Style net out-of-pocket and profit: red bad / green good
+  _$('o-loss').classList.toggle('good', lossM <= 0);
+  _$('o-net').classList.toggle('good',  netM  <= 0);
+  _$('o-net').classList.toggle('bad',   netM  > 0);
+  _$('o-hold-net').classList.toggle('good', holdNet <= 0);
+  _$('o-hold-net').classList.toggle('bad',  holdNet > 0);
+  _$('o-hold-total').classList.toggle('good', holdTotal <= 0);
+  _$('o-hold-total').classList.toggle('bad',  holdTotal > 0);
+  _$('o-profit').classList.toggle('good', profit >= 0);
+  _$('o-profit').classList.toggle('bad',  profit < 0);
+
+  // ══ Capital gains tax ════════════════════════════════════════════════════
+  // Method: 'discount' = current 50% CGT discount; 'index' = new (1 Jul 2027)
+  // rule that inflation-indexes the cost base and removes the discount.
+  const cgtMethodEl = document.querySelector('input[name="cgt-method"]:checked');
+  const cgtMethod = cgtMethodEl ? cgtMethodEl.value : 'discount';
+
+  // Step 1 — proceeds
+  const salePrice = salePriceEst;
+  const sellCosts = sellCostsEst;
+  const proceeds  = salePrice - sellCosts;
+
+  // Step 2 — cost base (LMI + holding costs excluded — deductible/borrowing)
+  const costBase    = price + stamp + legal + buyerAgent + reno;
+  const indexedBase = costBase * Math.pow(1 + inflA, years);
+
+  // Step 3 — taxable gain (depends on method)
+  let taxableGain, rawGain, discountAmt;
+  if (cgtMethod === 'index') {
+    rawGain     = Math.max(0, proceeds - indexedBase);   // gain vs inflated cost base
+    discountAmt = 0;
+    taxableGain = rawGain;
+  } else {
+    rawGain     = Math.max(0, proceeds - costBase);      // nominal gain
+    const disc  = years >= 1 ? 0.5 : 0;                  // 50% discount if held ≥ 1yr
+    discountAmt = rawGain * disc;
+    taxableGain = rawGain - discountAmt;
+  }
+
+  // Step 4 — tax the gain at marginal rate, split 50/50 across earners
+  const earners   = (p1inc > 0 ? 1 : 0) + (p2inc > 0 ? 1 : 0) || 1;
+  const gainShare = taxableGain / earners;
+  const p1after   = p1inc > 0 ? ato_tax_2024(p1inc + gainShare) : 0;
+  const p2after   = p2inc > 0 ? ato_tax_2024(p2inc + gainShare) : 0;
+  const p1cgt     = p1inc > 0 ? p1after - p1taxGross : 0;
+  const p2cgt     = p2inc > 0 ? p2after - p2taxGross : 0;
+  const cgtTotal  = p1cgt + p2cgt;
+
+  // Step 5 — net
+  const netAfterCgt = profit - cgtTotal;
+
+  // Toggle method-specific rows + make the "what − what" explicit per method.
+  _$('row-cgt-indexed').style.display  = cgtMethod === 'index'    ? '' : 'none';
+  _$('row-cgt-discount').style.display = cgtMethod === 'discount' ? '' : 'none';
+  if (cgtMethod === 'index') {
+    _$('lbl-cgt-gain').textContent  = 'Capital gain (net proceeds − indexed cost base)';
+    _$('hint-cgt-gain').textContent = `${fmtMoney(proceeds)} − ${fmtMoney(indexedBase)} (cost base inflated by ${(Math.pow(1+inflA,years)*100-100).toFixed(1)}% over ${years} yrs).`;
+  } else {
+    _$('lbl-cgt-gain').textContent  = 'Capital gain (net proceeds − cost base)';
+    _$('hint-cgt-gain').textContent = `${fmtMoney(proceeds)} − ${fmtMoney(costBase)}.`;
+  }
+
+  // Render
+  _$('o-cgt-saleprice').textContent = fmtMoney(salePrice);
+  _$('o-cgt-sellcost').textContent  = fmtMoney(sellCosts);
+  _$('o-cgt-proceeds').textContent  = fmtMoney(proceeds);
+  _$('o-cgt-cb-price').textContent  = fmtMoney(price);
+  _$('o-cgt-cb-stamp').textContent  = fmtMoney(stamp);
+  _$('o-cgt-cb-legal').textContent  = fmtMoney(legal);
+  _$('o-cgt-cb-buyer').textContent  = fmtMoney(buyerAgent);
+  _$('o-cgt-cb-reno').textContent   = fmtMoney(reno);
+  _$('o-cgt-costbase').textContent  = fmtMoney(costBase);
+  _$('o-cgt-indexed').textContent   = fmtMoney(indexedBase) + `  (×${Math.pow(1+inflA,years).toFixed(3)})`;
+  _$('o-cgt-gain').textContent      = fmtMoney(rawGain);
+  _$('o-cgt-disc').textContent      = '−' + fmtMoney(discountAmt);
+  _$('o-cgt-taxable').textContent   = fmtMoney(taxableGain);
+  _$('o-cgt-share').textContent     = fmtMoney(gainShare) + (earners === 2 ? '  (each)' : '');
+  _$('o-cgt-p1').textContent        = p1inc > 0 ? `${fmtMoney(p1taxGross)} → ${fmtMoney(p1after)}` : '—';
+  _$('o-cgt-p2').textContent        = p2inc > 0 ? `${fmtMoney(p2taxGross)} → ${fmtMoney(p2after)}` : '—';
+  _$('o-cgt-total').textContent     = fmtMoney(cgtTotal);
+  _$('o-cgt-profit').textContent    = fmtMoney(profit);
+  _$('o-cgt-net').textContent       = fmtMoney(netAfterCgt);
+  _$('o-cgt-net').classList.toggle('good', netAfterCgt >= 0);
+  _$('o-cgt-net').classList.toggle('bad',  netAfterCgt < 0);
+
+  // ══ Summary bar ══════════════════════════════════════════════════════════
+  // Upfront split: stamp duty vs other non-recoverable fees (LMI + legal +
+  // buyer agent). Deposit excluded — recoverable equity. Reno is a capital
+  // improvement that adds to value, so not counted as a sunk fee here.
+  // Non-recoverable upfront = stamp + LMI + legal + buyer agent (sunk fees).
+  // Total upfront payment = that + deposit (the full cash needed at settlement).
+  const upfrontCost  = stamp + lmi + legal + buyerAgent;
+  const upfrontTotal = upfrontCost + deposit;
+  // Net monthly cost EXCLUDING principal — netM already uses avgInt (interest
+  // only), so it IS the principal-excluded monthly cost.
+  const netMonthlyExclPrincipal = netM;
+
+  _$('s-final').textContent        = fmtMoney(netAfterCgt);
+  _$('s-upfront-cost').textContent = fmtMoney(upfrontCost);
+  _$('s-upfront-total').textContent= fmtMoney(upfrontTotal);
+  _$('s-monthly').textContent      = fmtMoney(netMonthlyExclPrincipal) + '/mo';
+  _$('s-final').classList.toggle('good', netAfterCgt >= 0);
+  _$('s-final').classList.toggle('bad',  netAfterCgt < 0);
+
+  // ══ All costs, in words (below the total cost) ═══════════════════════════
+  const monthlyPrincipal = monthlyPmt - avgInt;     // equity portion (excluded)
+  const ngRefundTotal = ngAnnual * years;
+  _$('o-cost-words').innerHTML =
+    `<b>What makes up the cost:</b><br>` +
+    `• Upfront (non-recoverable): stamp duty ${fmtMoney(stamp)} + LMI ${fmtMoney(lmi)} + legal ${fmtMoney(legal)} + buyer's agent ${fmtMoney(buyerAgent)}<br>` +
+    `• Monthly (over ${years} yrs): avg interest ${fmtMoney(avgInt)} + insurance ${fmtMoney(ins)} + council rates ${fmtMoney(council)} + land tax ${fmtMoney(landTax)} + repairs ${fmtMoney(repairs)} − rent ${fmtMoney(rent)}` +
+    (ngOn ? ` − NG refund ${fmtMoney(ngRefundM)}` : ``) + `<br>` +
+    `• Selling: agent ${fmtMoney(sellCosts)}<br>` +
+    `• Excluded (recoverable equity): deposit ${fmtMoney(deposit)} + principal ${fmtMoney(monthlyPrincipal)}/mo` +
+    (ngOn ? `<br>• NG refunds received over ${years} yrs: ${fmtMoney(ngRefundTotal)}` : ``);
+
+  // Expose rich params for the Capital tab (it does the full capital calc).
+  // Remaining IP loan after the holding period (P&I, 30-yr term, no offset).
+  const holdMonths = years * 12;
+  const remainingIpLoan = (loan > 0 && holdMonths > 0)
+    ? loan * (Math.pow(1+rateM, nper) - Math.pow(1+rateM, holdMonths)) / (Math.pow(1+rateM, nper) - 1)
+    : loan;
+  window._INV = {
+    years, price, loan, rate: rateA,
+    deposit, upfront: stamp + lmi + legal + buyerAgent,  // cash paid at purchase
+    monthlyPmt,                                   // IP P&I payment
+    runningMo: ins + council + landTax + repairs, // IP monthly running costs
+    rent, ngRefundMo: ngRefundM,
+    saleEnd: salePriceEst, sellCost: sellCostsEst, cgt: cgtTotal,
+    remainingLoan: remainingIpLoan,
+  };
+}
+
+// Recompute on any input change
+['i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
+ 'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax','i-repairs',
+ 'i-growth','i-inflation','i-sell-pct','i-p1-income','i-p2-income'].forEach(id => {
+  const el = _$(id);
+  if (el) el.addEventListener('input', recalcInvest);
+});
+
+// NG toggle: just flag the card state (salaries stay enabled — they're shared
+// inputs now, used by both NG and the CGT card). Muted styling on the tax
+// fields is handled inside recalcInvest based on the toggle.
+_$('i-ng-on').addEventListener('change', () => {
+  _$('ng-card').dataset.ngOff = _$('i-ng-on').checked ? 'false' : 'true';
+  recalcInvest();
+});
+// CGT method radio
+document.querySelectorAll('input[name="cgt-method"]').forEach(r =>
+  r.addEventListener('change', recalcInvest));
+
+// ══════════════════════════════════════════════════════════════════════════════
+// OWNER-OCCUPIED CALCULATOR — fully independent of the Investment tab.
+// Main residence: capital gain is CGT-EXEMPT; mortgage interest is NOT deductible
+// (so we just count it as a sunk holding cost). No rent, no negative gearing.
+// ══════════════════════════════════════════════════════════════════════════════
+function recalcOwner() {
+  const price   = +_$('oo-price').value       || 0;
+  const lvr     = (+_$('oo-lvr').value        || 0) / 100;
+  const rateA   = (+_$('oo-rate').value       || 0) / 100;
+  const stampPct= (+_$('oo-stamp-pct').value  || 0) / 100;
+  const lmi     = +_$('oo-lmi').value         || 0;
+  const legal   = +_$('oo-legal').value       || 0;
+  const buyerAg = +_$('oo-buyer-agent').value || 0;
+  const rates   = +_$('oo-rates').value       || 0;
+  const ins     = +_$('oo-insurance').value   || 0;
+  const maint   = +_$('oo-maint').value       || 0;
+  const growthA = (+_$('oo-growth').value     || 0) / 100;
+  const inflA   = (+_$('oo-inflation').value  || 0) / 100;
+  const years   = +_$('oo-years').value       || 0;
+  const sellPct = (+_$('oo-sell-pct').value   || 0) / 100;
+
+  const loan    = price * lvr;
+  const deposit = price - loan;
+  const stamp = stampPct * price;
+  const upfrontFees = stamp + lmi + legal + buyerAg;  // non-recoverable acquisition fees
+  const upfront = deposit + upfrontFees;              // total cash needed at settlement
+
+  // Mortgage P&I + interest paid over the holding period (equity-building
+  // principal is excluded — only interest is a true cost).
+  const rateM = rateA / 12, nper = 30 * 12;
+  const months = years * 12;
+  const monthlyPmt = loan > 0 ? pmt(rateM, nper, loan) : 0;
+  const interestPaid = (loan > 0 && months > 0)
+    ? cumipmt(rateM, nper, loan, 1, months) : 0;
+  // Split the P&I payment into its average interest vs principal components.
+  // Only interest is a real cost; principal repayments build recoverable equity.
+  const avgIntMo  = months > 0 ? interestPaid / months : 0;
+  const avgPrinMo = monthlyPmt - avgIntMo;
+  const runningCosts = (rates + ins + maint) * 12 * years;
+  const holdTotal = interestPaid + runningCosts;   // principal NOT included
+
+  // Sale
+  const salePrice = price * (1 + growthA * years);
+  const sellCosts = salePrice * sellPct;
+  const gain      = salePrice - price;                       // CGT-exempt
+  const inflPortion = price * (Math.pow(1 + inflA, years) - 1);
+  const realGain  = gain - inflPortion;
+  // Net benefit = capital gain − non-recoverable costs. The deposit and the
+  // principal you repay are recoverable equity (returned at sale), so they're
+  // NOT costs — only interest, running costs, acquisition fees and selling
+  // costs reduce your benefit. (Same philosophy as the Investment tab.)
+  const net = gain - sellCosts - holdTotal - upfrontFees;
+
+  // ── render ──
+  const set = (id, v) => { _$(id).textContent = fmtMoney(v); };
+  set('oo-o-loan', loan);
+  set('oo-o-deposit-calc', deposit);
+  set('oo-o-stamp', stamp);
+  set('oo-o-deposit', deposit);
+  set('oo-o-stamp2', stamp);
+  set('oo-o-upfront', upfront);
+  set('oo-o-pmt', monthlyPmt);
+  set('oo-o-int-mo', avgIntMo);
+  set('oo-o-prin-mo', avgPrinMo);
+  set('oo-o-interest', interestPaid);
+  set('oo-o-running', runningCosts);
+  set('oo-o-holdtotal', holdTotal);
+  set('oo-o-saleprice', salePrice);
+  set('oo-o-sellcost', sellCosts);
+  set('oo-o-gain', gain);
+  set('oo-o-realgain', realGain);
+  set('oo-o-net', net);
+  _$('oo-o-realgain').classList.toggle('good', realGain >= 0);
+  _$('oo-o-realgain').classList.toggle('bad',  realGain < 0);
+  _$('oo-o-net').classList.toggle('good', net >= 0);
+  _$('oo-o-net').classList.toggle('bad',  net < 0);
+
+  // Summary bar: combined non-recoverable upfront + total upfront payment
+  // (incl deposit) + net monthly cost (excl. principal).
+  const upfrontCostOO  = stamp + lmi + legal + buyerAg;   // sunk fees
+  const upfrontTotalOO = upfrontCostOO + deposit;          // full cash at settlement
+  const netMonthly = avgIntMo + rates + ins + maint;       // interest only, no principal
+  set('oo-s-final', net);
+  set('oo-s-upfront-cost', upfrontCostOO);
+  set('oo-s-upfront-total', upfrontTotalOO);
+  _$('oo-s-monthly').textContent = fmtMoney(netMonthly) + '/mo';
+  _$('oo-s-final').classList.toggle('good', net >= 0);
+  _$('oo-s-final').classList.toggle('bad',  net < 0);
+
+  // All costs, in words (below the total holding cost)
+  _$('oo-cost-words').innerHTML =
+    `<b>What makes up the cost:</b><br>` +
+    `• Upfront (non-recoverable): stamp duty ${fmtMoney(stamp)} + LMI ${fmtMoney(lmi)} + legal ${fmtMoney(legal)} + buyer's agent ${fmtMoney(buyerAg)}<br>` +
+    `• Monthly (over ${years} yrs): avg interest ${fmtMoney(avgIntMo)} + rates ${fmtMoney(rates)} + insurance ${fmtMoney(ins)} + maintenance ${fmtMoney(maint)}<br>` +
+    `• Selling: agent ${fmtMoney(sellCosts)}<br>` +
+    `• Excluded (recoverable equity): deposit ${fmtMoney(deposit)} + principal ${fmtMoney(avgPrinMo)}/mo`;
+
+  // Expose rich params for the Capital tab (it does the full capital calc).
+  // Remaining loan after the holding period (P&I, 30-yr term, no offset).
+  const remainingNewHomeLoan = (loan > 0 && months > 0)
+    ? loan * (Math.pow(1+rateM, nper) - Math.pow(1+rateM, months)) / (Math.pow(1+rateM, nper) - 1)
+    : loan;
+  window._OWN = {
+    years, price, loan, rate: rateA, deposit,
+    upfront: stamp + lmi + legal + buyerAg,   // cash paid at purchase
+    monthlyPmt,                          // new-home P&I payment
+    runningMo: rates + ins + maint,      // new-home monthly running costs
+    saleEnd: salePrice, sellCost: sellCosts,   // no CGT — main residence
+    remainingLoan: remainingNewHomeLoan,
+  };
+}
+
+['oo-price','oo-lvr','oo-rate','oo-stamp-pct','oo-lmi','oo-legal',
+ 'oo-buyer-agent','oo-rates','oo-insurance','oo-maint','oo-growth',
+ 'oo-inflation','oo-years','oo-sell-pct'].forEach(id => {
+  const el = _$(id);
+  if (el) el.addEventListener('input', recalcOwner);
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CAPITAL TAB — compares two pathways after the holding period.
+//
+// Scenario A: keep current home + buy IP (uses Investment-tab numbers).
+// Scenario B: sell current home + buy bigger home (uses Owner-tab numbers).
+//
+// SIMPLE MODEL (per user spec): offset interest reduction is NOT modelled yet.
+// Monthly surplus just accumulates as plain cash savings over the holding
+// period. Both tabs supply their own holding period (which may differ).
+// Nothing in the source tabs is recalculated here — we just read their outputs.
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Remaining principal on a P&I loan after `monthsPaid` months.
+function loanBalanceAfter(loan, rateA, termYears, monthsPaid) {
+  if (loan <= 0 || monthsPaid <= 0) return loan;
+  const rm = rateA / 12, nper = termYears * 12;
+  if (monthsPaid >= nper) return 0;
+  if (rm === 0) return loan * (1 - monthsPaid / nper);
+  return loan * (Math.pow(1+rm, nper) - Math.pow(1+rm, monthsPaid))
+              / (Math.pow(1+rm, nper) - 1);
+}
+
+// Standard P&I payment.
+function loanPaymentMo(loan, rateA, termYears) {
+  if (loan <= 0) return 0;
+  const rm = rateA / 12, nper = termYears * 12;
+  if (rm === 0) return loan / nper;
+  return loan * rm / (1 - Math.pow(1+rm, -nper));
+}
+
+function recalcCapital() {
+  // Pull fresh values from the two source tabs (values are copied, not
+  // recomputed — the source tabs own their own maths).
+  if (typeof recalcInvest === 'function') recalcInvest();
+  if (typeof recalcOwner  === 'function') recalcOwner();
+
+  // ── Current home / savings / income inputs (Capital tab's own) ──
+  const homeVal   = +_$('cap-home-value').value  || 0;
+  const agentPct  = (+_$('cap-agent').value || 0) / 100;
+  const curLoan   = +_$('cap-cur-loan').value    || 0;
+  const curRate   = (+_$('cap-cur-rate').value || 0) / 100;
+  const cashNow   = +_$('cap-savings').value     || 0;
+  const p1        = +_$('cap-p1').value          || 0;
+  const p2        = +_$('cap-p2').value          || 0;
+  const livingMo  = +_$('cap-living').value      || 0;
+  const homeGrow  = (+_$('cap-home-growth').value || 0) / 100;
+  const term      = +_$('cap-term').value        || 30;
+
+  const afterTaxYr = (p1 - ato_tax_2024(p1)) + (p2 - ato_tax_2024(p2));
+  const afterTaxMo = afterTaxYr / 12;
+
+  // Current home today
+  const equityNow = homeVal * (1 - agentPct) - curLoan;
+  const totalCapNow = equityNow + cashNow;
+  _$('cap-equity-now').textContent = fmtMoney(equityNow);
+  _$('cap-total-now').textContent  = fmtMoney(totalCapNow);
+  _$('cap-aftertax').textContent   = fmtMoney(afterTaxYr) + '/yr';
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // SCENARIO A — keep current home, buy IP (read from Investment tab)
+  // ──────────────────────────────────────────────────────────────────────────
+  const inv = window._INV;
+  let aTotal = NaN;
+  if (inv) {
+    const aYears   = inv.years;
+    const aMonths  = aYears * 12;
+    // Monthly cash flow
+    const ipCashMo = inv.monthlyPmt + inv.runningMo - inv.rent - inv.ngRefundMo;
+    const curRepay = loanPaymentMo(curLoan, curRate, term);   // we still service the current home loan
+    const surplusA = afterTaxMo - livingMo - ipCashMo - curRepay;
+
+    // After holding years (sell BOTH)
+    // 1. Cash savings accumulated
+    const cashSpentOnIP = inv.deposit + inv.upfront;          // money paid at IP settlement
+    const cashSavingsA  = cashNow - cashSpentOnIP + surplusA * aMonths;
+
+    // 2. Current home equity at sale
+    const curHomeValEnd  = homeVal * Math.pow(1 + homeGrow, aYears);
+    const curHomeLoanEnd = loanBalanceAfter(curLoan, curRate, term, aMonths);
+    const curHomeEqEnd   = curHomeValEnd * (1 - agentPct) - curHomeLoanEnd;
+
+    // 3. IP equity at sale (sale price − selling cost − remaining IP loan − CGT)
+    const ipEqEnd = inv.saleEnd - inv.sellCost - inv.remainingLoan - inv.cgt;
+
+    aTotal = cashSavingsA + curHomeEqEnd + ipEqEnd;
+
+    // Render Scenario A
+    _$('ca-income').textContent     = fmtMoney(afterTaxMo) + '/mo';
+    _$('ca-living').textContent     = '−' + fmtMoney(livingMo) + '/mo';
+    _$('ca-ipcost').textContent     = '−' + fmtMoney(ipCashMo) + '/mo';
+    _$('ca-homerepay').textContent  = '−' + fmtMoney(curRepay) + '/mo';
+    _$('ca-surplus').textContent    = fmtMoney(surplusA) + '/mo';
+    _$('ca-surplus').classList.toggle('good', surplusA >= 0);
+    _$('ca-surplus').classList.toggle('bad',  surplusA < 0);
+    _$('ca-years').textContent      = aYears + ' yrs';
+    _$('ca-savings-acc').textContent= fmtMoney(cashSavingsA);
+    _$('ca-home-eq').textContent    = fmtMoney(curHomeEqEnd);
+    _$('ca-ip-eq').textContent      = fmtMoney(ipEqEnd);
+    _$('ca-total').textContent      = fmtMoney(aTotal);
+    _$('ca-total').classList.toggle('good', aTotal >= 0);
+    _$('ca-total').classList.toggle('bad',  aTotal < 0);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // SCENARIO B — sell current home, buy bigger home (read from Owner tab)
+  // ──────────────────────────────────────────────────────────────────────────
+  const own = window._OWN;
+  let bTotal = NaN;
+  if (own) {
+    const bYears  = own.years;
+    const bMonths = bYears * 12;
+    // Monthly cash flow (no IP, no rent income, no current-home loan — sold)
+    const newHomeCashMo = own.monthlyPmt + own.runningMo;
+    const surplusB = afterTaxMo - livingMo - newHomeCashMo;
+
+    // At t=0: sell current home → use proceeds + savings as upfront for new home
+    const startCashB     = equityNow + cashNow;                // sale proceeds + savings
+    const buyCostB       = own.deposit + own.upfront;          // cash needed at settlement
+    const leftoverAtBuy  = startCashB - buyCostB;
+    const cashSavingsB   = leftoverAtBuy + surplusB * bMonths;
+
+    // After holding years (sell new home — no CGT, main residence)
+    const newHomeEqEnd = own.saleEnd - own.sellCost - own.remainingLoan;
+
+    bTotal = cashSavingsB + newHomeEqEnd;
+
+    // Render Scenario B
+    _$('cb-income').textContent     = fmtMoney(afterTaxMo) + '/mo';
+    _$('cb-living').textContent     = '−' + fmtMoney(livingMo) + '/mo';
+    _$('cb-homecost').textContent   = '−' + fmtMoney(newHomeCashMo) + '/mo';
+    _$('cb-surplus').textContent    = fmtMoney(surplusB) + '/mo';
+    _$('cb-surplus').classList.toggle('good', surplusB >= 0);
+    _$('cb-surplus').classList.toggle('bad',  surplusB < 0);
+    _$('cb-years').textContent      = bYears + ' yrs';
+    _$('cb-startcash').textContent  = fmtMoney(startCashB);
+    _$('cb-buycost').textContent    = '−' + fmtMoney(buyCostB);
+    _$('cb-savings-acc').textContent= fmtMoney(cashSavingsB);
+    _$('cb-home-eq').textContent    = fmtMoney(newHomeEqEnd);
+    _$('cb-total').textContent      = fmtMoney(bTotal);
+    _$('cb-total').classList.toggle('good', bTotal >= 0);
+    _$('cb-total').classList.toggle('bad',  bTotal < 0);
+  }
+
+  // Top-of-tab verdict
+  _$('cap-a-total').textContent = isFinite(aTotal) ? fmtMoney(aTotal) : '—';
+  _$('cap-b-total').textContent = isFinite(bTotal) ? fmtMoney(bTotal) : '—';
+  if (isFinite(aTotal) && isFinite(bTotal)) {
+    const diff = Math.abs(aTotal - bTotal);
+    _$('cap-verdict-label').textContent = aTotal >= bTotal ? 'Investing wins by' : 'Upgrading wins by';
+    _$('cap-verdict').textContent = fmtMoney(diff);
+  }
+}
+
+['cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
+ 'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term'].forEach(id => {
+  const el = _$(id); if (el) el.addEventListener('input', recalcCapital);
+});
+
 </script>
 </body>
 </html>

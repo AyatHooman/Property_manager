@@ -1329,6 +1329,100 @@
       background: #f4f5f8; border: 1px solid #dde;
       border-radius: 4px; padding: 10px 12px; margin: 4px 0; color: #233;
     }
+
+    /* ── Scenario save / load panel ────────────────────────────────────────── */
+    .scen-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-2); cursor: pointer;
+      padding: 5px 10px; border-radius: var(--r-pill);
+      font-size: var(--fs-sm); font-weight: 600;
+      white-space: nowrap; flex-shrink: 0;
+      transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+    }
+    .scen-btn:hover { background: var(--bg-elev); color: var(--text); }
+    .scen-btn.active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-strong); }
+    .scen-panel {
+      display: none;
+      position: fixed;
+      top: calc(var(--topbar-h) + 6px);
+      right: var(--s-4);
+      z-index: 48;
+      width: 320px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-lg);
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .scen-panel.open { display: flex; }
+    .scen-panel__head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--s-3) var(--s-4);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700; font-size: var(--fs-md);
+    }
+    .scen-panel__close {
+      background: none; border: none; color: var(--text-3); cursor: pointer;
+      font-size: 18px; line-height: 1; padding: 0 4px;
+    }
+    .scen-panel__close:hover { color: var(--text); }
+    .scen-save-row {
+      display: flex; gap: var(--s-2);
+      padding: var(--s-3) var(--s-4);
+      border-bottom: 1px solid var(--border);
+    }
+    .scen-save-row input {
+      flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); border-radius: var(--r-sm);
+      padding: 5px 10px; font-size: var(--fs-sm);
+    }
+    .scen-save-row input:focus { border-color: var(--brand); outline: none; }
+    .scen-save-row input::placeholder { color: var(--text-3); }
+    .scen-save-btn {
+      background: var(--brand); color: #fff; border: none;
+      border-radius: var(--r-sm); padding: 5px 14px;
+      font-size: var(--fs-sm); font-weight: 700; cursor: pointer;
+      white-space: nowrap; transition: opacity var(--t-fast);
+    }
+    .scen-save-btn:hover { opacity: .85; }
+    .scen-list { overflow-y: auto; max-height: 320px; padding: var(--s-2) 0; }
+    .scen-empty {
+      color: var(--text-3); font-size: var(--fs-sm);
+      text-align: center; padding: var(--s-5) var(--s-4);
+    }
+    .scen-item {
+      display: flex; align-items: center; gap: var(--s-2);
+      padding: 7px var(--s-4);
+      transition: background var(--t-fast);
+    }
+    .scen-item:hover { background: var(--bg-elev-2); }
+    .scen-item__name {
+      flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .scen-item__load {
+      background: transparent; border: 1px solid var(--brand); color: var(--brand);
+      border-radius: var(--r-sm); padding: 3px 10px;
+      font-size: var(--fs-xs); font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background var(--t-fast), color var(--t-fast);
+    }
+    .scen-item__load:hover { background: var(--brand); color: #fff; }
+    .scen-item__del {
+      background: transparent; border: 1px solid var(--border); color: var(--text-3);
+      border-radius: var(--r-sm); padding: 3px 8px;
+      font-size: var(--fs-xs); cursor: pointer;
+      transition: border-color var(--t-fast), color var(--t-fast);
+    }
+    .scen-item__del:hover { border-color: var(--danger); color: var(--danger); }
+    @media (max-width: 640px) {
+      .scen-panel {
+        top: auto; bottom: 0; right: 0; left: 0; width: auto;
+        border-radius: var(--r-lg) var(--r-lg) 0 0;
+        border-bottom: none; max-height: 70vh;
+      }
+      .scen-list { max-height: calc(70vh - 120px); }
+    }
   </style>
 </head>
 <body>
@@ -1355,7 +1449,21 @@
       <button class="tab-btn"        data-tab="invest" type="button">💰 Investment</button>
       <button class="tab-btn"        data-tab="owner"  type="button">🏡 Owner-occupied</button>
       <button class="tab-btn"        data-tab="capital" type="button">💎 Capital</button>
+      <button class="scen-btn" id="scen-btn" type="button" title="Save / Load scenarios">💾 Scenarios</button>
     </nav>
+  </div>
+
+  <!-- ── Scenario save / load panel ──────────────────────────────────────── -->
+  <div class="scen-panel" id="scen-panel">
+    <div class="scen-panel__head">
+      <span>💾 Saved Scenarios</span>
+      <button class="scen-panel__close" id="scen-close" type="button" title="Close">×</button>
+    </div>
+    <div class="scen-save-row">
+      <input type="text" id="scen-name-input" placeholder="Enter scenario name…" maxlength="60" autocomplete="off" />
+      <button class="scen-save-btn" id="scen-save-btn" type="button">Save</button>
+    </div>
+    <div class="scen-list" id="scen-list"><div class="scen-empty">No saved scenarios yet.</div></div>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -5139,6 +5247,102 @@ function recalcCapital() {
 ['cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
  'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years'].forEach(id => {
   const el = _$(id); if (el) el.addEventListener('input', recalcCapital);
+});
+
+// ── Scenario save / load (localStorage) ─────────────────────────────────
+const SCEN_STORE = 'pm_scenarios_v1';
+const SCEN_INPUT_IDS = [
+  // Investment tab
+  'i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
+  'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax',
+  'i-repairs','i-growth','i-inflation','i-sell-pct','i-p1-income','i-p2-income',
+  // Owner-occupied tab
+  'oo-price','oo-lvr','oo-rate','oo-stamp-pct','oo-lmi','oo-legal',
+  'oo-buyer-agent','oo-rates','oo-insurance','oo-maint',
+  'oo-growth','oo-inflation','oo-years','oo-sell-pct',
+  // Capital tab
+  'cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
+  'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years',
+];
+const SCEN_CHECK_IDS = ['i-ng-on'];
+
+function _scenGetAll() {
+  try { return JSON.parse(localStorage.getItem(SCEN_STORE) || '{}'); } catch { return {}; }
+}
+function _scenSaveAll(obj) { localStorage.setItem(SCEN_STORE, JSON.stringify(obj)); }
+
+function scenSave(name) {
+  if (!name) return;
+  const data = {};
+  SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el) data[id] = el.value; });
+  SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el) data[id] = el.checked; });
+  const cgtEl = document.querySelector('input[name="cgt-method"]:checked');
+  if (cgtEl) data['__cgt-method'] = cgtEl.value;
+  const all = _scenGetAll();
+  all[name] = data;
+  _scenSaveAll(all);
+  renderScenList();
+}
+
+function scenLoad(name) {
+  const data = (_scenGetAll())[name]; if (!data) return;
+  SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.value = data[id]; });
+  SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.checked = data[id]; });
+  if (data['__cgt-method']) {
+    const r = document.querySelector(`input[name="cgt-method"][value="${data['__cgt-method']}"]`);
+    if (r) r.checked = true;
+  }
+  if (typeof recalcInvest  === 'function') recalcInvest();
+  if (typeof recalcOwner   === 'function') recalcOwner();
+  if (typeof recalcCapital === 'function') recalcCapital();
+  closeScenPanel();
+}
+
+function scenDelete(name) {
+  const all = _scenGetAll(); delete all[name]; _scenSaveAll(all); renderScenList();
+}
+
+function renderScenList() {
+  const list = _$('scen-list'); if (!list) return;
+  const names = Object.keys(_scenGetAll());
+  if (!names.length) {
+    list.innerHTML = '<div class="scen-empty">No saved scenarios yet.</div>'; return;
+  }
+  list.innerHTML = names.map(n =>
+    `<div class="scen-item">` +
+    `<span class="scen-item__name" title="${n}">${n}</span>` +
+    `<button class="scen-item__load" data-name="${n}" type="button">Load</button>` +
+    `<button class="scen-item__del"  data-name="${n}" type="button">✕</button>` +
+    `</div>`).join('');
+  list.querySelectorAll('.scen-item__load').forEach(b => b.onclick = () => scenLoad(b.dataset.name));
+  list.querySelectorAll('.scen-item__del').forEach(b => b.onclick  = () => scenDelete(b.dataset.name));
+}
+
+function openScenPanel()  {
+  renderScenList();
+  _$('scen-panel').classList.add('open');
+  _$('scen-btn').classList.add('active');
+  _$('scen-name-input').focus();
+}
+function closeScenPanel() {
+  _$('scen-panel').classList.remove('open');
+  _$('scen-btn').classList.remove('active');
+}
+
+_$('scen-btn').addEventListener('click', () =>
+  _$('scen-panel').classList.contains('open') ? closeScenPanel() : openScenPanel());
+_$('scen-close').addEventListener('click', closeScenPanel);
+_$('scen-save-btn').addEventListener('click', () => {
+  const name = (_$('scen-name-input').value || '').trim();
+  if (!name) { _$('scen-name-input').focus(); return; }
+  scenSave(name);
+  _$('scen-name-input').value = '';
+});
+_$('scen-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') _$('scen-save-btn').click(); });
+document.addEventListener('click', e => {
+  const panel = _$('scen-panel'), btn = _$('scen-btn');
+  if (panel && panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target))
+    closeScenPanel();
 });
 
 </script>

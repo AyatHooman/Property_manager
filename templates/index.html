@@ -1308,6 +1308,27 @@
       .cap-verdict-bar #cap-verdict { font-size: var(--fs-md); }
     }
 
+    /* ── Capital tab: expandable calculation workings ─────────────────────── */
+    .cap-workings { margin: 4px 0 2px; }
+    .cap-workings > summary {
+      cursor: pointer; user-select: none;
+      font-size: 11px; color: var(--brand);
+      padding: 3px 8px; border-radius: 4px;
+      list-style: none; display: inline-flex;
+      align-items: center; gap: 4px;
+    }
+    .cap-workings > summary::before {
+      content: '▶'; font-size: 9px; transition: transform .15s;
+    }
+    .cap-workings[open] > summary::before { transform: rotate(90deg); }
+    .cap-workings > summary:hover { background: rgba(0,0,0,.05); }
+    .cap-workings__body {
+      font-family: 'Courier New', monospace; font-size: 10.5px;
+      line-height: 1.65; white-space: pre;
+      overflow-x: auto;
+      background: #f4f5f8; border: 1px solid #dde;
+      border-radius: 4px; padding: 10px 12px; margin: 4px 0; color: #233;
+    }
   </style>
 </head>
 <body>
@@ -2327,12 +2348,14 @@
             <div class="invest-row"><span class="invest-label">Investment property equity at sale</span><span class="invest-out good" id="ca-ip-eq">—</span><div class="invest-hint">sale price − selling cost − remaining IP loan − CGT.</div></div>
             <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ IP loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="ca-ip-loan-detail">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A) — no offset</span><span class="invest-out good" id="ca-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show no-offset calculation workings (A)</summary><div class="cap-workings__body" id="ca-work-simple">—</div></details>
             <div class="cgt-step">With offset on current home loan</div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset start (leftover cash after IP buy)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-start">—</span></div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset balance at end (monthly surplus fed in)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-end">—</span></div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Current home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-loan">—</span></div>
             <div class="invest-row"><span class="invest-label">Current home equity at sale (with offset)</span><span class="invest-out good" id="ca-off-eq">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A) — with offset</span><span class="invest-out good" id="ca-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show with-offset calculation workings (A)</summary><div class="cap-workings__body" id="ca-work-offset">—</div></details>
             <div class="invest-row"><span class="invest-label">Offset benefit (extra capital)</span><span class="invest-out good" id="ca-off-benefit">—</span><div class="invest-hint">Lower interest on the current home loan ⇒ more principal paid down ⇒ higher equity at sale.</div></div>
           </div>
         </div>
@@ -2353,12 +2376,14 @@
             <div class="invest-row"><span class="invest-label">New home equity at sale (no CGT)</span><span class="invest-out good" id="cb-home-eq">—</span><div class="invest-hint">sale price − selling cost − remaining loan.</div></div>
             <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ new home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cb-home-loan-detail">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B) — no offset</span><span class="invest-out good" id="cb-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show no-offset calculation workings (B)</summary><div class="cap-workings__body" id="cb-work-simple">—</div></details>
             <div class="cgt-step">With offset on new home loan</div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset start (leftover after buying new home)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-start">—</span></div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset balance at end (monthly surplus fed in)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-end">—</span></div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">New home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-loan">—</span></div>
             <div class="invest-row"><span class="invest-label">New home equity at sale (with offset)</span><span class="invest-out good" id="cb-off-eq">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B) — with offset</span><span class="invest-out good" id="cb-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show with-offset calculation workings (B)</summary><div class="cap-workings__body" id="cb-work-offset">—</div></details>
             <div class="invest-row"><span class="invest-label">Offset benefit (extra capital)</span><span class="invest-out good" id="cb-off-benefit">—</span><div class="invest-hint">Surplus parked in offset shields loan interest ⇒ more principal paid down.</div></div>
           </div>
         </div>
@@ -2377,12 +2402,14 @@
             <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="cc-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining home loan.</div></div>
             <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cc-home-loan-detail">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C) — no offset</span><span class="invest-out good" id="cc-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show no-offset calculation workings (C)</summary><div class="cap-workings__body" id="cc-work-simple">—</div></details>
             <div class="cgt-step">With offset on current home loan ($120k already in offset)</div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset start (your existing cash savings)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-start">—</span></div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset balance at end (monthly surplus fed in)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-end">—</span></div>
             <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-loan">—</span></div>
             <div class="invest-row"><span class="invest-label">Current home equity at sale (with offset)</span><span class="invest-out good" id="cc-off-eq">—</span></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C) — with offset</span><span class="invest-out good" id="cc-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show with-offset calculation workings (C)</summary><div class="cap-workings__body" id="cc-work-offset">—</div></details>
             <div class="invest-row"><span class="invest-label">Offset benefit (extra capital)</span><span class="invest-out good" id="cc-off-benefit">—</span><div class="invest-hint">Your $120k in offset has been shielding interest from day 1 ⇒ loan pays down faster.</div></div>
           </div>
         </div>
@@ -4580,6 +4607,70 @@ function simOffset(loan, rateA, termYears, holdMonths, startOffset, monthlySurpl
            totalInterest, principalPaid };
 }
 
+// ── Formatting helpers for Capital tab workings text ──────────────────────
+function _wm$(v) {
+  return (v < 0 ? '\u2212$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-AU');
+}
+function _wLine(lbl, val, note) {
+  const L = 46, V = 15;
+  return '  ' + lbl.padEnd(L) + _wm$(val).padStart(V) + (note ? '   \u2190 ' + note : '');
+}
+function _wRow(r) {
+  return '  ' + String(r.month).padStart(4) +
+    '  \u2502' + _wm$(r.balOff).padStart(15) +
+    '  \u2502' + _wm$(r.balNoOff).padStart(15) +
+    '  \u2502' + _wm$(r.offset).padStart(13) +
+    '  \u2502' + _wm$(r.effBal).padStart(15) +
+    '  \u2502' + _wm$(r.interest).padStart(11) +
+    '  \u2502' + _wm$(r.principalOff).padStart(12);
+}
+
+// Superset of simOffset — same monthly simulation plus milestone snapshot rows
+// and a no-offset shadow for interest comparison.
+// rows[]: { month, balOff, balNoOff, offset, effBal, interest, principalOff }
+// Snapshot months: 1, 12, 36, 60, holdMonths.
+function simOffsetLog(loan, rateA, termYears, holdMonths, startOffset, monthlySurplus) {
+  const payment = loanPaymentMo(loan, rateA, termYears);
+  if (loan <= 0 || holdMonths <= 0) {
+    const fin = (startOffset || 0) + (monthlySurplus || 0) * holdMonths;
+    return { payment, remainingLoan: loan, finalOffset: fin,
+             totalInterest: 0, principalPaid: 0,
+             totalInterestNoOff: 0, interestSaved: 0,
+             remainingLoanNoOff: loan, rows: [] };
+  }
+  const rm = rateA / 12;
+  const snaps = new Set([1, 12, 36, 60, holdMonths]);
+  let bal = loan, balN = loan;
+  let offset = Math.max(0, startOffset || 0);
+  let totalInterest = 0, totalInterestNoOff = 0, principalPaid = 0;
+  const rows = [];
+  for (let m = 1; m <= holdMonths; m++) {
+    const effBal   = Math.max(0, bal - offset);
+    const interest = effBal * rm;
+    let principal  = payment - interest;
+    if (principal > bal) principal = bal;
+    if (principal < 0)   principal = 0;
+    bal -= principal;
+    totalInterest += interest;
+    principalPaid += principal;
+    offset += monthlySurplus;
+    if (offset < 0) offset = 0;
+    const intN  = balN * rm;
+    let   prinN = payment - intN;
+    if (prinN > balN) prinN = balN;
+    if (prinN < 0)    prinN = 0;
+    balN -= prinN;
+    totalInterestNoOff += intN;
+    if (snaps.has(m))
+      rows.push({ month: m, balOff: Math.max(0, bal), balNoOff: Math.max(0, balN),
+                  offset, effBal, interest, principalOff: principal });
+  }
+  return { payment, remainingLoan: Math.max(0, bal), finalOffset: offset,
+           totalInterest, principalPaid,
+           totalInterestNoOff, interestSaved: totalInterestNoOff - totalInterest,
+           remainingLoanNoOff: Math.max(0, balN), rows };
+}
+
 function recalcCapital() {
   // Pull fresh values from the two source tabs (values are copied, not
   // recomputed — the source tabs own their own maths).
@@ -4659,8 +4750,9 @@ function recalcCapital() {
     // ── Offset variant: surplus + leftover cash sit in offset against the
     //    current home loan (non-deductible — best place for offset). IP loan
     //    is left untouched so its interest stays fully deductible.
+    const aTotalSimple = aTotal;
     const offStartA  = Math.max(0, cashNow - cashSpentOnIP);
-    const simA       = simOffset(curLoan, curRate, term, aMonths, offStartA, surplusA);
+    const simA       = simOffsetLog(curLoan, curRate, term, aMonths, offStartA, surplusA);
     const curEqA_off = curHomeValEnd * (1 - agentPct) - simA.remainingLoan;
     const aTotalOff  = simA.finalOffset + curEqA_off + ipEqEnd;
     _$('ca-off-start').textContent = fmtMoney(offStartA);
@@ -4671,6 +4763,96 @@ function recalcCapital() {
     _$('ca-off-total').textContent = fmtMoney(aTotalOff);
     _$('ca-off-benefit').textContent = '+' + fmtMoney(aTotalOff - aTotal);
     aTotal = aTotalOff;  // verdict uses offset-aware total
+    // ── Workings: Scenario A no-offset ────────────────────────────────────
+    {
+      const D = '\u2500'.repeat(78);
+      let w = D + '\n';
+      w += '  SCENARIO A \u00b7 Keep current home + buy investment property\n';
+      w += D + '\n';
+      w += 'MONTHLY CASH FLOW\n';
+      w += _wLine('After-tax income', afterTaxMo, '/mo') + '\n';
+      w += _wLine('  \u2212 Living expenses', -livingMo, '/mo') + '\n';
+      w += _wLine('  \u2212 IP net cash cost (P&I + running \u2212 rent \u2212 NG)', -ipCashMo, '/mo') + '\n';
+      w += _wLine('  \u2212 Current home loan repayment', -curRepay, '/mo') + '\n';
+      w += _wLine('  = Monthly surplus', surplusA, '/mo') + '\n';
+      w += '\n';
+      w += 'ACCUMULATED CASH  (' + aYears + ' yrs = ' + aMonths + ' months)\n';
+      w += _wLine('Cash savings today', cashNow) + '\n';
+      w += _wLine('  \u2212 IP deposit + upfront costs', -cashSpentOnIP) + '\n';
+      w += _wLine('  + Monthly surplus \u00d7 ' + aMonths + ' mo', surplusA * aMonths,
+                  _wm$(surplusA) + ' \u00d7 ' + aMonths) + '\n';
+      w += _wLine('  = Cash savings at end', cashSavingsA) + '\n';
+      w += '\n';
+      w += 'CURRENT HOME EQUITY  (standard P&I, no offset)\n';
+      w += _wLine('Home value today', homeVal) + '\n';
+      w += _wLine('  grown \u00d7 (1 + ' + (homeGrow*100).toFixed(1) + '%)^' + aYears, curHomeValEnd,
+                  homeVal + ' \u00d7 ' + Math.pow(1+homeGrow,aYears).toFixed(4)) + '\n';
+      w += _wLine('  net sale price \u00d7 (1 \u2212 ' + (agentPct*100).toFixed(1) + '%)', curHomeValEnd*(1-agentPct)) + '\n';
+      w += _wLine('  \u2212 remaining home loan (after ' + aMonths + ' mo P&I)', -curHomeLoanEnd) + '\n';
+      w += _wLine('  = Home equity', curHomeEqEnd) + '\n';
+      w += '\n';
+      w += 'IP EQUITY  (from Investment tab)\n';
+      w += _wLine('IP projected sale price', inv.saleEnd) + '\n';
+      w += _wLine('  \u2212 Selling cost', -inv.sellCost) + '\n';
+      w += _wLine('  \u2212 Remaining IP loan', -inv.remainingLoan) + '\n';
+      w += _wLine('  \u2212 CGT payable', -inv.cgt) + '\n';
+      w += _wLine('  = IP equity', ipEqEnd) + '\n';
+      w += '\n';
+      w += 'TOTAL  (no offset)\n';
+      w += _wLine('  Cash savings', cashSavingsA) + '\n';
+      w += _wLine('  + Current home equity', curHomeEqEnd) + '\n';
+      w += _wLine('  + IP equity', ipEqEnd) + '\n';
+      w += '  ' + '\u2550'.repeat(64) + '\n';
+      w += _wLine('  = TOTAL CAPITAL (A, no offset)', aTotalSimple) + '\n';
+      const el = _$('ca-work-simple'); if (el) el.textContent = w;
+    }
+    // ── Workings: Scenario A with-offset ──────────────────────────────────
+    {
+      const D = '\u2500'.repeat(78);
+      const TH = '  ' + ' Mth'.padStart(4) + '  \u2502' + 'Loan(off)'.padStart(15) +
+                 '  \u2502' + 'Loan(no-off)'.padStart(15) + '  \u2502' + 'Offset bal'.padStart(13) +
+                 '  \u2502' + 'Eff. balance'.padStart(15) + '  \u2502' + 'Interest'.padStart(11) +
+                 '  \u2502' + 'Principal'.padStart(12);
+      const TS = '  ' + '\u2500'.repeat(TH.length - 2);
+      let w = D + '\n';
+      w += '  SCENARIO A \u00b7 With offset on current home loan\n';
+      w += D + '\n';
+      w += 'SETUP\n';
+      w += _wLine('Offset starts at (cash remaining after IP buy)', offStartA) + '\n';
+      w += _wLine('Monthly surplus fed into offset', surplusA, '/mo') + '\n';
+      w += _wLine('Loan (current home)', curLoan,
+                  '@ ' + (curRate*100).toFixed(2) + '% P&I, ' + term + '-yr term') + '\n';
+      w += _wLine('Fixed monthly payment', simA.payment, '/mo') + '\n';
+      w += '\n';
+      w += 'MONTHLY SNAPSHOTS  (offset path vs no-offset shadow)\n';
+      w += TH + '\n' + TS + '\n';
+      simA.rows.forEach(r => { w += _wRow(r) + '\n'; });
+      w += '\n';
+      w += 'INTEREST COMPARISON\n';
+      w += _wLine('Total interest paid  (with offset)', simA.totalInterest) + '\n';
+      w += _wLine('Total interest paid  (without offset)', simA.totalInterestNoOff) + '\n';
+      w += _wLine('  = Interest saved by offset', simA.interestSaved) + '\n';
+      w += '\n';
+      w += 'LOAN BALANCE COMPARISON  (at end of ' + aYears + ' years)\n';
+      w += _wLine('Remaining loan  (with offset)', simA.remainingLoan) + '\n';
+      w += _wLine('Remaining loan  (without offset)', simA.remainingLoanNoOff) + '\n';
+      w += _wLine('  Extra principal paid down', simA.remainingLoanNoOff - simA.remainingLoan) + '\n';
+      w += '\n';
+      w += 'EQUITY COMPARISON  (current home)\n';
+      w += _wLine('Home equity  (with offset)', curEqA_off) + '\n';
+      w += _wLine('Home equity  (without offset)', curHomeEqEnd) + '\n';
+      w += _wLine('  Extra equity via offset', curEqA_off - curHomeEqEnd) + '\n';
+      w += '\n';
+      w += 'TOTAL  (with offset)\n';
+      w += _wLine('  Offset balance (= accumulated savings)', simA.finalOffset) + '\n';
+      w += _wLine('  + Home equity  (with offset)', curEqA_off) + '\n';
+      w += _wLine('  + IP equity  (unchanged)', ipEqEnd) + '\n';
+      w += '  ' + '\u2550'.repeat(64) + '\n';
+      w += _wLine('  = TOTAL CAPITAL (A, with offset)', aTotalOff) + '\n';
+      w += _wLine('    vs without offset', aTotalSimple) + '\n';
+      w += _wLine('  \u25b2 Offset benefit', aTotalOff - aTotalSimple) + '\n';
+      const el = _$('ca-work-offset'); if (el) el.textContent = w;
+    }
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -4716,8 +4898,9 @@ function recalcCapital() {
 
     // ── Offset variant: leftover cash + monthly surplus sit in offset
     //    against the new home loan.
+    const bTotalSimple = bTotal;
     const offStartB = Math.max(0, leftoverAtBuy);
-    const simB      = simOffset(own.loan, own.rate, term, bMonths, offStartB, surplusB);
+    const simB      = simOffsetLog(own.loan, own.rate, term, bMonths, offStartB, surplusB);
     const newEqB_off = own.saleEnd - own.sellCost - simB.remainingLoan;
     const bTotalOff  = simB.finalOffset + newEqB_off;
     _$('cb-off-start').textContent = fmtMoney(offStartB);
@@ -4728,6 +4911,91 @@ function recalcCapital() {
     _$('cb-off-total').textContent = fmtMoney(bTotalOff);
     _$('cb-off-benefit').textContent = '+' + fmtMoney(bTotalOff - bTotal);
     bTotal = bTotalOff;
+    // ── Workings: Scenario B no-offset ────────────────────────────────────
+    {
+      const D = '\u2500'.repeat(78);
+      let w = D + '\n';
+      w += '  SCENARIO B \u00b7 Sell current home + buy bigger/new home\n';
+      w += D + '\n';
+      w += 'MONTHLY CASH FLOW\n';
+      w += _wLine('After-tax income', afterTaxMo, '/mo') + '\n';
+      w += _wLine('  \u2212 Living expenses', -livingMo, '/mo') + '\n';
+      w += _wLine('  \u2212 New home cash cost (P&I + running)', -newHomeCashMo, '/mo') + '\n';
+      w += _wLine('  = Monthly surplus', surplusB, '/mo') + '\n';
+      w += '\n';
+      w += 'CASH AT START  (after selling current home)\n';
+      w += _wLine('Current home equity if sold now', equityNow,
+                  _wm$(homeVal) + ' \u00d7 (1\u2212' + (agentPct*100).toFixed(1) + '%) \u2212 ' + _wm$(curLoan)) + '\n';
+      w += _wLine('  + Savings today', cashNow) + '\n';
+      w += _wLine('  = Starting cash', startCashB) + '\n';
+      w += _wLine('  \u2212 New home deposit + upfront', -buyCostB) + '\n';
+      w += _wLine('  = Leftover cash after buying', leftoverAtBuy) + '\n';
+      w += '\n';
+      w += 'ACCUMULATED CASH  (' + bYears + ' yrs = ' + bMonths + ' months)\n';
+      w += _wLine('Leftover at buy', leftoverAtBuy) + '\n';
+      w += _wLine('  + Monthly surplus \u00d7 ' + bMonths + ' mo', surplusB * bMonths,
+                  _wm$(surplusB) + ' \u00d7 ' + bMonths) + '\n';
+      w += _wLine('  = Cash savings at end', cashSavingsB) + '\n';
+      w += '\n';
+      w += 'NEW HOME EQUITY  (standard P&I, no offset, no CGT \u2014 main residence)\n';
+      w += _wLine('New home projected sale price', own.saleEnd) + '\n';
+      w += _wLine('  \u2212 Selling cost', -own.sellCost) + '\n';
+      w += _wLine('  \u2212 Remaining new home loan', -own.remainingLoan) + '\n';
+      w += _wLine('  = New home equity', newHomeEqEnd) + '\n';
+      w += '\n';
+      w += 'TOTAL  (no offset)\n';
+      w += _wLine('  Cash savings', cashSavingsB) + '\n';
+      w += _wLine('  + New home equity', newHomeEqEnd) + '\n';
+      w += '  ' + '\u2550'.repeat(64) + '\n';
+      w += _wLine('  = TOTAL CAPITAL (B, no offset)', bTotalSimple) + '\n';
+      const el = _$('cb-work-simple'); if (el) el.textContent = w;
+    }
+    // ── Workings: Scenario B with-offset ──────────────────────────────────
+    {
+      const D = '\u2500'.repeat(78);
+      const TH = '  ' + ' Mth'.padStart(4) + '  \u2502' + 'Loan(off)'.padStart(15) +
+                 '  \u2502' + 'Loan(no-off)'.padStart(15) + '  \u2502' + 'Offset bal'.padStart(13) +
+                 '  \u2502' + 'Eff. balance'.padStart(15) + '  \u2502' + 'Interest'.padStart(11) +
+                 '  \u2502' + 'Principal'.padStart(12);
+      const TS = '  ' + '\u2500'.repeat(TH.length - 2);
+      let w = D + '\n';
+      w += '  SCENARIO B \u00b7 With offset on new home loan\n';
+      w += D + '\n';
+      w += 'SETUP\n';
+      w += _wLine('Offset starts at (leftover cash after buying)', offStartB) + '\n';
+      w += _wLine('Monthly surplus fed into offset', surplusB, '/mo') + '\n';
+      w += _wLine('Loan (new home)', own.loan,
+                  '@ ' + (own.rate*100).toFixed(2) + '% P&I, ' + term + '-yr term') + '\n';
+      w += _wLine('Fixed monthly payment', simB.payment, '/mo') + '\n';
+      w += '\n';
+      w += 'MONTHLY SNAPSHOTS  (offset path vs no-offset shadow)\n';
+      w += TH + '\n' + TS + '\n';
+      simB.rows.forEach(r => { w += _wRow(r) + '\n'; });
+      w += '\n';
+      w += 'INTEREST COMPARISON\n';
+      w += _wLine('Total interest paid  (with offset)', simB.totalInterest) + '\n';
+      w += _wLine('Total interest paid  (without offset)', simB.totalInterestNoOff) + '\n';
+      w += _wLine('  = Interest saved by offset', simB.interestSaved) + '\n';
+      w += '\n';
+      w += 'LOAN BALANCE COMPARISON  (at end of ' + bYears + ' years)\n';
+      w += _wLine('Remaining loan  (with offset)', simB.remainingLoan) + '\n';
+      w += _wLine('Remaining loan  (without offset)', simB.remainingLoanNoOff) + '\n';
+      w += _wLine('  Extra principal paid down', simB.remainingLoanNoOff - simB.remainingLoan) + '\n';
+      w += '\n';
+      w += 'EQUITY COMPARISON  (new home)\n';
+      w += _wLine('New home equity  (with offset)', newEqB_off) + '\n';
+      w += _wLine('New home equity  (without offset)', newHomeEqEnd) + '\n';
+      w += _wLine('  Extra equity via offset', newEqB_off - newHomeEqEnd) + '\n';
+      w += '\n';
+      w += 'TOTAL  (with offset)\n';
+      w += _wLine('  Offset balance (= accumulated savings)', simB.finalOffset) + '\n';
+      w += _wLine('  + New home equity  (with offset)', newEqB_off) + '\n';
+      w += '  ' + '\u2550'.repeat(64) + '\n';
+      w += _wLine('  = TOTAL CAPITAL (B, with offset)', bTotalOff) + '\n';
+      w += _wLine('    vs without offset', bTotalSimple) + '\n';
+      w += _wLine('  \u25b2 Offset benefit', bTotalOff - bTotalSimple) + '\n';
+      const el = _$('cb-work-offset'); if (el) el.textContent = w;
+    }
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -4761,7 +5029,8 @@ function recalcCapital() {
 
   // ── Offset variant (C): $120k cash sits in offset against the current
   //    home loan from day 1, and the monthly surplus is fed in every month.
-  const simC      = simOffset(curLoan, curRate, term, cMonths, cashNow, surplusC);
+  const cTotalSimple = cTotal;
+  const simC       = simOffsetLog(curLoan, curRate, term, cMonths, cashNow, surplusC);
   const curEqC_off = curHomeValEndC * (1 - agentPct) - simC.remainingLoan;
   const cTotalOff  = simC.finalOffset + curEqC_off;
   _$('cc-off-start').textContent = fmtMoney(cashNow);
@@ -4772,6 +5041,86 @@ function recalcCapital() {
   _$('cc-off-total').textContent = fmtMoney(cTotalOff);
   _$('cc-off-benefit').textContent = '+' + fmtMoney(cTotalOff - cTotal);
   const cTotalForVerdict = cTotalOff;
+  // ── Workings: Scenario C no-offset ────────────────────────────────────
+  {
+    const D = '\u2500'.repeat(78);
+    let w = D + '\n';
+    w += '  SCENARIO C \u00b7 Keep current home, no new purchase\n';
+    w += D + '\n';
+    w += 'MONTHLY CASH FLOW\n';
+    w += _wLine('After-tax income', afterTaxMo, '/mo') + '\n';
+    w += _wLine('  \u2212 Living expenses', -livingMo, '/mo') + '\n';
+    w += _wLine('  \u2212 Current home loan repayment', -curRepayC, '/mo') + '\n';
+    w += _wLine('  = Monthly surplus', surplusC, '/mo') + '\n';
+    w += '\n';
+    w += 'ACCUMULATED CASH  (' + cYears + ' yrs = ' + cMonths + ' months)\n';
+    w += _wLine('Cash savings today', cashNow,
+                'not in offset \u2014 standard savings account') + '\n';
+    w += _wLine('  + Monthly surplus \u00d7 ' + cMonths + ' mo', surplusC * cMonths,
+                _wm$(surplusC) + ' \u00d7 ' + cMonths) + '\n';
+    w += _wLine('  = Cash savings at end', cashSavingsC) + '\n';
+    w += '\n';
+    w += 'CURRENT HOME EQUITY  (standard P&I, no offset)\n';
+    w += _wLine('Home value today', homeVal) + '\n';
+    w += _wLine('  grown \u00d7 (1 + ' + (homeGrow*100).toFixed(1) + '%)^' + cYears, curHomeValEndC,
+                homeVal + ' \u00d7 ' + Math.pow(1+homeGrow,cYears).toFixed(4)) + '\n';
+    w += _wLine('  net sale price \u00d7 (1 \u2212 ' + (agentPct*100).toFixed(1) + '%)', curHomeValEndC*(1-agentPct)) + '\n';
+    w += _wLine('  \u2212 remaining home loan (after ' + cMonths + ' mo P&I)', -curHomeLoanEndC) + '\n';
+    w += _wLine('  = Home equity', curHomeEqEndC) + '\n';
+    w += '\n';
+    w += 'TOTAL  (no offset)\n';
+    w += _wLine('  Cash savings', cashSavingsC) + '\n';
+    w += _wLine('  + Current home equity', curHomeEqEndC) + '\n';
+    w += '  ' + '\u2550'.repeat(64) + '\n';
+    w += _wLine('  = TOTAL CAPITAL (C, no offset)', cTotalSimple) + '\n';
+    const el = _$('cc-work-simple'); if (el) el.textContent = w;
+  }
+  // ── Workings: Scenario C with-offset ──────────────────────────────────
+  {
+    const D = '\u2500'.repeat(78);
+    const TH = '  ' + ' Mth'.padStart(4) + '  \u2502' + 'Loan(off)'.padStart(15) +
+               '  \u2502' + 'Loan(no-off)'.padStart(15) + '  \u2502' + 'Offset bal'.padStart(13) +
+               '  \u2502' + 'Eff. balance'.padStart(15) + '  \u2502' + 'Interest'.padStart(11) +
+               '  \u2502' + 'Principal'.padStart(12);
+    const TS = '  ' + '\u2500'.repeat(TH.length - 2);
+    let w = D + '\n';
+    w += '  SCENARIO C \u00b7 With offset on current home (' + _wm$(cashNow) + ' in offset from day 1)\n';
+    w += D + '\n';
+    w += 'SETUP\n';
+    w += _wLine('Offset starts at (your existing cash savings)', cashNow) + '\n';
+    w += _wLine('Monthly surplus fed into offset', surplusC, '/mo') + '\n';
+    w += _wLine('Loan (current home)', curLoan,
+                '@ ' + (curRate*100).toFixed(2) + '% P&I, ' + term + '-yr term') + '\n';
+    w += _wLine('Fixed monthly payment', simC.payment, '/mo') + '\n';
+    w += '\n';
+    w += 'MONTHLY SNAPSHOTS  (offset path vs no-offset shadow)\n';
+    w += TH + '\n' + TS + '\n';
+    simC.rows.forEach(r => { w += _wRow(r) + '\n'; });
+    w += '\n';
+    w += 'INTEREST COMPARISON\n';
+    w += _wLine('Total interest paid  (with offset)', simC.totalInterest) + '\n';
+    w += _wLine('Total interest paid  (without offset)', simC.totalInterestNoOff) + '\n';
+    w += _wLine('  = Interest saved by offset', simC.interestSaved) + '\n';
+    w += '\n';
+    w += 'LOAN BALANCE COMPARISON  (at end of ' + cYears + ' years)\n';
+    w += _wLine('Remaining loan  (with offset)', simC.remainingLoan) + '\n';
+    w += _wLine('Remaining loan  (without offset)', simC.remainingLoanNoOff) + '\n';
+    w += _wLine('  Extra principal paid down', simC.remainingLoanNoOff - simC.remainingLoan) + '\n';
+    w += '\n';
+    w += 'EQUITY COMPARISON  (current home)\n';
+    w += _wLine('Home equity  (with offset)', curEqC_off) + '\n';
+    w += _wLine('Home equity  (without offset)', curHomeEqEndC) + '\n';
+    w += _wLine('  Extra equity via offset', curEqC_off - curHomeEqEndC) + '\n';
+    w += '\n';
+    w += 'TOTAL  (with offset)\n';
+    w += _wLine('  Offset balance (= accumulated savings)', simC.finalOffset) + '\n';
+    w += _wLine('  + Home equity  (with offset)', curEqC_off) + '\n';
+    w += '  ' + '\u2550'.repeat(64) + '\n';
+    w += _wLine('  = TOTAL CAPITAL (C, with offset)', cTotalOff) + '\n';
+    w += _wLine('    vs without offset', cTotalSimple) + '\n';
+    w += _wLine('  \u25b2 Offset benefit', cTotalOff - cTotalSimple) + '\n';
+    const el = _$('cc-work-offset'); if (el) el.textContent = w;
+  }
 
   // Top-of-tab verdict (uses offset-aware totals)
   _$('cap-a-total').textContent = isFinite(aTotal) ? fmtMoney(aTotal) : '—';

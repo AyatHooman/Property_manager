@@ -1238,6 +1238,76 @@
     .invest-card[data-ng-off="true"] .invest-card__body > *:not(.ng-toggle) {
       opacity: .4; pointer-events: none;
     }
+    /* ════════════════════════════════════════════════════════════════════════
+       MOBILE RESPONSIVE FIXES
+       ════════════════════════════════════════════════════════════════════════ */
+
+    /* Prevent any overflow from causing a page-level horizontal scrollbar */
+    html, body { overflow-x: hidden; max-width: 100%; }
+
+    /* ── Topbar: 2-row layout on phones ─────────────────────────────────── */
+    @media (max-width: 640px) {
+      .topbar {
+        height: auto;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 0 var(--s-3);
+      }
+      .topbar__brand {
+        flex: 1; min-width: 0;
+        padding: var(--s-2) 0;
+      }
+      .topbar__title { font-size: var(--fs-md); }
+      .topbar__focus {
+        margin-left: auto; margin-right: 0;
+        padding: var(--s-2) 0;
+      }
+      /* Tabs occupy the full second row */
+      .topbar__tabs {
+        flex: 0 0 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        border-top: 1px solid rgba(255,255,255,.06);
+        padding: var(--s-1) 0;
+        gap: var(--s-1);
+      }
+      .topbar__tabs::-webkit-scrollbar { display: none; }
+      .tab-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 5px 10px;
+        font-size: var(--fs-sm);
+      }
+    }
+
+    /* ── Summary bars: tighter on narrow phones ─────────────────────────── */
+    @media (max-width: 440px) {
+      .invest-summary {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--s-2);
+      }
+      .invest-summary__item { padding: var(--s-2) var(--s-2); }
+      .invest-summary__label { font-size: 10px; letter-spacing: 0; }
+      .invest-summary__val { font-size: var(--fs-md); }
+    }
+
+    /* ── Capital verdict bar: hero cell wraps text cleanly ───────────────── */
+    .cap-verdict-bar #cap-verdict {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    /* On mobile the verdict value is just the money; the label carries the name */
+    @media (max-width: 760px) {
+      .cap-verdict-bar .invest-summary__label { white-space: normal; }
+      .cap-verdict-bar #cap-verdict { font-size: var(--fs-lg); }
+    }
+    @media (max-width: 440px) {
+      /* 2-wide: A/B on row 1, C/Best on row 2 */
+      .cap-verdict-bar { grid-template-columns: 1fr 1fr !important; }
+      .cap-verdict-bar #cap-verdict { font-size: var(--fs-md); }
+    }
+
   </style>
 </head>
 <body>
@@ -2181,7 +2251,7 @@
   <div class="app__capital">
 
     <!-- Comparison verdict (top) -->
-    <div class="invest-summary" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="invest-summary cap-verdict-bar">
       <div class="invest-summary__item">
         <span class="invest-summary__label">A · Keep home + invest</span>
         <span class="invest-summary__val" id="cap-a-total">—</span>
@@ -4713,8 +4783,8 @@ function recalcCapital() {
     { label: 'C (keep, no buy)',       val: cTotalForVerdict },
   ];
   const best = scores.reduce((a, b) => b.val > a.val ? b : a);
-  _$('cap-verdict-label').textContent = 'Best pathway';
-  _$('cap-verdict').textContent = best.label + '  ' + fmtMoney(best.val);
+  _$('cap-verdict-label').textContent = '🏆 Best: ' + best.label;
+  _$('cap-verdict').textContent = fmtMoney(best.val);
 }
 
 ['cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',

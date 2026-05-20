@@ -6,6 +6,7 @@ import os
 import json
 import time
 import hashlib
+import sqlite3
 import threading
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from src import scraper
@@ -61,6 +62,26 @@ def _cache_save_one(key: tuple, ref, items) -> None:
 
 
 _cache_load()
+
+# ── Scenarios DB (server-side, shared across all devices) ─────────────────────
+
+_SCEN_DB = os.path.join(os.path.dirname(__file__), "..", "data", "scenarios.db")
+
+
+def _scen_db():
+    """Return a connection to the scenarios SQLite DB (auto-creates table)."""
+    os.makedirs(os.path.dirname(_SCEN_DB), exist_ok=True)
+    conn = sqlite3.connect(_SCEN_DB)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS scenarios (
+            name TEXT PRIMARY KEY,
+            data TEXT NOT NULL,
+            updated_at REAL NOT NULL
+        )
+    """)
+    conn.commit()
+    return conn
+
 
 app = Flask(
     __name__,
@@ -481,6 +502,47 @@ def _state_abbr(state_full: str) -> str:
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
+
+
+@app.route("/api/scenarios", methods=["GET"])
+def scen_list():
+    with _scen_db() as conn:
+        rows = conn.execute("SELECT name, updated_at FROM scenarios ORDER BY updated_at DESC").fetchall()
+    return jsonify([{"name": r[0], "updated_at": r[1]} for r in rows])
+
+
+@app.route("/api/scenarios", methods=["POST"])
+def scen_save():
+    body = request.get_json(force=True, silent=True) or {}
+    name = (body.get("name") or "").strip()
+    data = body.get("data")
+    if not name or data is None:
+        return jsonify({"error": "name and data required"}), 400
+    with _scen_db() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO scenarios (name, data, updated_at) VALUES (?,?,?)",
+            (name, json.dumps(data), time.time()),
+        )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/scenarios/<path:name>", methods=["GET"])
+def scen_get(name):
+    with _scen_db() as conn:
+        row = conn.execute("SELECT data FROM scenarios WHERE name=?", (name,)).fetchone()
+    if not row:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({"name": name, "data": json.loads(row[0])})
+
+
+@app.route("/api/scenarios/<path:name>", methods=["DELETE"])
+def scen_delete(name):
+    with _scen_db() as conn:
+        conn.execute("DELETE FROM scenarios WHERE name=?", (name,))
+        conn.commit()
+    return jsonify({"ok": True})
+
 
 if __name__ == "__main__":
     import os

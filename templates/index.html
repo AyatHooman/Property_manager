@@ -5249,9 +5249,108 @@ function recalcCapital() {
   const el = _$(id); if (el) el.addEventListener('input', recalcCapital);
 });
 
-// ── Scenario save / load (localStorage) ─────────────────────────────────
-const SCEN_STORE = 'pm_scenarios_v1';
+// ── Scenario save / load (server-side — works across all devices) ────────────
 const SCEN_INPUT_IDS = [
+  // Investment tab
+  'i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
+  'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax',
+  'i-repairs','i-growth','i-inflation','i-sell-pct','i-p1-income','i-p2-income',
+  // Owner-occupied tab
+  'oo-price','oo-lvr','oo-rate','oo-stamp-pct','oo-lmi','oo-legal',
+  'oo-buyer-agent','oo-rates','oo-insurance','oo-maint',
+  'oo-growth','oo-inflation','oo-years','oo-sell-pct',
+  // Capital tab
+  'cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
+  'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years',
+];
+const SCEN_CHECK_IDS = ['i-ng-on'];
+
+async function scenSave(name) {
+  if (!name) return;
+  const data = {};
+  SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el) data[id] = el.value; });
+  SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el) data[id] = el.checked; });
+  const cgtEl = document.querySelector('input[name="cgt-method"]:checked');
+  if (cgtEl) data['__cgt-method'] = cgtEl.value;
+  await fetch('/api/scenarios', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, data})
+  });
+  renderScenList();
+}
+
+async function scenLoad(name) {
+  const res = await fetch(`/api/scenarios/${encodeURIComponent(name)}`);
+  if (!res.ok) return;
+  const {data} = await res.json();
+  SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.value = data[id]; });
+  SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.checked = data[id]; });
+  if (data['__cgt-method']) {
+    const r = document.querySelector(`input[name="cgt-method"][value="${data['__cgt-method']}"]`);
+    if (r) r.checked = true;
+  }
+  if (typeof recalcInvest  === 'function') recalcInvest();
+  if (typeof recalcOwner   === 'function') recalcOwner();
+  if (typeof recalcCapital === 'function') recalcCapital();
+  closeScenPanel();
+}
+
+async function scenDelete(name) {
+  await fetch(`/api/scenarios/${encodeURIComponent(name)}`, {method: 'DELETE'});
+  renderScenList();
+}
+
+async function renderScenList() {
+  const list = _$('scen-list'); if (!list) return;
+  list.innerHTML = '<div class="scen-empty">Loading…</div>';
+  let names = [];
+  try {
+    const res = await fetch('/api/scenarios');
+    const rows = await res.json();
+    names = rows.map(r => r.name);
+  } catch { names = []; }
+  if (!names.length) {
+    list.innerHTML = '<div class="scen-empty">No saved scenarios yet.</div>'; return;
+  }
+  list.innerHTML = names.map(n =>
+    `<div class="scen-item">` +
+    `<span class="scen-item__name" title="${n}">${n}</span>` +
+    `<button class="scen-item__load" data-name="${n}" type="button">Load</button>` +
+    `<button class="scen-item__del"  data-name="${n}" type="button">✕</button>` +
+    `</div>`).join('');
+  list.querySelectorAll('.scen-item__load').forEach(b => b.onclick = () => scenLoad(b.dataset.name));
+  list.querySelectorAll('.scen-item__del').forEach(b => b.onclick  = () => scenDelete(b.dataset.name));
+}
+
+function openScenPanel()  {
+  renderScenList();
+  _$('scen-panel').classList.add('open');
+  _$('scen-btn').classList.add('active');
+  _$('scen-name-input').focus();
+}
+function closeScenPanel() {
+  _$('scen-panel').classList.remove('open');
+  _$('scen-btn').classList.remove('active');
+}
+
+_$('scen-btn').addEventListener('click', () =>
+  _$('scen-panel').classList.contains('open') ? closeScenPanel() : openScenPanel());
+_$('scen-close').addEventListener('click', closeScenPanel);
+_$('scen-save-btn').addEventListener('click', async () => {
+  const name = (_$('scen-name-input').value || '').trim();
+  if (!name) { _$('scen-name-input').focus(); return; }
+  await scenSave(name);
+  _$('scen-name-input').value = '';
+});
+_$('scen-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') _$('scen-save-btn').click(); });
+document.addEventListener('click', e => {
+  const panel = _$('scen-panel'), btn = _$('scen-btn');
+  if (panel && panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target))
+    closeScenPanel();
+});
+
+</script>
   // Investment tab
   'i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
   'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax',

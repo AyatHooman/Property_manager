@@ -198,6 +198,16 @@ def static_lots():
     return _serve_gzipped_geojson("lots_melb", "data/build_lots_melb.py")
 
 
+# VicPlan planning-scheme overlay files (PAO, DDO, EAO, VPO, SLO, ESO, DPO,
+# SBO, EMO, SMO, DCPO, FO). Pre-gzipped by data/build_vicplan_overlays_melb.py.
+@app.route("/static/overlays/vic_<scheme>.geojson")
+def static_vicplan_overlay(scheme):
+    if not scheme.isalpha() or len(scheme) > 10:
+        return jsonify({"error": "bad scheme"}), 400
+    return _serve_gzipped_geojson(f"vic_{scheme.lower()}",
+                                  "data/build_vicplan_overlays_melb.py")
+
+
 # Per-parcel rich detail (lot number, plan, LGA) fetched on click from the
 # v_parcel_mp WFS layer keyed by PFI. The bulk static file only carries the
 # PFI to keep it small; this endpoint fills in the rest on demand.

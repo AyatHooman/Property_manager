@@ -1969,6 +1969,21 @@
           <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements</div>
           <div class="zone-toggle" id="toggle-overlay-lots"       onclick="toggleLots()">▦ Lots</div>
         </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>📋 Planning overlays (VicPlan)</div>
+          <div class="zone-toggle" id="toggle-overlay-pao"   onclick="toggleOverlay('pao')"  title="Government reserve — road / rail / public acquisition">🚧 Public Acquisition (PAO)</div>
+          <div class="zone-toggle" id="toggle-overlay-ddo"   onclick="toggleOverlay('ddo')"  title="Height + form + setback controls">📐 Design & Development (DDO)</div>
+          <div class="zone-toggle" id="toggle-overlay-dpo"   onclick="toggleOverlay('dpo')"  title="Approved development plan required before permits">📋 Development Plan (DPO)</div>
+          <div class="zone-toggle" id="toggle-overlay-dcpo"  onclick="toggleOverlay('dcpo')" title="Infrastructure contribution payments required">💰 Dev Contributions (DCPO)</div>
+          <div class="zone-toggle" id="toggle-overlay-eao"   onclick="toggleOverlay('eao')"  title="Contamination — env audit required before sensitive use">☢️ Environmental Audit (EAO)</div>
+          <div class="zone-toggle" id="toggle-overlay-vpo"   onclick="toggleOverlay('vpo')"  title="Tree-removal restrictions">🌳 Vegetation Protection (VPO)</div>
+          <div class="zone-toggle" id="toggle-overlay-slo"   onclick="toggleOverlay('slo')"  title="Landscape character protection">🏞️ Significant Landscape (SLO)</div>
+          <div class="zone-toggle" id="toggle-overlay-eso"   onclick="toggleOverlay('eso')"  title="Environmental significance — works controls">🍃 Environmental Significance (ESO)</div>
+          <div class="zone-toggle" id="toggle-overlay-sbo"   onclick="toggleOverlay('sbo')"  title="Overland-flow / drainage authority controls">💧 Special Building (SBO)</div>
+          <div class="zone-toggle" id="toggle-overlay-emo"   onclick="toggleOverlay('emo')"  title="Erosion / landslip risk — engineering cost">⛰️ Erosion Management (EMO)</div>
+          <div class="zone-toggle" id="toggle-overlay-smo"   onclick="toggleOverlay('smo')"  title="Salinity management — site usability">🧂 Salinity Management (SMO)</div>
+          <div class="zone-toggle" id="toggle-overlay-fo"    onclick="toggleOverlay('fo')"   title="Floodway — high-velocity flood risk">🌊 Floodway (FO)</div>
+        </div>
       </div>
       <div id="map"></div>
     </div>
@@ -3727,6 +3742,17 @@ function updateMapLegend() {
   if (_overlayLayer && _overlayLayer.flood)    rows.push(`<div class="row"><span class="lbl">Flood</span><span class="swatch" style="background:#06b6d4"></span></div>`);
   if (_overlayLayer && _overlayLayer.heritage) rows.push(`<div class="row"><span class="lbl">Heritage</span><span class="swatch" style="background:#a16207"></span></div>`);
   if (_overlayLayer && _overlayLayer.bushfire) rows.push(`<div class="row"><span class="lbl">Bushfire</span><span class="swatch" style="background:#ea580c"></span></div>`);
+  // VicPlan planning-scheme overlays — show ONE compact row listing the
+  // active ones, since up to 12 can be on at once and we don't want to
+  // dominate the legend.
+  const PLAN_SCHEMES = { pao:'PAO', ddo:'DDO', dpo:'DPO', dcpo:'DCPO', eao:'EAO', vpo:'VPO',
+                         slo:'SLO', eso:'ESO', sbo:'SBO', emo:'EMO', smo:'SMO', fo:'FO' };
+  const activePlans = Object.entries(PLAN_SCHEMES)
+    .filter(([k]) => _overlayLayer && _overlayLayer[k])
+    .map(([k, code]) => `<span class="swatch" style="background:${_overlayCfg[k].color}"></span>${code}`);
+  if (activePlans.length) {
+    rows.push(`<div class="row"><span class="lbl">VicPlan</span>${activePlans.join(' ')}</div>`);
+  }
   if (_easements && _easements.on) {
     const line = (color, dashed) => `<span style="display:inline-block;width:18px;height:0;border-top:3px ${dashed?'dashed':'solid'} ${color};vertical-align:middle;margin:0 2px;box-shadow:0 0 0 1px #0f172a"></span>`;
     rows.push(`<div class="row"><span class="lbl">Easements</span>${line('#fbbf24',false)}active ${line('#e2e8f0',true)}retired</div>`);
@@ -4160,9 +4186,23 @@ const _overlayCfg = {
   crime:    { color: '#b91c1c', file: '/static/overlays/crime_postcode.geojson', label: 'Crime rate (postcode)' },
   infra:    { color: '#ec4899', file: '/static/overlays/infra.geojson',           label: 'Future infrastructure' },
   icsea:    { color: '#7c3aed', file: '/static/overlays/icsea_postcode.geojson',  label: 'ICSEA (per postcode)' },
+  // VicPlan planning-scheme overlays (built by data/build_vicplan_overlays_melb.py)
+  pao:  { color: '#dc2626', file: '/static/overlays/vic_pao.geojson',  label: 'Public Acquisition (PAO)' },
+  ddo:  { color: '#4f46e5', file: '/static/overlays/vic_ddo.geojson',  label: 'Design & Development (DDO)' },
+  dpo:  { color: '#2563eb', file: '/static/overlays/vic_dpo.geojson',  label: 'Development Plan (DPO)' },
+  dcpo: { color: '#d97706', file: '/static/overlays/vic_dcpo.geojson', label: 'Dev Contributions (DCPO)' },
+  eao:  { color: '#92400e', file: '/static/overlays/vic_eao.geojson',  label: 'Environmental Audit (EAO)' },
+  vpo:  { color: '#16a34a', file: '/static/overlays/vic_vpo.geojson',  label: 'Vegetation Protection (VPO)' },
+  slo:  { color: '#059669', file: '/static/overlays/vic_slo.geojson',  label: 'Significant Landscape (SLO)' },
+  eso:  { color: '#0d9488', file: '/static/overlays/vic_eso.geojson',  label: 'Environmental Significance (ESO)' },
+  sbo:  { color: '#0891b2', file: '/static/overlays/vic_sbo.geojson',  label: 'Special Building (SBO drainage)' },
+  emo:  { color: '#ea580c', file: '/static/overlays/vic_emo.geojson',  label: 'Erosion Management (EMO)' },
+  smo:  { color: '#ca8a04', file: '/static/overlays/vic_smo.geojson',  label: 'Salinity Management (SMO)' },
+  fo:   { color: '#1d4ed8', file: '/static/overlays/vic_fo.geojson',   label: 'Floodway (FO)' },
 };
-const _overlayData  = { flood: null, heritage: null, bushfire: null, crime: null, infra: null, icsea: null };
-const _overlayLayer = { flood: null, heritage: null, bushfire: null, crime: null, infra: null, icsea: null };
+const _overlayData  = {};
+const _overlayLayer = {};
+Object.keys(_overlayCfg).forEach(k => { _overlayData[k] = null; _overlayLayer[k] = null; });
 
 const _INFRA_RAIL = '#ff0080';
 const _INFRA_ROAD = '#8b5cf6';
@@ -4312,9 +4352,11 @@ async function toggleOverlay(name) {
         : { color: cfg.color, weight: 1.2, fillColor: cfg.color, fillOpacity: 0.22 },
       onEachFeature(feature, layer) {
         const p = feature.properties || {};
-        const code = p.ZONE_CODE || p.OVERLAY || '';
-        const desc = p.ZONE_DESCRIPTION || '';
-        const lga  = p.LGA || '';
+        // Be tolerant of either UPPER_CASE (legacy VicPlan exports) or
+        // lower_case (newer DEECA WFS dumps) attribute spellings.
+        const code = p.ZONE_CODE || p.OVERLAY || p.zone_code || p.scheme_code || '';
+        const desc = p.ZONE_DESCRIPTION || p.zone_description || p.description || '';
+        const lga  = p.LGA || p.lga || '';
         layer.bindPopup(
           `<b>${cfg.label}</b>` +
           (code ? `<br><span style="font-size:12px"><b>${code}</b></span>` : '') +

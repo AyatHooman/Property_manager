@@ -45,3 +45,10 @@ static/overlays/easements_vic.geojson.gz
 # Greater Melbourne). Build with `python data/build_lots_melb.py`.
 static/overlays/lots_melb.geojson
 static/overlays/lots_melb.geojson.gz
+
+# Big VicPlan planning-scheme overlays (>20 MB raw). Build with
+# data/build_vicplan_overlays_melb.py; gzipped versions are committed below
+# the 30 MB threshold instead (.gz files are <10 MB).
+static/overlays/vic_emo.geojson
+static/overlays/vic_eso.geojson
+static/overlays/vic_sbo.geojson

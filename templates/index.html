@@ -982,10 +982,45 @@
     }
     .map-measure-row .mm-result.empty { color: var(--text-4); font-weight: 400; font-style: italic; }
     @media (max-width: 600px) {
-      .map-measure-wrap { top: 50px; right: 6px; gap: 3px; }
+      .map-measure-wrap { bottom: 8px; right: 6px; gap: 3px; top: auto; }
       .map-measure-fab  { width: 28px; height: 28px; font-size: 13px; }
       .map-measure-row .mm-icon   { width: 24px; height: 24px; font-size: 12px; }
       .map-measure-row .mm-result { font-size: 10px; max-width: 110px; padding: 0 4px; }
+    }
+
+    /* For-Sale floating toolbar: shows on the map when the layer is on.
+       Bottom-LEFT corner (next to the Leaflet attribution); compact icon
+       buttons so it stays out of the way on mobile. */
+    .map-fs-toolbar {
+      position: absolute; bottom: 12px; left: 12px; z-index: 600;
+      display: none; gap: 4px; pointer-events: auto;
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px; padding: 3px;
+      box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
+    }
+    .map-fs-toolbar.visible { display: flex; }
+    .map-fs-toolbar button {
+      width: 28px; height: 28px; padding: 0;
+      background: transparent; color: var(--text-2);
+      border: 1px solid transparent; border-radius: 4px;
+      font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .map-fs-toolbar button:hover { color: #34d399; border-color: #34d399; }
+    .map-fs-toolbar button.loading {
+      color: #fbbf24; animation: fsSpin 1.2s linear infinite;
+    }
+    @keyframes fsSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .map-fs-toolbar .fs-tb-status {
+      color: var(--text-3); font-size: 10px; padding: 0 6px;
+      align-self: center; max-width: 130px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      .map-fs-toolbar { bottom: 8px; left: 8px; padding: 2px; gap: 2px; }
+      .map-fs-toolbar button { width: 26px; height: 26px; font-size: 12px; }
+      .map-fs-toolbar .fs-tb-status { font-size: 9px; max-width: 80px; }
     }
 
     .map-legend-floating .row {
@@ -3662,6 +3697,25 @@ function _initMap() {
     _mmRedraw(true);
     _mmRecompute(true);
   }
+  // For-Sale floating toolbar — visible only when the For-Sale layer is on.
+  // Three buttons: 🔄 re-scrape, ✏️ change filter URL, ✕ turn off layer.
+  const fsTb = document.createElement('div');
+  fsTb.id = 'map-fs-toolbar';
+  fsTb.className = 'map-fs-toolbar';
+  fsTb.innerHTML = `
+    <button id="fs-tb-refresh" title="Re-scrape Domain for fresh listings">🔄</button>
+    <button id="fs-tb-edit"    title="Change the Domain filter URL">✏️</button>
+    <button id="fs-tb-off"     title="Hide For Sale layer">✕</button>
+    <span class="fs-tb-status" id="fs-tb-status"></span>`;
+  L.DomEvent.disableClickPropagation(fsTb);
+  L.DomEvent.disableScrollPropagation(fsTb);
+  _map.getContainer().appendChild(fsTb);
+  document.getElementById('fs-tb-refresh').onclick = () => _forSaleRefresh();
+  document.getElementById('fs-tb-edit').onclick    = () => editForSaleUrl();
+  document.getElementById('fs-tb-off').onclick     = () => {
+    if (_forSale.on) toggleForSale();   // off-state cleanup is in toggleForSale
+  };
+
   // Sync easements + lots toggle gates with current zoom + refresh their
   // bbox-queried features on every pan/zoom. Both layers are disabled below
   // their MIN_ZOOM (browser would receive an oversized payload otherwise).
@@ -4805,12 +4859,21 @@ async function _forSaleLoadCached() {
   } catch (e) { console.error('cached for-sale load failed', e); }
 }
 
+function _forSaleStatus(msg) {
+  const el = document.getElementById('fs-tb-status');
+  if (el) el.textContent = msg || '';
+  const btn = document.getElementById('toggle-for-sale');
+  if (btn) btn.title = msg || '';
+}
+
 async function _forSaleRefresh() {
   if (_forSale.scraping) return;
   _forSale.scraping = true;
   const btn = document.getElementById('toggle-for-sale');
-  btn.classList.add('loading');
-  btn.title = 'Scraping Domain — this can take 30–90s for many suburbs…';
+  const tbRef = document.getElementById('fs-tb-refresh');
+  if (btn)   btn.classList.add('loading');
+  if (tbRef) tbRef.classList.add('loading');
+  _forSaleStatus('Scraping Domain… (30–90 s)');
   try {
     const url = _forSaleGetUrl();
     const r = await fetch('/api/for-sale/refresh?url=' + encodeURIComponent(url), { method: 'POST' });
@@ -4821,36 +4884,45 @@ async function _forSaleRefresh() {
     const fc = await r.json();
     _forSaleRender(fc);
     if (fc.meta) {
-      btn.title = `Scraped ${fc.meta.scraped} listings (+${fc.meta.inserted} new, ${fc.meta.updated} updated). ${fc.meta.total_in_db} total in DB.`;
+      _forSaleStatus(`${fc.meta.total_in_db} listings (+${fc.meta.inserted} new, ${fc.meta.updated} updated)`);
+    } else {
+      _forSaleStatus(`${(fc.features || []).length} listings`);
     }
   } catch (e) {
     console.error('for-sale refresh failed', e);
-    btn.title = 'Scrape failed: ' + e.message;
-    btn.classList.add('error');
-    setTimeout(() => btn.classList.remove('error'), 4000);
+    _forSaleStatus('Scrape failed: ' + e.message);
+    if (btn) {
+      btn.classList.add('error');
+      setTimeout(() => btn.classList.remove('error'), 4000);
+    }
   } finally {
     _forSale.scraping = false;
-    btn.classList.remove('loading');
+    if (btn)   btn.classList.remove('loading');
+    if (tbRef) tbRef.classList.remove('loading');
   }
 }
 
 async function toggleForSale() {
   _initMap();
   const btn = document.getElementById('toggle-for-sale');
+  const tb  = document.getElementById('map-fs-toolbar');
   if (_forSale.on) {
-    // Off: tear down + restore the rest of the UI as the user left it.
     if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
     _forSale.on = false;
     btn.classList.remove('active');
+    if (tb) tb.classList.remove('visible');
     return;
   }
   _forSaleClearOtherLayers();
   _forSale.on = true;
   _forSale._fitDone = false;
   btn.classList.add('active');
-  await _forSaleLoadCached();        // immediate render from local DB
-  // Don't auto-scrape on toggle — the user uses the explicit 🔄 Re-scrape
-  // button to refresh, which is also when the bot-detection risk is highest.
+  if (tb) tb.classList.add('visible');     // map-level mini-toolbar now visible
+  await _forSaleLoadCached();
+  // Don't auto-scrape — the user triggers it from the 🔄 floating button or
+  // the layer-panel "Re-scrape" entry. Less bot-detection exposure.
+  const fc = _forSale.layer ? _forSale.layer.toGeoJSON() : null;
+  _forSaleStatus(fc && fc.features ? `${fc.features.length} listings (cached). 🔄 to refresh.` : 'Empty cache — press 🔄 to scrape.');
 }
 
 function toggleLots() {

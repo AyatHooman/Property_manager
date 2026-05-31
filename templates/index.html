@@ -733,6 +733,50 @@
     .zone-toggle.disabled { opacity: .45; color: var(--text-4); cursor: not-allowed; }
     .zone-toggle.disabled:hover { background: var(--bg-input); border-color: var(--border-strong); }
     .zone-toggle.error    { border-color: #b91c1c; color: #fca5a5; }
+    .zone-toggle.for-sale-toggle {
+      background: #064e3b; color: #34d399; border-color: #047857; font-weight: 700;
+    }
+    .zone-toggle.for-sale-toggle.active { background: #047857; color: #fff; }
+    .zone-toggle.for-sale-toggle.loading::after { content: ' …'; }
+    .zone-toggle.for-sale-edit { font-size: 10px; color: var(--text-4); }
+    /* For-sale popup: image carousel + compact stats */
+    .fs-popup { font-family: system-ui, sans-serif; min-width: 220px; max-width: 280px; }
+    .fs-popup .fs-img-wrap {
+      position: relative; height: 140px; background: #0f172a;
+      border-radius: 6px; overflow: hidden; margin-bottom: 6px;
+    }
+    .fs-popup .fs-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .fs-popup .fs-img-nav {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,.55); color: #fff; border: 0;
+      width: 26px; height: 26px; border-radius: 50%; font-size: 14px;
+      cursor: pointer; user-select: none; line-height: 1;
+    }
+    .fs-popup .fs-img-nav.prev { left: 4px; } .fs-popup .fs-img-nav.next { right: 4px; }
+    .fs-popup .fs-img-count {
+      position: absolute; bottom: 4px; right: 6px;
+      background: rgba(0,0,0,.55); color: #fff; font-size: 10px;
+      padding: 1px 6px; border-radius: 8px;
+    }
+    .fs-popup .fs-addr  { font-weight: 700; font-size: 13px; color: var(--text); line-height: 1.25; }
+    .fs-popup .fs-price { font-weight: 700; font-size: 14px; color: #34d399; margin-top: 4px; }
+    .fs-popup .fs-stats { display: flex; gap: 8px; font-size: 11px; color: var(--text-2); margin-top: 4px; flex-wrap: wrap; }
+    .fs-popup .fs-stats span { white-space: nowrap; }
+    .fs-popup .fs-meta  { font-size: 10px; color: var(--text-4); margin-top: 4px; }
+    .fs-popup a.fs-link {
+      display: inline-block; margin-top: 6px;
+      background: #047857; color: #fff; text-decoration: none;
+      padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    }
+    .fs-popup a.fs-link:hover { background: #059669; }
+    @media (max-width: 600px) {
+      .fs-popup { min-width: 200px; max-width: 260px; }
+      .fs-popup .fs-img-wrap { height: 120px; }
+      .fs-popup .fs-addr  { font-size: 12px; }
+      .fs-popup .fs-price { font-size: 13px; }
+    }
     .zone-toggle.error::after {
       content: ' ⚠ index building'; font-size: 9px; color: #fca5a5; margin-left: 4px;
     }
@@ -1927,6 +1971,15 @@
            Leaflet control on _initMap). Kept here so onclick handlers + IDs
            are valid when toggles are wired. -->
       <div class="zone-toggles" id="zone-toggles-seed" style="display:none">
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>🟢 For sale (Domain scrape)</div>
+          <div class="zone-toggle for-sale-toggle" id="toggle-for-sale" onclick="toggleForSale()"
+               title="Show For Sale points (clears other layers)">🏷️ Show listings</div>
+          <div class="zone-toggle for-sale-refresh" id="for-sale-refresh" onclick="_forSaleRefresh()"
+               title="Re-scrape Domain for new / updated listings">🔄 Re-scrape Domain</div>
+          <div class="zone-toggle for-sale-edit" id="for-sale-edit" onclick="editForSaleUrl()"
+               title="Change the Domain filter URL">✏️ Edit filter URL</div>
+        </div>
         <div class="lp-group">
           <div class="lp-head"><span class="lp-caret">▾</span>🗺️ View</div>
           <div class="zone-toggle" id="toggle-overlay-suburbs"    onclick="toggleSuburbs()">🗺️ Suburbs</div>
@@ -4626,6 +4679,178 @@ function _lotsUpdateGate() {
     btn.classList.remove('disabled');
     btn.title = '';
   }
+}
+
+// ─── For Sale (Domain scrape) ────────────────────────────────────────────────
+// One toggle drives the whole feature. Pressing it (a) clears every other
+// active overlay so only base map + sale points show, (b) loads any cached
+// listings from /api/for-sale, (c) kicks off a background scrape of the
+// saved filter URL to refresh / discover new listings. Click again to turn
+// the layer off. The "✏️ Edit filter URL" sibling button lets the user
+// change which Domain page gets scraped.
+const FOR_SALE_URL_KEY = 'pm_for_sale_url_v1';
+const FOR_SALE_DEFAULT_URL = (
+  "https://www.domain.com.au/sale/?suburb=" +
+  "glen-waverley-vic-3150,mount-waverley-vic-3149,burwood-vic-3125," +
+  "wheelers-hill-vic-3150,doncaster-vic-3108,doncaster-east-vic-3109," +
+  "blackburn-vic-3130,blackburn-south-vic-3130,blackburn-north-vic-3130," +
+  "vermont-vic-3133,vermont-south-vic-3133,forest-hill-vic-3131," +
+  "nunawading-vic-3131,box-hill-vic-3128,box-hill-south-vic-3128," +
+  "box-hill-north-vic-3129,burwood-east-vic-3151" +
+  "&ptype=house&bedrooms=3-any&bathrooms=1-any&price=0-1300000" +
+  "&excludeunderoffer=1&carspaces=1-any&landsize=500-any&landsizeunit=m2"
+);
+const _forSale = { on: false, layer: null, scraping: false };
+
+function _forSaleGetUrl() {
+  try { return localStorage.getItem(FOR_SALE_URL_KEY) || FOR_SALE_DEFAULT_URL; }
+  catch (_) { return FOR_SALE_DEFAULT_URL; }
+}
+
+function editForSaleUrl() {
+  const cur = _forSaleGetUrl();
+  const next = prompt("Domain filter URL to scrape:", cur);
+  if (next && next.startsWith("https://www.domain.com.au/")) {
+    try { localStorage.setItem(FOR_SALE_URL_KEY, next.trim()); } catch (_) {}
+    alert("Saved. Press '🏷️ Show / refresh listings' to scrape it.");
+  }
+}
+
+function _forSaleRender(fc) {
+  if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
+  _forSale.layer = L.geoJSON(fc, {
+    pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+      radius: 6, fillColor: '#34d399', color: '#064e3b',
+      weight: 2, opacity: 1, fillOpacity: 0.95,
+    }),
+    onEachFeature: _forSaleBindPopup,
+    pane: 'markerPane',
+  }).addTo(_map);
+  if (fc.features && fc.features.length) {
+    // Fit map to results only the FIRST time (so subsequent refreshes don't
+    // hijack the user's pan/zoom).
+    if (!_forSale._fitDone) {
+      try { _map.fitBounds(_forSale.layer.getBounds(), { padding: [40, 40] }); }
+      catch (_) {}
+      _forSale._fitDone = true;
+    }
+  }
+}
+
+function _forSaleBindPopup(feature, layer) {
+  const p = feature.properties || {};
+  const imgs = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : [];
+  const stat = (icon, val) => val != null && val !== '' ? `<span>${icon} ${val}</span>` : '';
+  const popupId = 'fs_p_' + (p.listing_id || Math.random().toString(36).slice(2, 7));
+  const initialImg = imgs[0] || '';
+  const hasImgs = imgs.length > 0;
+  const html = `
+    <div class="fs-popup" data-popup-id="${popupId}" data-imgs='${JSON.stringify(imgs).replace(/'/g, "&apos;")}'>
+      ${hasImgs ? `
+      <div class="fs-img-wrap">
+        <img class="fs-img" src="${initialImg}" alt="" loading="lazy"/>
+        ${imgs.length > 1 ? `
+        <button class="fs-img-nav prev" data-dir="-1">‹</button>
+        <button class="fs-img-nav next" data-dir="1">›</button>
+        <div class="fs-img-count"><span class="fs-img-idx">1</span>/${imgs.length}</div>
+        ` : ''}
+      </div>` : ''}
+      <div class="fs-addr">${p.address || ''}</div>
+      <div class="fs-price">${p.price_text || ''}</div>
+      <div class="fs-stats">
+        ${stat('🛏', p.beds)}${stat('🛁', p.baths)}${stat('🚗', p.carspaces)}
+        ${stat('📐', p.land_m2 ? p.land_m2 + ' m²' : '')}
+      </div>
+      <div class="fs-meta">
+        ${p.prop_type ? p.prop_type + ' · ' : ''}${p.sale_type || ''}
+        ${p.agency ? '<br>' + p.agency : ''}
+      </div>
+      ${p.url ? `<a class="fs-link" href="${p.url}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
+    </div>`;
+  layer.bindPopup(html, { maxWidth: 300, minWidth: 220 });
+  layer.on('popupopen', (e) => {
+    const root = e.popup.getElement();
+    if (!root) return;
+    const imgEl = root.querySelector('.fs-img');
+    const idxEl = root.querySelector('.fs-img-idx');
+    if (!imgEl || imgs.length < 2) return;
+    let idx = 0;
+    root.querySelectorAll('.fs-img-nav').forEach(btn => {
+      btn.onclick = (ev) => {
+        ev.stopPropagation();
+        idx = (idx + parseInt(btn.dataset.dir) + imgs.length) % imgs.length;
+        imgEl.src = imgs[idx];
+        if (idxEl) idxEl.textContent = idx + 1;
+      };
+    });
+  });
+}
+
+function _forSaleClearOtherLayers() {
+  // Click every active toggle EXCEPT the For Sale toggle itself to turn it off.
+  // The for-sale-edit button isn't a real layer; skip it.
+  document.querySelectorAll('.zone-toggle.active').forEach(t => {
+    if (t.id === 'toggle-for-sale' || t.id === 'for-sale-edit') return;
+    if (t.classList.contains('for-sale-edit')) return;
+    t.click();
+  });
+}
+
+async function _forSaleLoadCached() {
+  try {
+    const r = await fetch('/api/for-sale');
+    if (!r.ok) return;
+    const fc = await r.json();
+    _forSaleRender(fc);
+  } catch (e) { console.error('cached for-sale load failed', e); }
+}
+
+async function _forSaleRefresh() {
+  if (_forSale.scraping) return;
+  _forSale.scraping = true;
+  const btn = document.getElementById('toggle-for-sale');
+  btn.classList.add('loading');
+  btn.title = 'Scraping Domain — this can take 30–90s for many suburbs…';
+  try {
+    const url = _forSaleGetUrl();
+    const r = await fetch('/api/for-sale/refresh?url=' + encodeURIComponent(url), { method: 'POST' });
+    if (!r.ok) {
+      const body = await r.text();
+      throw new Error(`HTTP ${r.status}: ${body.slice(0, 200)}`);
+    }
+    const fc = await r.json();
+    _forSaleRender(fc);
+    if (fc.meta) {
+      btn.title = `Scraped ${fc.meta.scraped} listings (+${fc.meta.inserted} new, ${fc.meta.updated} updated). ${fc.meta.total_in_db} total in DB.`;
+    }
+  } catch (e) {
+    console.error('for-sale refresh failed', e);
+    btn.title = 'Scrape failed: ' + e.message;
+    btn.classList.add('error');
+    setTimeout(() => btn.classList.remove('error'), 4000);
+  } finally {
+    _forSale.scraping = false;
+    btn.classList.remove('loading');
+  }
+}
+
+async function toggleForSale() {
+  _initMap();
+  const btn = document.getElementById('toggle-for-sale');
+  if (_forSale.on) {
+    // Off: tear down + restore the rest of the UI as the user left it.
+    if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
+    _forSale.on = false;
+    btn.classList.remove('active');
+    return;
+  }
+  _forSaleClearOtherLayers();
+  _forSale.on = true;
+  _forSale._fitDone = false;
+  btn.classList.add('active');
+  await _forSaleLoadCached();        // immediate render from local DB
+  // Don't auto-scrape on toggle — the user uses the explicit 🔄 Re-scrape
+  // button to refresh, which is also when the bot-detection risk is highest.
 }
 
 function toggleLots() {

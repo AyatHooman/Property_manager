@@ -566,6 +566,75 @@ def api_similar_listings():
         return jsonify({"error": str(e), "count": 0, "items": []}), 200
 
 
+# ── API: "For Sale" listings — scrape Domain filter URL + cache locally ──────
+#
+# scrape:   POST /api/for-sale/refresh?url=<full domain filter url>
+# load:     GET  /api/for-sale            — return cached listings as GeoJSON
+#
+# The scrape uses src/scraper_domain_sale.py (same undetected-chromedriver
+# infrastructure as the sold-results scraper). Results are upserted into
+# data/for_sale.db so the next page load is instant.
+
+_FORSALE_DB = os.path.join(os.path.dirname(__file__), "..", "data", "for_sale.db")
+
+
+def _forsale_to_geojson(items):
+    feats = []
+    for d in items:
+        if d.get("lat") is None or d.get("lng") is None:
+            continue
+        feats.append({
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [d["lng"], d["lat"]]},
+            "properties": {k: v for k, v in d.items() if k not in ("lat", "lng")},
+        })
+    return {"type": "FeatureCollection", "features": feats}
+
+
+@app.route("/api/for-sale", methods=["GET"])
+def api_for_sale_load():
+    """Return the currently-saved For Sale listings as a GeoJSON FC."""
+    from src import scraper_domain_sale as sds
+    con = sds.init_db(_FORSALE_DB)
+    try:
+        items = sds.load_listings(con)
+    finally:
+        con.close()
+    return jsonify(_forsale_to_geojson(items))
+
+
+@app.route("/api/for-sale/refresh", methods=["POST", "GET"])
+def api_for_sale_refresh():
+    """Scrape the supplied Domain filter URL, upsert results, return the new
+    GeoJSON. Accepts ?url= via either GET or POST so the frontend can use a
+    plain fetch() without payload juggling."""
+    url = (request.args.get("url") or
+           (request.json or {}).get("url") if request.is_json else
+           request.args.get("url") or "").strip()
+    if not url or "domain.com.au" not in url:
+        return jsonify({"error": "url must be a domain.com.au filter URL"}), 400
+    max_pages = int(request.args.get("max_pages", 20) or 20)
+    from src import scraper_domain_sale as sds
+    try:
+        listings = sds.scrape_filter_url(url, max_pages=max_pages)
+    except Exception as ex:
+        return jsonify({"error": f"scrape failed: {ex}"}), 502
+    con = sds.init_db(_FORSALE_DB)
+    try:
+        ins, upd = sds.save_listings(con, listings)
+        items = sds.load_listings(con)
+    finally:
+        con.close()
+    fc = _forsale_to_geojson(items)
+    fc["meta"] = {
+        "scraped":  len(listings),
+        "inserted": ins,
+        "updated":  upd,
+        "total_in_db": len(items),
+    }
+    return jsonify(fc)
+
+
 # ── API: nearby sold properties (SSE streaming) ────────────────────────────────
 
 @app.route("/api/nearby-sales")

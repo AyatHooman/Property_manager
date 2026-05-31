@@ -1,0 +1,284 @@
+"""Domain "For Sale" listing scraper, driven by a user-supplied filter URL.
+
+Reuses the undetected_chromedriver session from src/scraper.py. Paginates the
+filter URL, extracts each listing's id / address / lat-lng / price / features
+/ images from the embedded __NEXT_DATA__ JSON, and writes them to a local
+SQLite DB so the map can render points without re-scraping.
+
+Public API:
+    scrape_filter_url(filter_url, max_pages=20)   -> list[dict]
+    init_db(db_path)                              -> sqlite3.Connection
+    save_listings(con, listings)                  -> (inserted, updated)
+    load_listings(con)                            -> list[dict]
+"""
+import json, os, re, sqlite3, time, random
+from typing import List, Dict, Any, Optional, Tuple
+
+from src import scraper as _base
+
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "data", "for_sale.db")
+
+
+# ── DB layer ─────────────────────────────────────────────────────────────────
+
+def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
+    os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+    con = sqlite3.connect(db_path)
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS listings (
+            listing_id  INTEGER PRIMARY KEY,
+            address     TEXT,
+            suburb      TEXT,
+            state       TEXT,
+            postcode    TEXT,
+            lat         REAL,
+            lng         REAL,
+            price_text  TEXT,
+            price_low   INTEGER,
+            price_high  INTEGER,
+            beds        INTEGER,
+            baths       INTEGER,
+            carspaces   INTEGER,
+            land_m2     REAL,
+            prop_type   TEXT,
+            sale_type   TEXT,
+            agency      TEXT,
+            url         TEXT,
+            image_urls  TEXT,           -- JSON array
+            first_seen  TEXT,
+            last_seen   TEXT,
+            removed     INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+    # Spatial filter goes through these
+    con.execute("CREATE INDEX IF NOT EXISTS listings_geo  ON listings(lat, lng)")
+    con.execute("CREATE INDEX IF NOT EXISTS listings_seen ON listings(last_seen)")
+    con.commit()
+    return con
+
+
+def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tuple[int, int]:
+    """Insert new listings; UPSERT existing ones with the fresher info.
+    Returns (inserted_count, updated_count)."""
+    if not listings:
+        return 0, 0
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    cur = con.cursor()
+    cur.execute("SELECT listing_id FROM listings")
+    existing = {row[0] for row in cur.fetchall()}
+    inserted = updated = 0
+    for L in listings:
+        lid = L.get("listing_id")
+        if not lid:
+            continue
+        params = (
+            lid, L.get("address"), L.get("suburb"), L.get("state"), L.get("postcode"),
+            L.get("lat"), L.get("lng"),
+            L.get("price_text"), L.get("price_low"), L.get("price_high"),
+            L.get("beds"), L.get("baths"), L.get("carspaces"), L.get("land_m2"),
+            L.get("prop_type"), L.get("sale_type"), L.get("agency"), L.get("url"),
+            json.dumps(L.get("image_urls") or [], separators=(",", ":")),
+            now,            # last_seen
+        )
+        if lid in existing:
+            cur.execute("""UPDATE listings SET
+                address=?, suburb=?, state=?, postcode=?, lat=?, lng=?,
+                price_text=?, price_low=?, price_high=?,
+                beds=?, baths=?, carspaces=?, land_m2=?,
+                prop_type=?, sale_type=?, agency=?, url=?,
+                image_urls=?, last_seen=?, removed=0
+                WHERE listing_id=?""",
+                params[1:] + (lid,))
+            updated += 1
+        else:
+            cur.execute("""INSERT INTO listings (
+                listing_id, address, suburb, state, postcode, lat, lng,
+                price_text, price_low, price_high,
+                beds, baths, carspaces, land_m2,
+                prop_type, sale_type, agency, url,
+                image_urls, last_seen, first_seen
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                params + (now,))
+            inserted += 1
+    con.commit()
+    return inserted, updated
+
+
+def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
+    cur = con.execute("""
+        SELECT listing_id, address, suburb, state, postcode, lat, lng,
+               price_text, price_low, price_high,
+               beds, baths, carspaces, land_m2,
+               prop_type, sale_type, agency, url, image_urls,
+               first_seen, last_seen
+        FROM listings WHERE removed=0 AND lat IS NOT NULL AND lng IS NOT NULL
+    """)
+    cols = [d[0] for d in cur.description]
+    out = []
+    for row in cur:
+        d = dict(zip(cols, row))
+        try:
+            d["image_urls"] = json.loads(d.get("image_urls") or "[]")
+        except Exception:
+            d["image_urls"] = []
+        out.append(d)
+    return out
+
+
+# ── Scraper ──────────────────────────────────────────────────────────────────
+
+def _money(s: str) -> Optional[int]:
+    """Parse '$1,250,000' / '1.25M' / '1.2m' / '$850k' into an int."""
+    if not s: return None
+    s = s.replace(",", "").strip()
+    m = re.search(r"\$?\s*([\d.]+)\s*([mMkK]?)", s)
+    if not m: return None
+    try:
+        val = float(m.group(1))
+    except ValueError:
+        return None
+    suf = m.group(2).lower()
+    if suf == "m": val *= 1_000_000
+    elif suf == "k": val *= 1_000
+    return int(val)
+
+
+def _parse_price_range(text: str) -> Tuple[Optional[int], Optional[int]]:
+    """'$1.2m - $1.3m' / '$850,000+ Guide' → (low, high)."""
+    if not text: return (None, None)
+    nums = re.findall(r"\$?\s*([\d.,]+)\s*[mMkK]?", text)
+    if not nums: return (None, None)
+    parsed = []
+    for n in nums:
+        m = re.search(r"([\d.,]+)\s*([mMkK]?)", n)
+        if not m: continue
+        try:
+            v = float(m.group(1).replace(",", ""))
+            suf = m.group(2).lower()
+            if suf == "m": v *= 1_000_000
+            elif suf == "k": v *= 1_000
+            parsed.append(int(v))
+        except ValueError:
+            continue
+    if not parsed: return (None, None)
+    if len(parsed) == 1: return (parsed[0], parsed[0])
+    return (min(parsed), max(parsed))
+
+
+def _safe_int(x):
+    try: return int(x)
+    except (TypeError, ValueError): return None
+
+
+def _safe_float(x):
+    try: return float(x)
+    except (TypeError, ValueError): return None
+
+
+def _parse_listing(item: dict) -> Optional[Dict[str, Any]]:
+    """Pull every useful field out of one __NEXT_DATA__ listing dict."""
+    try:
+        lid = item.get("id")
+        if not lid: return None
+        lm = item.get("listingModel") or {}
+        addr = lm.get("address") or {}
+        feats = lm.get("features") or {}
+
+        # lat/lng may live under address or top-level — Domain has changed it
+        # historically. Probe both spots.
+        lat = (addr.get("lat") or addr.get("latitude")
+               or item.get("lat") or (item.get("geoLocation") or {}).get("lat"))
+        lng = (addr.get("lng") or addr.get("longitude")
+               or item.get("lng") or (item.get("geoLocation") or {}).get("lng"))
+        lat = _safe_float(lat); lng = _safe_float(lng)
+
+        street = addr.get("street") or ""
+        suburb = addr.get("suburb") or ""
+        state = addr.get("state") or ""
+        postcode = addr.get("postcode") or ""
+        full_addr = ", ".join(p for p in (street, f"{suburb} {state} {postcode}".strip()) if p)
+
+        url = lm.get("url") or ""
+        if url and not url.startswith("http"):
+            url = "https://www.domain.com.au" + url
+
+        price_text = lm.get("price") or lm.get("displaySearchPriceRange") or ""
+        plow, phigh = _parse_price_range(price_text)
+
+        # Image URLs: lm.media is a list of dicts each with imageUrl/largeImageUrl
+        images = []
+        for m in (lm.get("media") or []):
+            if not isinstance(m, dict): continue
+            u = m.get("imageUrl") or m.get("url") or m.get("smallImageUrl")
+            if u: images.append(u)
+            if len(images) >= 6: break
+
+        # Sale type heuristic: text near "Auction" or "Private Sale" — Domain
+        # exposes auctionSchedule / inspectionDetails on premium listings.
+        sale_type = ""
+        if lm.get("auction") or lm.get("auctionSchedule"):
+            sale_type = "Auction"
+        elif "auction" in price_text.lower():
+            sale_type = "Auction"
+        else:
+            sale_type = "Private Sale"
+
+        return {
+            "listing_id": int(lid),
+            "address":    full_addr,
+            "suburb":     suburb, "state": state, "postcode": postcode,
+            "lat":        lat, "lng": lng,
+            "price_text": price_text,
+            "price_low":  plow, "price_high": phigh,
+            "beds":       _safe_int(feats.get("beds")),
+            "baths":      _safe_int(feats.get("baths")),
+            "carspaces":  _safe_int(feats.get("parking")),
+            "land_m2":    _safe_float(feats.get("landSize")),
+            "prop_type":  feats.get("propertyTypeFormatted") or feats.get("propertyType") or "",
+            "sale_type":  sale_type,
+            "agency":     (lm.get("branding") or {}).get("agencyName"),
+            "url":        url,
+            "image_urls": images,
+        }
+    except Exception:
+        return None
+
+
+def scrape_filter_url(filter_url: str, max_pages: int = 20) -> List[Dict[str, Any]]:
+    """Paginate the given Domain filter URL until we hit an empty page, a
+    repeat-only page, or max_pages. Returns parsed listing dicts."""
+    driver = _base._get_driver()
+    try:
+        seen_ids = set()
+        out = []
+        for page in range(1, max_pages + 1):
+            sep = "&" if "?" in filter_url else "?"
+            page_url = filter_url + sep + f"page={page}" if page > 1 else filter_url
+            try:
+                html = _base._fetch_page_with_driver(driver, page_url)
+            except Exception as ex:
+                print(f"  page {page} fetch failed: {ex}", flush=True)
+                break
+            raw = _base._extract_json_listings(html)
+            if not raw:
+                break
+            new_items = []
+            for it in raw:
+                lid = it.get("id")
+                if not lid or lid in seen_ids:
+                    continue
+                parsed = _parse_listing(it)
+                if parsed and parsed.get("lat") and parsed.get("lng"):
+                    seen_ids.add(lid)
+                    new_items.append(parsed)
+            print(f"  page {page}: +{len(new_items)} new (cum {len(out) + len(new_items)})", flush=True)
+            out.extend(new_items)
+            if not new_items:
+                break
+            # be polite — random 2-4s between pages
+            time.sleep(2 + random.random() * 2)
+        return out
+    finally:
+        try: _base._quit_driver(driver)
+        except Exception: pass

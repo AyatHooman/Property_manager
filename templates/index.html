@@ -729,7 +729,9 @@
       color: var(--brand-strong);
       font-weight: 600;
     }
-    .zone-toggle.loading { opacity: .6; pointer-events: none; }
+    .zone-toggle.loading  { opacity: .6; pointer-events: none; }
+    .zone-toggle.disabled { opacity: .45; color: var(--text-4); cursor: not-allowed; }
+    .zone-toggle.disabled:hover { background: var(--bg-input); border-color: var(--border-strong); }
     .zone-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
     .map-legend-floating {
@@ -889,69 +891,53 @@
       .map-search-item .icon { font-size: 12px; }
       .map-search-item .sub { font-size: 9px; }
     }
-    /* ── Measurement tool: bright orange FAB at the top-RIGHT, sized so the
-       result text is always visible. Panel stacks BELOW the FAB. Designed so
-       the result chip is plainly readable on both desktop and a phone. ──── */
+    /* ── Measurement tool: icon-only, compact. One 30px button when idle; when
+       active, the FAB stays put and an inline icon row + tiny result chip
+       slide out to the LEFT of it. No text — just emoji. ─────────────────── */
     .map-measure-wrap {
-      position: absolute;
-      top: 50px;          /* clear the Leaflet layers-switcher on the right */
-      right: 10px;
-      z-index: 600;
-      display: flex; flex-direction: column; align-items: flex-end;
+      position: absolute; top: 50px; right: 10px; z-index: 600;
+      display: flex; flex-direction: row-reverse; align-items: center;
       gap: 4px; pointer-events: auto;
     }
     .map-measure-fab {
-      background: #f59e0b;   /* amber — visually distinct from grey controls */
-      border: 1px solid #b45309;
-      border-radius: var(--r-md);
-      color: #1c1917; font-size: 12px; font-weight: 700;
-      padding: 8px 12px; cursor: pointer;
-      box-shadow: var(--shadow-md);
-      user-select: none; line-height: 1.2; white-space: nowrap;
-      min-width: 44px; min-height: 36px; box-sizing: border-box;
-    }
-    .map-measure-fab:hover { background: #fbbf24; }
-    .map-measure-fab.active { background: #1c1917; color: #fbbf24; border-color: #fbbf24; }
-    .map-measure-panel {
-      display: none; flex-direction: column; gap: 6px;
-      background: rgba(20,23,32,.96);
+      width: 30px; height: 30px;
+      background: rgba(20,23,32,.92);
       border: 1px solid var(--border-strong);
-      border-radius: var(--r-md);
-      padding: 8px 10px; min-width: 200px; max-width: 260px;
-      color: var(--text-2); font-size: 12px;
-      box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+      border-radius: 6px;
+      color: var(--text); font-size: 14px;
+      padding: 0; cursor: pointer;
+      box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
+      user-select: none; display: flex; align-items: center; justify-content: center;
     }
-    .map-measure-panel.visible { display: flex; }
-    .map-measure-panel .mm-modes { display: flex; gap: 4px; }
-    .map-measure-panel .mm-mode {
-      flex: 1; text-align: center; cursor: pointer;
-      background: var(--bg-input); color: var(--text-3);
-      border: 1px solid var(--border); border-radius: var(--r-sm);
-      padding: 6px 0; font-size: 11px; user-select: none; font-weight: 600;
+    .map-measure-fab:hover  { border-color: #fbbf24; }
+    .map-measure-fab.active { background: #fbbf24; color: #1c1917; border-color: #b45309; }
+    .map-measure-row {
+      display: none; align-items: center; gap: 3px;
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px; padding: 2px;
+      box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
     }
-    .map-measure-panel .mm-mode.active { color: #1c1917; background: #fbbf24; border-color: #b45309; }
-    .map-measure-panel .mm-result {
-      color: #fbbf24; font-weight: 700; font-size: 14px;
-      background: rgba(0,0,0,.25);
-      padding: 6px 8px; border-radius: var(--r-sm);
-      border: 1px solid rgba(251,191,36,.35);
-      line-height: 1.35;
+    .map-measure-row.visible { display: flex; }
+    .map-measure-row .mm-icon {
+      width: 26px; height: 26px; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; cursor: pointer; user-select: none;
+      color: var(--text-2); border-radius: 4px;
     }
-    .map-measure-panel .mm-sub { color: var(--text-4); font-size: 10px; }
-    .map-measure-panel .mm-actions { display: flex; gap: 4px; }
-    .map-measure-panel .mm-btn {
-      flex: 1; background: transparent; color: var(--text-2);
-      border: 1px solid var(--border-strong); border-radius: var(--r-sm);
-      padding: 5px 6px; font-size: 11px; font-weight: 600; cursor: pointer;
+    .map-measure-row .mm-icon:hover  { color: #fbbf24; background: rgba(251,191,36,.10); }
+    .map-measure-row .mm-icon.active { color: #1c1917; background: #fbbf24; }
+    .map-measure-row .mm-result {
+      color: #fbbf24; font-weight: 700; font-size: 11px;
+      padding: 0 6px; min-width: 60px; max-width: 140px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .map-measure-panel .mm-btn:hover { color: #fbbf24; border-color: #fbbf24; }
+    .map-measure-row .mm-result.empty { color: var(--text-4); font-weight: 400; font-style: italic; }
     @media (max-width: 600px) {
-      .map-measure-wrap  { top: 50px; right: 6px; gap: 3px; }
-      .map-measure-fab   { font-size: 11px; padding: 6px 9px; min-height: 32px; }
-      .map-measure-panel { min-width: 160px; max-width: 70vw; padding: 6px 8px; font-size: 11px; }
-      .map-measure-panel .mm-mode { font-size: 10px; padding: 5px 0; }
-      .map-measure-panel .mm-result { font-size: 13px; padding: 5px 7px; }
-      .map-measure-panel .mm-btn { font-size: 10px; padding: 4px 5px; }
+      .map-measure-wrap { top: 50px; right: 6px; gap: 3px; }
+      .map-measure-fab  { width: 28px; height: 28px; font-size: 13px; }
+      .map-measure-row .mm-icon   { width: 24px; height: 24px; font-size: 12px; }
+      .map-measure-row .mm-result { font-size: 10px; max-width: 110px; padding: 0 4px; }
     }
 
     .map-legend-floating .row {
@@ -3471,26 +3457,20 @@ function _initMap() {
   });
 
   // ── Measurement tool (line length + polygon area) ───────────────────────
-  // Custom floating panel anchored to the right side of the map (below the
-  // streets/satellite switcher). Click "📏 Measure" to enter measure mode,
-  // click on the map to drop vertices, double-click (or Done) to finish.
-  // Distance uses Leaflet's haversine; polygon area uses geodesic shoelace on
-  // a WGS84 sphere (~0.1%% error at suburb scale).
+  // Compact: a single 30px 📏 button. When tapped, an inline icon row +
+  // tiny result chip appear to the LEFT of it. Tap map to drop points;
+  // ✓ to finish, ↻ to clear. Distance uses Leaflet's haversine; polygon area
+  // uses geodesic shoelace on a WGS84 sphere (~0.1%% error at suburb scale).
   const mmWrap = document.createElement('div');
   mmWrap.className = 'map-measure-wrap';
   mmWrap.innerHTML = `
-    <button class="map-measure-fab" id="mm-fab" title="Measure distance or area">📏 Measure</button>
-    <div class="map-measure-panel" id="mm-panel">
-      <div class="mm-modes">
-        <div class="mm-mode active" data-mode="line">📏 Distance</div>
-        <div class="mm-mode" data-mode="area">▱ Area</div>
-      </div>
-      <div class="mm-result" id="mm-result">Click on the map to start.</div>
-      <div class="mm-sub" id="mm-sub">Double-click to finish.</div>
-      <div class="mm-actions">
-        <button class="mm-btn" id="mm-done">Done</button>
-        <button class="mm-btn" id="mm-clear">Clear</button>
-      </div>
+    <button class="map-measure-fab" id="mm-fab" title="Measure">📏</button>
+    <div class="map-measure-row" id="mm-row">
+      <span class="mm-result empty" id="mm-result">tap map</span>
+      <span class="mm-icon" id="mm-clear" title="Clear">↻</span>
+      <span class="mm-icon" id="mm-done"  title="Finish">✓</span>
+      <span class="mm-icon active" id="mm-mode-line" data-mode="line" title="Distance">📏</span>
+      <span class="mm-icon"        id="mm-mode-area" data-mode="area" title="Area">▱</span>
     </div>`;
   L.DomEvent.disableClickPropagation(mmWrap);
   L.DomEvent.disableScrollPropagation(mmWrap);
@@ -3501,17 +3481,16 @@ function _initMap() {
     points: [], markers: [], path: null, polygon: null, lastTip: null,
   };
   const mmFab    = document.getElementById('mm-fab');
-  const mmPanel  = document.getElementById('mm-panel');
+  const mmRow    = document.getElementById('mm-row');
   const mmResult = document.getElementById('mm-result');
-  const mmSub    = document.getElementById('mm-sub');
 
   function _mmFmtLen(m) {
-    return m < 1000 ? `${m.toFixed(1)} m` : `${(m/1000).toFixed(3)} km`;
+    return m < 1000 ? `${m.toFixed(1)} m` : `${(m/1000).toFixed(2)} km`;
   }
   function _mmFmtArea(m2) {
-    if (m2 < 10000) return `${m2.toFixed(1)} m² <span class="mm-sub">(${(m2/10000).toFixed(4)} ha)</span>`;
-    if (m2 < 1_000_000) return `${(m2/10000).toFixed(3)} ha <span class="mm-sub">(${m2.toFixed(0)} m²)</span>`;
-    return `${(m2/1_000_000).toFixed(3)} km² <span class="mm-sub">(${(m2/10000).toFixed(1)} ha)</span>`;
+    if (m2 < 10000) return `${m2.toFixed(0)} m²`;
+    if (m2 < 1_000_000) return `${(m2/10000).toFixed(2)} ha`;
+    return `${(m2/1_000_000).toFixed(2)} km²`;
   }
   function _mmPolyAreaM2(latlngs) {
     if (latlngs.length < 3) return 0;
@@ -3528,19 +3507,19 @@ function _initMap() {
     for (let i = 1; i < latlngs.length; i++) s += latlngs[i-1].distanceTo(latlngs[i]);
     return s;
   }
+  function _mmSetResult(text, isEmpty) {
+    mmResult.textContent = text;
+    mmResult.classList.toggle('empty', !!isEmpty);
+  }
   function _mmRecompute(includeMouse) {
     const pts = MM.points.slice();
     if (includeMouse && MM.lastTip) pts.push(MM.lastTip);
     if (MM.mode === 'line') {
-      if (pts.length < 2) { mmResult.textContent = 'Click again to extend the line.'; return; }
-      mmResult.innerHTML = `Length: <b>${_mmFmtLen(_mmTotalLenM(pts))}</b>`;
-      mmSub.textContent = `${pts.length} points · double-click to finish`;
+      if (pts.length < 2) { _mmSetResult('tap map', true); return; }
+      _mmSetResult(_mmFmtLen(_mmTotalLenM(pts)));
     } else {
-      if (pts.length < 3) { mmResult.textContent = 'Click 3+ points to form a polygon.'; return; }
-      const perim = _mmTotalLenM(pts.concat([pts[0]]));
-      mmResult.innerHTML = `Area: <b>${_mmFmtArea(_mmPolyAreaM2(pts))}</b><br>` +
-                           `<span class="mm-sub">Perimeter ${_mmFmtLen(perim)}</span>`;
-      mmSub.textContent = `${pts.length} vertices · double-click to close`;
+      if (pts.length < 3) { _mmSetResult('tap 3+ pts', true); return; }
+      _mmSetResult(_mmFmtArea(_mmPolyAreaM2(pts)));
     }
   }
   function _mmRedraw(includeMouseTrail) {
@@ -3572,27 +3551,21 @@ function _initMap() {
     MM.markers = [];
     if (MM.path)    { _map.removeLayer(MM.path);    MM.path = null; }
     if (MM.polygon) { _map.removeLayer(MM.polygon); MM.polygon = null; }
-    mmResult.textContent = 'Click on the map to start.';
-    mmSub.textContent = 'Double-click to finish.';
+    _mmSetResult(MM.mode === 'line' ? 'tap map' : 'tap 3+ pts', true);
   }
   function _mmStart() {
     MM.active = true;
     mmFab.classList.add('active');
-    mmFab.textContent = '✕ Stop measure';
-    mmPanel.classList.add('visible');
+    mmRow.classList.add('visible');
     _map.getContainer().style.cursor = 'crosshair';
     _map.on('click', _mmOnClick);
     _map.on('mousemove', _mmOnMove);
-    mmResult.textContent = MM.mode === 'line'
-      ? 'Tap on the map to drop points.'
-      : 'Tap 3+ points to form a polygon.';
-    mmSub.textContent = 'Use "Done" to finish; "Clear" to reset.';
+    _mmSetResult(MM.mode === 'line' ? 'tap map' : 'tap 3+ pts', true);
   }
   function _mmStop() {
     MM.active = false;
     mmFab.classList.remove('active');
-    mmFab.textContent = '📏 Measure';
-    mmPanel.classList.remove('visible');
+    mmRow.classList.remove('visible');
     _map.getContainer().style.cursor = '';
     _map.off('click', _mmOnClick);
     _map.off('mousemove', _mmOnMove);
@@ -3615,36 +3588,34 @@ function _initMap() {
     _mmRedraw(true);
     _mmRecompute(true);
   }
+  // Sync easements toggle gate with current zoom (button is disabled below
+  // _EASE_MIN_ZOOM since rendering 1.3M lines globally would crash).
+  _easementsUpdateGate();
+  _map.on('zoomend', _easementsUpdateGate);
+
   mmFab.onclick = () => { if (MM.active) _mmStop(); else _mmStart(); };
-  mmPanel.querySelectorAll('.mm-mode').forEach(el => {
+  mmRow.querySelectorAll('.mm-icon[data-mode]').forEach(el => {
     el.onclick = () => {
-      mmPanel.querySelectorAll('.mm-mode').forEach(x => x.classList.remove('active'));
+      mmRow.querySelectorAll('.mm-icon[data-mode]').forEach(x => x.classList.remove('active'));
       el.classList.add('active');
       MM.mode = el.dataset.mode;
       _mmClear();
     };
   });
   document.getElementById('mm-done').onclick = () => {
-    // Finish: stop listening to map clicks/moves but keep the final shape
-    // and the result text in the panel so the user can read the number.
+    // Stop listening but keep the final shape + result number visible.
     _map.off('click', _mmOnClick);
     _map.off('mousemove', _mmOnMove);
     MM.lastTip = null;
     _mmRedraw(false);
     _mmRecompute(false);
-    mmSub.textContent = 'Press 📏 Measure again to start a new measurement.';
     _map.getContainer().style.cursor = '';
   };
   document.getElementById('mm-clear').onclick = () => {
     _mmClear();
     if (MM.active) {
-      // Re-arm listeners (in case Done had detached them) and reset the hint.
       _map.on('click', _mmOnClick);
       _map.on('mousemove', _mmOnMove);
-      mmResult.textContent = MM.mode === 'line'
-        ? 'Tap on the map to drop points.'
-        : 'Tap 3+ points to form a polygon.';
-      mmSub.textContent = 'Use "Done" to finish; "Clear" to reset.';
     }
   };
 }
@@ -4288,6 +4259,12 @@ function mmHintEasement(msg) {
 const _EASE_STYLE_ACTIVE  = { weight: 2.5, color: '#22d3ee', opacity: 0.95 };
 const _EASE_STYLE_RETIRED = { weight: 1.5, color: '#94a3b8', opacity: 0.6, dashArray: [3, 3] };
 
+// Minimum zoom for showing easements. With 1.3M LineStrings, rendering one
+// global canvas tile at low zoom would freeze the browser; we gate both the
+// VectorGrid layer (won't request tiles below this zoom) AND the toggle
+// button (disabled until the user is zoomed in this far).
+const _EASE_MIN_ZOOM = 13;
+
 function _easementsBuildLayer(geojson) {
   // VectorGrid.slicer needs each feature to know its own style; we wrap the
   // raw geojson and provide vectorTileLayerStyles keyed by the geojson-vt
@@ -4295,8 +4272,10 @@ function _easementsBuildLayer(geojson) {
   // properties and zoom; we colour by status.
   return L.vectorGrid.slicer(geojson, {
     rendererFactory: L.canvas.tile,
+    minZoom: _EASE_MIN_ZOOM,
     maxZoom: 22,
     interactive: true,
+    pane: 'overlayPane',
     vectorTileLayerStyles: {
       sliced(props, zoom) {
         const s = (props && props.status) || '';
@@ -4319,14 +4298,45 @@ function _easementsBuildLayer(geojson) {
   });
 }
 
+// Sync the easements toggle button's enabled state with the current zoom.
+// Below _EASE_MIN_ZOOM the layer can't safely render — the button is grayed
+// out and clicking it shows a hint instead of toggling. Called once during
+// init + on every `zoomend`.
+function _easementsUpdateGate() {
+  const btn = document.getElementById('toggle-overlay-easements');
+  if (!btn || !_map) return;
+  const z = _map.getZoom();
+  if (z < _EASE_MIN_ZOOM) {
+    btn.classList.add('disabled');
+    btn.title = `Zoom in to ${_EASE_MIN_ZOOM}+ to enable (you're at ${z})`;
+    if (_easements.on) {
+      // Auto-hide if we zoom out past the threshold while it's on. Keeps the
+      // tile cache so re-enabling at higher zoom is instant.
+      if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
+      _easements.on = false;
+      btn.classList.remove('active');
+      updateMapLegend();
+    }
+  } else {
+    btn.classList.remove('disabled');
+    btn.title = '';
+  }
+}
+
 async function toggleEasements() {
   _initMap();
   const btn = document.getElementById('toggle-overlay-easements');
+  const z = _map.getZoom();
   if (_easements.on) {
     _easements.on = false;
     if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
     btn.classList.remove('active');
     updateMapLegend();
+    return;
+  }
+  if (z < _EASE_MIN_ZOOM) {
+    alert(`Zoom in to ${_EASE_MIN_ZOOM}+ first (you're at ${z}).\n\n` +
+          `Rendering 1.3M easements at low zoom would crash the browser.`);
     return;
   }
   // Mobile guard — the 200MB GeoJSON will likely OOM-crash a phone tab. Warn

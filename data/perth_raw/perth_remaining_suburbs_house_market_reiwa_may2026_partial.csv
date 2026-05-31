@@ -1,0 +1,258 @@
+﻿rank_alphabetical_continuing_from_first_100,suburb,postcode,median_house_price_aud,median_house_rent_per_week_aud,sales_price_growth_pct_yoy,rental_price_growth_pct_yoy,source_url,data_status,notes
+101,East Perth,6004,1720000,900,7.2,9.1,https://reiwa.com.au/suburb/east-perth/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+102,East Rockingham,6168,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/east-rockingham/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+103,East Victoria Park,6101,1180000,735,17.4,0.0,https://reiwa.com.au/suburb/east-victoria-park/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+104,Eden Hill,6054,880000,800,21.2,23.1,https://reiwa.com.au/suburb/eden-hill/,verified_REIWA_quick_stats,
+105,Edgewater,6027,1030000,780,16.2,12.2,https://reiwa.com.au/suburb/edgewater/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+106,Eglinton,6034,790000,680,12.9,4.6,https://reiwa.com.au/suburb/eglinton/,verified_REIWA_quick_stats,
+107,Ellenbrook,6069,800000,750,16.8,5.6,https://reiwa.com.au/suburb/ellenbrook/,verified_REIWA_quick_stats,
+108,Embleton,6062,982000,765,18.3,7.0,https://reiwa.com.au/suburb/embleton/,verified_REIWA_quick_stats,
+109,Ferndale,6148,813000,660,10.9,-5.0,https://reiwa.com.au/suburb/ferndale/,verified_REIWA_quick_stats,
+110,Floreat,6014,2380000,910,11.0,-24.2,https://reiwa.com.au/suburb/floreat/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+111,Forrestdale,6112,880000,750,11.7,1.4,https://reiwa.com.au/suburb/forrestdale/,verified_REIWA_quick_stats,
+112,Forrestfield,6058,835000,750,19.3,15.4,https://reiwa.com.au/suburb/forrestfield/,verified_REIWA_quick_stats,
+113,Fremantle,6160,1580000,887,17.3,7.5,https://reiwa.com.au/suburb/fremantle/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+114,Gidgegannup,6083,1130000,1250,55.9,27.6,https://reiwa.com.au/suburb/gidgegannup/,verified_REIWA_quick_stats_rounded; small/sample-sensitive,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+115,Girrawheen,6064,757000,650,16.5,0.0,https://reiwa.com.au/suburb/girrawheen/,verified_REIWA_quick_stats,
+116,Glen Forrest,6071,1167500,750,25.5,-5.9,https://reiwa.com.au/suburb/glen-forrest/,verified_REIWA_detailed_price_visible,
+117,Glendalough,6016,898000,775,11.2,3.3,https://reiwa.com.au/suburb/glendalough/,verified_REIWA_quick_stats,
+118,Gnangara,6077,957500,N/A,16.8,N/A,https://reiwa.com.au/suburb/gnangara/,verified_REIWA_detailed_price_visible; rent_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+119,Golden Bay,6174,820000,650,21.5,8.3,https://reiwa.com.au/suburb/golden-bay/,verified_REIWA_quick_stats,
+120,Gooseberry Hill,6076,1287500,N/A,14.7,N/A,https://reiwa.com.au/suburb/gooseberry-hill/,verified_REIWA_detailed_price_visible; rent_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+121,Gorrie,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/gorrie/,not_verified_REIWA_page_internal_error,REIWA page could not be read by the web tool in this run.
+122,Gosnells,6110,712000,650,16.7,8.3,https://reiwa.com.au/suburb/gosnells/,verified_REIWA_quick_stats,
+123,Greenmount,6056,878000,695,13.6,6.9,https://reiwa.com.au/suburb/greenmount/,verified_REIWA_quick_stats,
+124,Greenwood,6024,1000000,780,13.6,12.2,https://reiwa.com.au/suburb/greenwood/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+125,Guildford,6055,1100000,700,10.0,0.0,https://reiwa.com.au/suburb/guildford/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+126,Gwelup,6018,1680000,900,8.9,-25.0,https://reiwa.com.au/suburb/gwelup/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+127,Hacketts Gully,6076,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/hacketts-gully/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+128,Hamersley,6022,1040000,750,10.7,0.0,https://reiwa.com.au/suburb/hamersley/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+129,Hamilton Hill,6163,955000,795,12.4,14.4,https://reiwa.com.au/suburb/hamilton-hill/,verified_REIWA_quick_stats,
+130,Hammond Park,6164,930000,795,14.0,9.7,https://reiwa.com.au/suburb/hammond-park/,verified_REIWA_quick_stats,
+131,Harrisdale,6112,987000,785,16.1,6.1,https://reiwa.com.au/suburb/harrisdale/,verified_REIWA_quick_stats,
+132,Haynes,6112,787000,710,13.6,4.4,https://reiwa.com.au/suburb/haynes/,verified_REIWA_quick_stats,
+133,Hazelmere,6055,1000000,N/A,22.0,N/A,https://reiwa.com.au/suburb/hazelmere/,verified_REIWA_quick_stats_rounded; rent_NA,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+134,Heathridge,6027,920000,700,15.0,0.0,https://reiwa.com.au/suburb/heathridge/,verified_REIWA_quick_stats,
+135,Helena Valley,6056,1030000,790,17.1,12.9,https://reiwa.com.au/suburb/helena-valley/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+136,Henderson,6166,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/henderson/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+137,Henley Brook,6055,888000,830,16.7,14.2,https://reiwa.com.au/suburb/henley-brook/,verified_REIWA_quick_stats,
+138,Herdsman,6017,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/herdsman/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+139,Herne Hill,6056,753000,N/A,-20.8,N/A,https://reiwa.com.au/suburb/herne-hill/,verified_REIWA_quick_stats; rent_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+140,High Wycombe,6057,845000,732,19.9,12.6,https://reiwa.com.au/suburb/high-wycombe/,verified_REIWA_quick_stats,
+141,Highgate,6003,1370000,775,8.1,4.7,https://reiwa.com.au/suburb/highgate/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+142,Hilbert,6112,780000,680,16.4,3.0,https://reiwa.com.au/suburb/hilbert/,verified_REIWA_quick_stats,
+143,Hillarys,6025,1650000,1100,16.9,41.9,https://reiwa.com.au/suburb/hillarys/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+144,Hillman,6168,690000,570,12.2,0.5,https://reiwa.com.au/suburb/hillman/,verified_REIWA_quick_stats,
+145,Hilton,6163,1200000,890,31.4,-1.1,https://reiwa.com.au/suburb/hilton/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+146,Hocking,6065,930000,850,13.7,17.2,https://reiwa.com.au/suburb/hocking/,verified_REIWA_quick_stats,
+147,Hope Valley,6165,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/hope-valley/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+148,Hopeland,6125,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/hopeland/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+149,Hovea,6071,N/A,650,N/A,N/A,https://reiwa.com.au/suburb/hovea/,verified_REIWA_price_NA; rent_available,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+150,Huntingdale,6110,784000,770,11.4,10.0,https://reiwa.com.au/suburb/huntingdale/,verified_REIWA_quick_stats,
+151,Garden Island,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/garden-island/,not_verified_REIWA_page_internal_error,REIWA page could not be read by the web tool in this run.
+152,Iluka,6028,1650000,1100,9.8,0.0,https://reiwa.com.au/suburb/iluka/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+153,Inglewood,6052,1600000,900,24.0,12.5,https://reiwa.com.au/suburb/inglewood/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+154,Innaloo,6018,1010000,825,13.5,4.8,https://reiwa.com.au/suburb/innaloo/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+155,Jandabup,6077,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/jandabup/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+156,Jandakot,6164,1250000,912,14.2,1.3,https://reiwa.com.au/suburb/jandakot/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+157,Jane Brook,6056,981000,810,13.4,8.0,https://reiwa.com.au/suburb/jane-brook/,verified_REIWA_quick_stats,
+158,Jarrahdale,6124,823000,680,-14.8,0.0,https://reiwa.com.au/suburb/jarrahdale/,verified_REIWA_quick_stats,
+159,Jindalee,6036,1130000,850,31.4,13.3,https://reiwa.com.au/suburb/jindalee/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+160,Jolimont,6014,2050000,1600,2.5,77.8,https://reiwa.com.au/suburb/jolimont/,verified_REIWA_quick_stats_rounded; rental_growth_sample_sensitive,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+161,Joondalup,6027,965000,750,14.7,15.4,https://reiwa.com.au/suburb/joondalup/,verified_REIWA_quick_stats,
+162,Joondanna,6060,1180000,850,18.6,25.0,https://reiwa.com.au/suburb/joondanna/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+163,Kalamunda,6076,1100000,750,23.9,-15.7,https://reiwa.com.au/suburb/kalamunda/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+164,Kallaroo,6025,1380000,772,14.6,-3.5,https://reiwa.com.au/suburb/kallaroo/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+165,Karawara,6152,975000,760,4.3,14.8,https://reiwa.com.au/suburb/karawara/,verified_REIWA_quick_stats,
+166,Kardinya,6163,1240000,825,18.8,4.4,https://reiwa.com.au/suburb/kardinya/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+167,Karnup,6176,780000,650,13.9,0.0,https://reiwa.com.au/suburb/karnup/,verified_REIWA_quick_stats,
+168,Karragullen,6111,798000,N/A,8.1,N/A,https://reiwa.com.au/suburb/karragullen/,verified_REIWA_quick_stats; rent_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+169,Karrakatta,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/karrakatta/,not_verified_REIWA_page_internal_error,REIWA page could not be read by the web tool in this run.
+170,Karrakup,6122,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/karrakup/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+171,Karrinyup,6018,1630000,1000,9.6,11.1,https://reiwa.com.au/suburb/karrinyup/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+172,Kelmscott,6111,718000,640,19.6,6.7,https://reiwa.com.au/suburb/kelmscott/,verified_REIWA_quick_stats,
+173,Kensington,6151,1580000,850,9.7,-1.2,https://reiwa.com.au/suburb/kensington/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+174,Kenwick,6107,740000,640,18.4,1.6,https://reiwa.com.au/suburb/kenwick/,verified_REIWA_quick_stats,
+175,Keralup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/keralup/,not_verified_REIWA_page_internal_error,REIWA page could not be read by the web tool in this run.
+176,Kewdale,6105,920000,755,22.7,16.2,https://reiwa.com.au/suburb/kewdale/,verified_REIWA_quick_stats,
+177,Keysbrook,6126,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/keysbrook/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+178,Kiara,6054,900000,835,26.8,22.8,https://reiwa.com.au/suburb/kiara/,verified_REIWA_quick_stats,
+179,Kingsley,6026,1160000,830,18.4,6.4,https://reiwa.com.au/suburb/kingsley/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+180,Kinross,6028,985000,750,13.5,7.1,https://reiwa.com.au/suburb/kinross/,verified_REIWA_quick_stats,
+181,Koondoola,6064,738000,665,17.2,10.8,https://reiwa.com.au/suburb/koondoola/,verified_REIWA_quick_stats,
+182,Koongamia,6056,650000,650,13.0,8.3,https://reiwa.com.au/suburb/koongamia/,verified_REIWA_quick_stats,
+183,Kwinana Beach,6167,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/kwinana-beach/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+184,Kwinana Town Centre,6167,643000,630,9.8,5.0,https://reiwa.com.au/suburb/kwinana-town-centre/,verified_REIWA_quick_stats,
+185,Lake Coogee,6166,1060000,825,11.8,3.5,https://reiwa.com.au/suburb/lake-coogee/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+186,Landsdale,6065,1120000,860,22.7,0.6,https://reiwa.com.au/suburb/landsdale/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+187,Langford,6147,735000,650,15.7,1.6,https://reiwa.com.au/suburb/langford/,verified_REIWA_quick_stats,
+188,Lathlain,6100,1200000,875,21.1,21.5,https://reiwa.com.au/suburb/lathlain/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+189,Leda,6170,737000,620,18.9,0.0,https://reiwa.com.au/suburb/leda/,verified_REIWA_quick_stats,
+190,Leederville,6007,1650000,815,14.0,-8.1,https://reiwa.com.au/suburb/leederville/,verified_REIWA_quick_stats_rounded,Price converted from rounded REIWA quick-stat display (e.g. $1.72M).
+191,Leeming,6149,1417500,900,15.7,15.4,https://reiwa.com.au/suburb/leeming/,verified_REIWA_detailed_price_visible,
+192,Lesmurdie,6076,1085000,680,9.0,-2.9,https://reiwa.com.au/suburb/lesmurdie/,verified_REIWA_detailed_price_visible,
+193,Lexia,6079,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/lexia/,verified_REIWA_NA,"REIWA quick stats showed insufficient/NA house data, or page did not return usable values."
+194,Lockridge,6054,757500,637,24.1,9.8,https://reiwa.com.au/suburb/lockridge/,verified_REIWA_detailed_price_visible,
+195,Lynwood,6147,830000,700,18.6,7.7,https://reiwa.com.au/suburb/lynwood/,verified_REIWA_quick_stats,
+196,Maddington,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/maddington/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+197,Madeley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/madeley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+198,Mahogany Creek,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mahogany-creek/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+199,Maida Vale,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/maida-vale/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+200,Malaga,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/malaga/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+201,Mandogalup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mandogalup/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+202,Manning,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/manning/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+203,Marangaroo,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/marangaroo/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+204,Mardella,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mardella/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+205,Mariginiup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mariginiup/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+206,Marmion,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/marmion/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+207,Martin,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/martin/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+208,Maylands,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/maylands/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+209,Medina,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/medina/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+210,Melaleuca,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/melaleuca/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+211,Melville,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/melville/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+212,Menora,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/menora/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+213,Merriwa,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/merriwa/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+214,Middle Swan,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/middle-swan/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+215,Midland,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/midland/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+216,Midvale,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/midvale/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+217,Millendon,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/millendon/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+218,Mindarie,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mindarie/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+219,Mirrabooka,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mirrabooka/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+220,Morley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/morley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+221,Mosman Park,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mosman-park/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+222,Mount Claremont,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-claremont/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+223,Mount Hawthorn,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-hawthorn/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+224,Mount Helena,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-helena/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+225,Mount Lawley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-lawley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+226,Mount Nasura,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-nasura/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+227,Mount Pleasant,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-pleasant/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+228,Mount Richon,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mount-richon/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+229,Mullaloo,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mullaloo/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+230,Mundaring,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mundaring/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+231,Mundijong,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/mundijong/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+232,Munster,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/munster/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+233,Murdoch,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/murdoch/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+234,Myaree,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/myaree/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+235,Naval Base,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/naval-base/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+236,Nedlands,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/nedlands/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+237,Neerabup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/neerabup/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+238,Nollamara,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/nollamara/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+239,Noranda,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/noranda/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+240,North Beach,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/north-beach/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+241,North Coogee,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/north-coogee/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+242,North Fremantle,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/north-fremantle/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+243,North Lake,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/north-lake/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+244,North Perth,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/north-perth/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+245,Northbridge,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/northbridge/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+246,Nowergup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/nowergup/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+247,Oakford,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/oakford/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+248,Ocean Reef,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/ocean-reef/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+249,O'Connor,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/oconnor/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+250,Oldbury,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/oldbury/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+251,Orange Grove,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/orange-grove/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+252,Orelia,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/orelia/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+253,Osborne Park,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/osborne-park/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+254,Padbury,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/padbury/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+255,Palmyra,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/palmyra/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+256,Parkerville,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/parkerville/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+257,Parkwood,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/parkwood/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+258,Parmelia,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/parmelia/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+259,Paulls Valley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/paulls-valley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+260,Pearsall,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/pearsall/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+261,Peppermint Grove,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/peppermint-grove/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+262,Peron,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/peron/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+263,Perth,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/perth/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+264,Perth Airport,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/perth-airport/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+265,Piara Waters,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/piara-waters/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+266,Pickering Brook,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/pickering-brook/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+267,Piesse Brook,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/piesse-brook/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+268,Pinjar,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/pinjar/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+269,Port Kennedy,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/port-kennedy/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+270,Postans,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/postans/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+271,Queens Park,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/queens-park/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+272,Quinns Rocks,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/quinns-rocks/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+273,Red Hill,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/red-hill/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+274,Redcliffe,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/redcliffe/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+275,Reservoir,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/reservoir/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+276,Ridgewood,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/ridgewood/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+277,Riverton,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/riverton/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+278,Rivervale,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/rivervale/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+279,Rockingham,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/rockingham/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+280,Roleystone,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/roleystone/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+281,Rottnest Island,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/rottnest-island/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+282,Rossmoyne,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/rossmoyne/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+283,Safety Bay,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/safety-bay/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+284,Salter Point,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/salter-point/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+285,Samson,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/samson/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+286,Sawyers Valley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/sawyers-valley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+287,Scarborough,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/scarborough/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+288,Secret Harbour,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/secret-harbour/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+289,Serpentine,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/serpentine/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+290,Seville Grove,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/seville-grove/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+291,Shelley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/shelley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+292,Shenton Park,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/shenton-park/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+293,Shoalwater,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/shoalwater/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+294,Sinagra,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/sinagra/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+295,Singleton,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/singleton/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+296,Sorrento,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/sorrento/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+297,South Fremantle,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/south-fremantle/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+298,South Guildford,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/south-guildford/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+299,South Lake,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/south-lake/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+300,South Perth,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/south-perth/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+301,Southern River,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/southern-river/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+302,Spearwood,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/spearwood/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+303,St James,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/st-james/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+304,Stirling,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/stirling/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+305,Stoneville,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/stoneville/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+306,Stratton,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/stratton/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+307,Subiaco,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/subiaco/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+308,Success,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/success/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+309,Swan View,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/swan-view/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+310,Swanbourne,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/swanbourne/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+311,Tamala Park,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/tamala-park/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+312,Tapping,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/tapping/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+313,The Lakes,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/the-lakes/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+314,The Spectacles,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/the-spectacles/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+315,The Vines,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/the-vines/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+316,Thornlie,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/thornlie/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+317,Treeby,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/treeby/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+318,Trigg,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/trigg/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+319,Tuart Hill,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/tuart-hill/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+320,Two Rocks,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/two-rocks/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+321,Upper Swan,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/upper-swan/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+322,Victoria Park,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/victoria-park/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+323,Viveash,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/viveash/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+324,Waikiki,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/waikiki/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+325,Walliston,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/walliston/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+326,Wandi,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wandi/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+327,Wangara,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wangara/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+328,Wanneroo,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wanneroo/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+329,Warnbro,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/warnbro/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+330,Warwick,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/warwick/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+331,Waterford,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/waterford/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+332,Watermans Bay,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/watermans-bay/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+333,Wattle Grove,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wattle-grove/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+334,Wattleup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wattleup/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+335,Wellard,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wellard/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+336,Welshpool,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/welshpool/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+337,Wembley Downs,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wembley-downs/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+338,Wembley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wembley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+339,West Leederville,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/west-leederville/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+340,West Perth,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/west-perth/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+341,West Swan,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/west-swan/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+342,Westminster,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/westminster/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+343,Whitby,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/whitby/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+344,White Gum Valley,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/white-gum-valley/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+345,Whiteman,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/whiteman/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+346,Willagee,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/willagee/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+347,Willetton,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/willetton/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+348,Wilson,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wilson/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+349,Winthrop,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/winthrop/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+350,Woodbridge,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/woodbridge/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+351,Woodlands,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/woodlands/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+352,Woodvale,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/woodvale/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+353,Wooroloo,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wooroloo/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+354,Wungong,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/wungong/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+355,Yanchep,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/yanchep/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+356,Yangebup,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/yangebup/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.
+357,Yokine,N/A,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/yokine/,not_fetched_this_run,Row included from Perth suburb list; REIWA house market values not yet verified in this partial file.

@@ -1,0 +1,358 @@
+suburb,postcode,median_house_price_aud,median_house_rent_per_week_aud,sales_price_growth_pct_yoy,rental_price_growth_pct_yoy,source_url
+Alexander Heights,6064,890000,760,16.6,1.3,https://reiwa.com.au/suburb/alexander-heights/
+Alfred Cove,6154,1595000,840,14.2,12,https://reiwa.com.au/suburb/alfred-cove/
+Alkimos,6038,830000,720,17.7,5.9,https://reiwa.com.au/suburb/alkimos/
+Anketell,6167,771000,700,14.2,0,https://reiwa.com.au/suburb/anketell/
+Applecross,6153,2750000,1000,0.4,0,https://reiwa.com.au/suburb/applecross/
+Ardross,6153,1860000,1000,12.7,-9.1,https://reiwa.com.au/suburb/ardross/
+Armadale,6112,650000,615,15,6,https://reiwa.com.au/suburb/armadale/
+Ascot,6104,1300000,800,27.1,12.7,https://reiwa.com.au/suburb/ascot/
+Ashby,6065,890000,695,21.5,3.7,https://reiwa.com.au/suburb/ashby/
+Ashendon,6111,,,,,https://reiwa.com.au/suburb/ashendon/
+Ashfield,6054,818000,730,1,21.7,https://reiwa.com.au/suburb/ashfield/
+Attadale,6156,2200000,950,18.9,-13.6,https://reiwa.com.au/suburb/attadale/
+Atwell,6164,965000,750,10.9,7.1,https://reiwa.com.au/suburb/atwell/
+Aubin Grove,6164,940000,760,10.8,9.4,https://reiwa.com.au/suburb/aubin-grove/
+Aveley,6069,830000,780,12.2,13.9,https://reiwa.com.au/suburb/aveley/
+Bailup,6082,,,,,https://reiwa.com.au/suburb/bailup/
+Balcatta,6021,960000,750,20,8.7,https://reiwa.com.au/suburb/balcatta/
+Baldivis,6171,810000,680,14.9,4.6,https://reiwa.com.au/suburb/baldivis/
+Balga,6061,735000,700,18.5,7.7,https://reiwa.com.au/suburb/balga/
+Ballajura,6066,880501,750,17.4,11.9,https://reiwa.com.au/suburb/ballajura/
+Banjup,6164,,950,,29.3,https://reiwa.com.au/suburb/banjup/
+Banksia Grove,6031,800000,730,16.8,7.4,https://reiwa.com.au/suburb/banksia-grove/
+Baskerville,6056,,700,,1.4,https://reiwa.com.au/suburb/baskerville/
+Bassendean,6054,950000,737,15.9,5.3,https://reiwa.com.au/suburb/bassendean/
+Bateman,6150,1525000,800,21.6,1.3,https://reiwa.com.au/suburb/bateman/
+Bayswater,6053,1200000,790,24.4,8.2,https://reiwa.com.au/suburb/bayswater/
+Beaconsfield,6162,1330000,850,10.8,4.9,https://reiwa.com.au/suburb/beaconsfield/
+Beckenham,6107,813000,700,17,7.7,https://reiwa.com.au/suburb/beckenham/
+Bedford,6052,1175000,775,19,3.3,https://reiwa.com.au/suburb/bedford/
+Bedfordale,6112,1405000,,16.8,,https://reiwa.com.au/suburb/bedfordale/
+Beechboro,6063,831500,730,17.9,9,https://reiwa.com.au/suburb/beechboro/
+Beechina,6556,,,,,https://reiwa.com.au/suburb/beechina/
+Beeliar,6164,996000,730,20,7.4,https://reiwa.com.au/suburb/beeliar/
+Beldon,6027,955000,750,10.7,12.8,https://reiwa.com.au/suburb/beldon/
+Belhus,6069,,,,,https://reiwa.com.au/suburb/belhus/
+Bellevue,6056,758500,830,23.2,59.6,https://reiwa.com.au/suburb/bellevue/
+Belmont,6104,886500,790,21.3,6.8,https://reiwa.com.au/suburb/belmont/
+Bennett Springs,6063,920000,850,16.8,7.6,https://reiwa.com.au/suburb/bennett-springs/
+Bentley,6102,806000,780,15.1,11.4,https://reiwa.com.au/suburb/bentley/
+Bertram,6167,762500,690,12.1,6.2,https://reiwa.com.au/suburb/bertram/
+Bibra Lake,6163,1037000,625,15.2,-21.9,https://reiwa.com.au/suburb/bibra-lake/
+Bickley,6076,830000,,-34.6,,https://reiwa.com.au/suburb/bickley/
+Bicton,6157,1980000,900,19.6,0,https://reiwa.com.au/suburb/bicton/
+Booragoon,6154,1620000,870,17.4,2.7,https://reiwa.com.au/suburb/booragoon/
+Boya,6056,1025000,700,6.8,-22.2,https://reiwa.com.au/suburb/boya/
+Brabham,6055,843000,760,17.1,1.3,https://reiwa.com.au/suburb/brabham/
+Brentwood,6153,1490000,800,46.8,12.7,https://reiwa.com.au/suburb/brentwood/
+Brigadoon,6069,,,,,https://reiwa.com.au/suburb/brigadoon/
+Brookdale,6112,700000,650,16.7,8.3,https://reiwa.com.au/suburb/brookdale/
+Bull Creek,6149,1500000,800,13.6,0.6,https://reiwa.com.au/suburb/bull-creek/
+Bullsbrook,6084,767500,775,20.9,10.7,https://reiwa.com.au/suburb/bullsbrook/
+Burns Beach,6028,1680000,1350,18,-10,https://reiwa.com.au/suburb/burns-beach/
+Burswood,6100,1380000,880,-8.5,3.5,https://reiwa.com.au/suburb/burswood/
+Bushmead,6055,1130000,1000,15.3,8.1,https://reiwa.com.au/suburb/bushmead/
+Butler,6036,781000,675,15.6,9.4,https://reiwa.com.au/suburb/butler/
+Byford,6122,820000,690,19.7,6.2,https://reiwa.com.au/suburb/byford/
+Calista,6167,661000,562,13.4,8.1,https://reiwa.com.au/suburb/calista/
+Camillo,6111,690000,615,16.7,4.2,https://reiwa.com.au/suburb/camillo/
+Canning Mills,6111,,,,,https://reiwa.com.au/suburb/canning-mills/
+Canning Vale,6155,1100000,840,17.6,7.7,https://reiwa.com.au/suburb/canning-vale/
+Cannington,6107,771000,780,26.3,11.4,https://reiwa.com.au/suburb/cannington/
+Carabooda,6033,,,,,https://reiwa.com.au/suburb/carabooda/
+Cardup,6122,1700000,,28.8,,https://reiwa.com.au/suburb/cardup/
+Carine,6020,1630000,965,20.9,4.9,https://reiwa.com.au/suburb/carine/
+Carlisle,6101,971000,790,20.9,6.8,https://reiwa.com.au/suburb/carlisle/
+Carmel,6076,,,,,https://reiwa.com.au/suburb/carmel/
+Carramar,6031,1000000,875,13.3,12.2,https://reiwa.com.au/suburb/carramar/
+Casuarina,6167,1450000,800,38.8,,https://reiwa.com.au/suburb/casuarina/
+Caversham,6055,890000,850,12.3,13.3,https://reiwa.com.au/suburb/caversham/
+Champion Lakes,6111,823000,760,14.2,11.8,https://reiwa.com.au/suburb/champion-lakes/
+Chidlow,6556,950000,,36.5,,https://reiwa.com.au/suburb/chidlow/
+Churchlands,6018,2190000,1250,4.3,6.4,https://reiwa.com.au/suburb/churchlands/
+City Beach,6015,3700000,1525,23.3,8.9,https://reiwa.com.au/suburb/city-beach/
+Claremont,6010,2500000,1175,21.2,21.8,https://reiwa.com.au/suburb/claremont/
+Clarkson,6030,830000,700,18,7.7,https://reiwa.com.au/suburb/clarkson/
+Cloverdale,6105,855000,700,17.9,7.7,https://reiwa.com.au/suburb/cloverdale/
+Cockburn Central,6164,890000,810,12.7,30.6,https://reiwa.com.au/suburb/cockburn-central/
+Como,6152,1600000,850,12.7,6.3,https://reiwa.com.au/suburb/como/
+Connolly,6027,1370000,975,24.6,8.3,https://reiwa.com.au/suburb/connolly/
+Coogee,6166,1430000,1050,7.5,32.1,https://reiwa.com.au/suburb/coogee/
+Coolbellup,6163,916000,700,16.6,0,https://reiwa.com.au/suburb/coolbellup/
+Coolbinia,6050,2100000,1375,22.8,61.8,https://reiwa.com.au/suburb/coolbinia/
+Cooloongup,6168,725000,650,15.1,16.1,https://reiwa.com.au/suburb/cooloongup/
+Cottesloe,6011,3330000,1625,5.6,32.7,https://reiwa.com.au/suburb/cottesloe/
+Craigie,6025,951000,750,17.3,10.8,https://reiwa.com.au/suburb/craigie/
+Crawley,6009,1820000,920,30.3,6.4,https://reiwa.com.au/suburb/crawley/
+Cullacabardee,6067,,,,,https://reiwa.com.au/suburb/cullacabardee/
+Currambine,6028,1020000,850,11.1,12.6,https://reiwa.com.au/suburb/currambine/
+Daglish,6008,1970000,1175,14.1,17.5,https://reiwa.com.au/suburb/daglish/
+Dalkeith,6009,4100000,1375,17.1,-8.3,https://reiwa.com.au/suburb/dalkeith/
+Darch,6065,1090000,870,13.2,16,https://reiwa.com.au/suburb/darch/
+Darling Downs,6122,1510000,,81.9,,https://reiwa.com.au/suburb/darling-downs/
+Darlington,6070,1290000,,12.4,,https://reiwa.com.au/suburb/darlington/
+Dayton,6055,800000,715,11.1,-2.1,https://reiwa.com.au/suburb/dayton/
+Dianella,6059,1165000,750,23.9,7.1,https://reiwa.com.au/suburb/dianella/
+Doobarda,6112,,,,,https://reiwa.com.au/suburb/doobarda/
+Doubleview,6018,1400000,950,14.8,18.8,https://reiwa.com.au/suburb/doubleview/
+Duncraig,6023,1400000,917,11.1,17.3,https://reiwa.com.au/suburb/duncraig/
+East Cannington,6107,830000,750,16.9,0,https://reiwa.com.au/suburb/east-cannington/
+East Fremantle,6158,2203000,1000,10.1,-2.4,https://reiwa.com.au/suburb/east-fremantle/
+East Perth,6004,1720000,900,7.2,9.1,https://reiwa.com.au/suburb/east-perth/
+East Rockingham,6168,,,,,https://reiwa.com.au/suburb/east-rockingham/
+East Victoria Park,6101,1180000,735,17.4,0,https://reiwa.com.au/suburb/east-victoria-park/
+Eden Hill,6054,880000,800,21.2,23.1,https://reiwa.com.au/suburb/eden-hill/
+Edgewater,6027,1030000,780,16.2,12.2,https://reiwa.com.au/suburb/edgewater/
+Eglinton,6034,790000,680,12.9,4.6,https://reiwa.com.au/suburb/eglinton/
+Ellenbrook,6069,800000,750,16.8,5.6,https://reiwa.com.au/suburb/ellenbrook/
+Embleton,6062,982000,765,18.3,7,https://reiwa.com.au/suburb/embleton/
+Ferndale,6148,813000,660,10.9,-5,https://reiwa.com.au/suburb/ferndale/
+Floreat,6014,2380000,910,11,-24.2,https://reiwa.com.au/suburb/floreat/
+Forrestdale,6112,880000,750,11.7,1.4,https://reiwa.com.au/suburb/forrestdale/
+Forrestfield,6058,835000,750,19.3,15.4,https://reiwa.com.au/suburb/forrestfield/
+Fremantle,6160,1580000,887,17.3,7.5,https://reiwa.com.au/suburb/fremantle/
+Garden Island,N/A,,,,,https://reiwa.com.au/suburb/garden-island/
+Gidgegannup,6083,1130000,1250,55.9,27.6,https://reiwa.com.au/suburb/gidgegannup/
+Girrawheen,6064,757000,650,16.5,0,https://reiwa.com.au/suburb/girrawheen/
+Glen Forrest,6071,1167500,750,25.5,-5.9,https://reiwa.com.au/suburb/glen-forrest/
+Glendalough,6016,898000,775,11.2,3.3,https://reiwa.com.au/suburb/glendalough/
+Gnangara,6077,957500,,16.8,,https://reiwa.com.au/suburb/gnangara/
+Golden Bay,6174,820000,650,21.5,8.3,https://reiwa.com.au/suburb/golden-bay/
+Gooseberry Hill,6076,1287500,,14.7,,https://reiwa.com.au/suburb/gooseberry-hill/
+Gorrie,N/A,,,,,https://reiwa.com.au/suburb/gorrie/
+Gosnells,6110,712000,650,16.7,8.3,https://reiwa.com.au/suburb/gosnells/
+Greenmount,6056,878000,695,13.6,6.9,https://reiwa.com.au/suburb/greenmount/
+Greenwood,6024,1000000,780,13.6,12.2,https://reiwa.com.au/suburb/greenwood/
+Guildford,6055,1100000,700,10,0,https://reiwa.com.au/suburb/guildford/
+Gwelup,6018,1680000,900,8.9,-25,https://reiwa.com.au/suburb/gwelup/
+Hacketts Gully,6076,,,,,https://reiwa.com.au/suburb/hacketts-gully/
+Hamersley,6022,1040000,750,10.7,0,https://reiwa.com.au/suburb/hamersley/
+Hamilton Hill,6163,955000,795,12.4,14.4,https://reiwa.com.au/suburb/hamilton-hill/
+Hammond Park,6164,930000,795,14,9.7,https://reiwa.com.au/suburb/hammond-park/
+Harrisdale,6112,987000,785,16.1,6.1,https://reiwa.com.au/suburb/harrisdale/
+Haynes,6112,787000,710,13.6,4.4,https://reiwa.com.au/suburb/haynes/
+Hazelmere,6055,1000000,,22,,https://reiwa.com.au/suburb/hazelmere/
+Heathridge,6027,920000,700,15,0,https://reiwa.com.au/suburb/heathridge/
+Helena Valley,6056,1030000,790,17.1,12.9,https://reiwa.com.au/suburb/helena-valley/
+Henderson,6166,,,,,https://reiwa.com.au/suburb/henderson/
+Henley Brook,6055,888000,830,16.7,14.2,https://reiwa.com.au/suburb/henley-brook/
+Herdsman,6017,,,,,https://reiwa.com.au/suburb/herdsman/
+Herne Hill,6056,753000,,-20.8,,https://reiwa.com.au/suburb/herne-hill/
+High Wycombe,6057,845000,732,19.9,12.6,https://reiwa.com.au/suburb/high-wycombe/
+Highgate,6003,1370000,775,8.1,4.7,https://reiwa.com.au/suburb/highgate/
+Hilbert,6112,780000,680,16.4,3,https://reiwa.com.au/suburb/hilbert/
+Hillarys,6025,1650000,1100,16.9,41.9,https://reiwa.com.au/suburb/hillarys/
+Hillman,6168,690000,570,12.2,0.5,https://reiwa.com.au/suburb/hillman/
+Hilton,6163,1200000,890,31.4,-1.1,https://reiwa.com.au/suburb/hilton/
+Hocking,6065,930000,850,13.7,17.2,https://reiwa.com.au/suburb/hocking/
+Hope Valley,6165,,,,,https://reiwa.com.au/suburb/hope-valley/
+Hopeland,6125,,,,,https://reiwa.com.au/suburb/hopeland/
+Hovea,6071,,650,,,https://reiwa.com.au/suburb/hovea/
+Huntingdale,6110,784000,770,11.4,10,https://reiwa.com.au/suburb/huntingdale/
+Iluka,6028,1650000,1100,9.8,0,https://reiwa.com.au/suburb/iluka/
+Inglewood,6052,1600000,900,24,12.5,https://reiwa.com.au/suburb/inglewood/
+Innaloo,6018,1010000,825,13.5,4.8,https://reiwa.com.au/suburb/innaloo/
+Jandabup,6077,,,,,https://reiwa.com.au/suburb/jandabup/
+Jandakot,6164,1250000,912,14.2,1.3,https://reiwa.com.au/suburb/jandakot/
+Jane Brook,6056,981000,810,13.4,8,https://reiwa.com.au/suburb/jane-brook/
+Jarrahdale,6124,823000,680,-14.8,0,https://reiwa.com.au/suburb/jarrahdale/
+Jindalee,6036,1130000,850,31.4,13.3,https://reiwa.com.au/suburb/jindalee/
+Jolimont,6014,2050000,1600,2.5,77.8,https://reiwa.com.au/suburb/jolimont/
+Joondalup,6027,965000,750,14.7,15.4,https://reiwa.com.au/suburb/joondalup/
+Joondanna,6060,1180000,850,18.6,25,https://reiwa.com.au/suburb/joondanna/
+Kalamunda,6076,1100000,750,23.9,-15.7,https://reiwa.com.au/suburb/kalamunda/
+Kallaroo,6025,1380000,772,14.6,-3.5,https://reiwa.com.au/suburb/kallaroo/
+Karawara,6152,975000,760,4.3,14.8,https://reiwa.com.au/suburb/karawara/
+Kardinya,6163,1240000,825,18.8,4.4,https://reiwa.com.au/suburb/kardinya/
+Karnup,6176,780000,650,13.9,0,https://reiwa.com.au/suburb/karnup/
+Karragullen,6111,798000,,8.1,,https://reiwa.com.au/suburb/karragullen/
+Karrakatta,N/A,,,,,https://reiwa.com.au/suburb/karrakatta/
+Karrakup,6122,,,,,https://reiwa.com.au/suburb/karrakup/
+Karrinyup,6018,1630000,1000,9.6,11.1,https://reiwa.com.au/suburb/karrinyup/
+Kelmscott,6111,718000,640,19.6,6.7,https://reiwa.com.au/suburb/kelmscott/
+Kensington,6151,1580000,850,9.7,-1.2,https://reiwa.com.au/suburb/kensington/
+Kenwick,6107,740000,640,18.4,1.6,https://reiwa.com.au/suburb/kenwick/
+Keralup,N/A,,,,,https://reiwa.com.au/suburb/keralup/
+Kewdale,6105,920000,755,22.7,16.2,https://reiwa.com.au/suburb/kewdale/
+Keysbrook,6126,,,,,https://reiwa.com.au/suburb/keysbrook/
+Kiara,6054,900000,835,26.8,22.8,https://reiwa.com.au/suburb/kiara/
+Kingsley,6026,1160000,830,18.4,6.4,https://reiwa.com.au/suburb/kingsley/
+Kinross,6028,985000,750,13.5,7.1,https://reiwa.com.au/suburb/kinross/
+Koondoola,6064,738000,665,17.2,10.8,https://reiwa.com.au/suburb/koondoola/
+Koongamia,6056,650000,650,13,8.3,https://reiwa.com.au/suburb/koongamia/
+Kwinana Beach,6167,,,,,https://reiwa.com.au/suburb/kwinana-beach/
+Kwinana Town Centre,6167,643000,630,9.8,5,https://reiwa.com.au/suburb/kwinana-town-centre/
+Lake Coogee,6166,1060000,825,11.8,3.5,https://reiwa.com.au/suburb/lake-coogee/
+Landsdale,6065,1120000,860,22.7,0.6,https://reiwa.com.au/suburb/landsdale/
+Langford,6147,735000,650,15.7,1.6,https://reiwa.com.au/suburb/langford/
+Lathlain,6100,1200000,875,21.1,21.5,https://reiwa.com.au/suburb/lathlain/
+Leda,6170,737000,620,18.9,0,https://reiwa.com.au/suburb/leda/
+Leederville,6007,1650000,815,14,-8.1,https://reiwa.com.au/suburb/leederville/
+Leeming,6149,1417500,900,15.7,15.4,https://reiwa.com.au/suburb/leeming/
+Lesmurdie,6076,1085000,680,9,-2.9,https://reiwa.com.au/suburb/lesmurdie/
+Lexia,6079,,,,,https://reiwa.com.au/suburb/lexia/
+Lockridge,6054,757500,637,24.1,9.8,https://reiwa.com.au/suburb/lockridge/
+Lynwood,6147,830000,700,18.6,7.7,https://reiwa.com.au/suburb/lynwood/
+Maddington,6109,725000,690,17.9,9.5,https://reiwa.com.au/suburb/maddington/
+Madeley,6065,1130000,800,21.6,6.7,https://reiwa.com.au/suburb/madeley/
+Mahogany Creek,6072,873000,,-8.2,,https://reiwa.com.au/suburb/mahogany-creek/
+Maida Vale,6057,938000,850,16.9,21.4,https://reiwa.com.au/suburb/maida-vale/
+Malaga,6090,,,,,https://reiwa.com.au/suburb/malaga/
+Mandogalup,6167,960000,780,17.4,5.4,https://reiwa.com.au/suburb/mandogalup/
+Manning,6152,1560000,900,19.6,9.1,https://reiwa.com.au/suburb/manning/
+Marangaroo,6064,915000,750,20.4,11.9,https://reiwa.com.au/suburb/marangaroo/
+Mardella,6125,,,,,https://reiwa.com.au/suburb/mardella/
+Mariginiup,6078,,1395,,,https://reiwa.com.au/suburb/mariginiup/
+Marmion,6020,2300000,1500,37.1,,https://reiwa.com.au/suburb/marmion/
+Martin,6110,778000,670,3.7,-5.6,https://reiwa.com.au/suburb/martin/
+Maylands,6051,1210000,740,30.6,-1.3,https://reiwa.com.au/suburb/maylands/
+Medina,6167,655000,550,19.7,-0.9,https://reiwa.com.au/suburb/medina/
+Melaleuca,,,,,,https://reiwa.com.au/suburb/melaleuca/
+Melville,6156,1600000,905,16,20.7,https://reiwa.com.au/suburb/melville/
+Menora,6050,2470000,,40.5,,https://reiwa.com.au/suburb/menora/
+Merriwa,6030,770000,700,14.1,7.7,https://reiwa.com.au/suburb/merriwa/
+Middle Swan,6056,740000,670,24.4,11.7,https://reiwa.com.au/suburb/middle-swan/
+Midland,6056,681000,650,21.6,10.2,https://reiwa.com.au/suburb/midland/
+Midvale,6056,735000,750,21.5,22.5,https://reiwa.com.au/suburb/midvale/
+Millendon,6056,,,,,https://reiwa.com.au/suburb/millendon/
+Mindarie,6030,1350000,1112,15.4,28.3,https://reiwa.com.au/suburb/mindarie/
+Mirrabooka,6061,793000,700,18.1,14.4,https://reiwa.com.au/suburb/mirrabooka/
+Morley,6062,920000,750,15,4.2,https://reiwa.com.au/suburb/morley/
+Mosman Park,6012,2950000,1050,32.9,19,https://reiwa.com.au/suburb/mosman-park/
+Mount Claremont,6010,2300000,1450,7,20.8,https://reiwa.com.au/suburb/mount-claremont/
+Mount Hawthorn,6016,1770000,1200,13.8,50,https://reiwa.com.au/suburb/mount-hawthorn/
+Mount Helena,6082,920000,710,10.8,1.4,https://reiwa.com.au/suburb/mount-helena/
+Mount Lawley,6050,1810000,875,17.6,2.9,https://reiwa.com.au/suburb/mount-lawley/
+Mount Nasura,6112,865000,620,33.1,-0.8,https://reiwa.com.au/suburb/mount-nasura/
+Mount Pleasant,6153,2220000,880,22.5,-4.6,https://reiwa.com.au/suburb/mount-pleasant/
+Mount Richon,6112,875000,600,19,-16.1,https://reiwa.com.au/suburb/mount-richon/
+Mullaloo,6027,1360000,900,7.3,14.4,https://reiwa.com.au/suburb/mullaloo/
+Mundaring,6073,989000,,9.4,,https://reiwa.com.au/suburb/mundaring/
+Mundijong,6123,818000,720,17,5.9,https://reiwa.com.au/suburb/mundijong/
+Munster,6166,,,,,https://reiwa.com.au/suburb/munster/
+Murdoch,6150,1340000,862,11.7,1.4,https://reiwa.com.au/suburb/murdoch/
+Myaree,6154,1370000,950,14,-29.6,https://reiwa.com.au/suburb/myaree/
+Naval Base,6165,,,,,https://reiwa.com.au/suburb/naval-base/
+Nedlands,6009,2750000,1300,15,17.1,https://reiwa.com.au/suburb/nedlands/
+Neerabup,6031,,,,,https://reiwa.com.au/suburb/neerabup/
+Nollamara,6061,800000,745,21.2,9.6,https://reiwa.com.au/suburb/nollamara/
+Noranda,6062,1110000,710,19.5,-2.1,https://reiwa.com.au/suburb/noranda/
+North Beach,6020,2130000,850,32.8,-5.6,https://reiwa.com.au/suburb/north-beach/
+North Coogee,6163,1880000,1250,6.2,19,https://reiwa.com.au/suburb/north-coogee/
+North Fremantle,6159,1980000,1100,19.7,14.6,https://reiwa.com.au/suburb/north-fremantle/
+North Lake,6163,1180000,960,13.5,19.3,https://reiwa.com.au/suburb/north-lake/
+North Perth,6006,1670000,950,18.9,20.3,https://reiwa.com.au/suburb/north-perth/
+Northbridge,6003,1250000,730,48.5,9,https://reiwa.com.au/suburb/northbridge/
+Nowergup,6032,,,,,https://reiwa.com.au/suburb/nowergup/
+O'Connor,6163,,,,,https://reiwa.com.au/suburb/oconnor/
+Oakford,6121,1900000,550,53.8,,https://reiwa.com.au/suburb/oakford/
+Ocean Reef,6027,1450000,1050,11.1,10.5,https://reiwa.com.au/suburb/ocean-reef/
+Oldbury,6121,,,,,https://reiwa.com.au/suburb/oldbury/
+Orange Grove,6109,1030000,,-20.8,,https://reiwa.com.au/suburb/orange-grove/
+Orelia,6167,690000,590,15.5,7.3,https://reiwa.com.au/suburb/orelia/
+Osborne Park,6017,965000,840,26.1,31.3,https://reiwa.com.au/suburb/osborne-park/
+Padbury,6025,1130000,750,13.7,8.7,https://reiwa.com.au/suburb/padbury/
+Palmyra,6157,1280000,850,22.3,13.3,https://reiwa.com.au/suburb/palmyra/
+Parkerville,6081,1100000,,14.6,,https://reiwa.com.au/suburb/parkerville/
+Parkwood,6147,915000,800,12.8,22.1,https://reiwa.com.au/suburb/parkwood/
+Parmelia,6167,692000,592,15.5,2.1,https://reiwa.com.au/suburb/parmelia/
+Paulls Valley,6076,,,,,https://reiwa.com.au/suburb/paulls-valley/
+Pearsall,6065,852000,825,12.9,14.6,https://reiwa.com.au/suburb/pearsall/
+Peppermint Grove,6011,6300000,1650,61.1,0,https://reiwa.com.au/suburb/peppermint-grove/
+Peron,,,,,,https://reiwa.com.au/suburb/peron/
+Perth,6000,1370000,800,9.2,12.4,https://reiwa.com.au/suburb/perth/
+Perth Airport,6105,,,,,https://reiwa.com.au/suburb/perth-airport/
+Piara Waters,6112,983000,830,18.5,10.7,https://reiwa.com.au/suburb/piara-waters/
+Pickering Brook,6076,860000,,-3.4,,https://reiwa.com.au/suburb/pickering-brook/
+Piesse Brook,6076,,,,,https://reiwa.com.au/suburb/piesse-brook/
+Pinjar,6078,,,,,https://reiwa.com.au/suburb/pinjar/
+Port Kennedy,6172,810000,650,15.7,0,https://reiwa.com.au/suburb/port-kennedy/
+Postans,6167,,,,,https://reiwa.com.au/suburb/postans/
+Queens Park,6107,833000,780,17,11.4,https://reiwa.com.au/suburb/queens-park/
+Quinns Rocks,6030,984000,750,12.4,15.4,https://reiwa.com.au/suburb/quinns-rocks/
+Red Hill,6056,,,,,https://reiwa.com.au/suburb/red-hill/
+Redcliffe,6104,860000,730,15.4,4.3,https://reiwa.com.au/suburb/redcliffe/
+Reservoir,,,,,,https://reiwa.com.au/suburb/reservoir/
+Ridgewood,6030,800000,680,14.3,5.4,https://reiwa.com.au/suburb/ridgewood/
+Riverton,6148,1210000,760,0.9,-5,https://reiwa.com.au/suburb/riverton/
+Rivervale,6103,960000,750,14.3,5.3,https://reiwa.com.au/suburb/rivervale/
+Rockingham,6168,830000,630,18.1,8.6,https://reiwa.com.au/suburb/rockingham/
+Roleystone,6111,1130000,820,29.4,12.3,https://reiwa.com.au/suburb/roleystone/
+Rossmoyne,6148,2060000,1200,14.8,60,https://reiwa.com.au/suburb/rossmoyne/
+Rottnest Island,6161,,,,,https://reiwa.com.au/suburb/rottnest-island/
+Safety Bay,6169,830000,700,15.7,18.6,https://reiwa.com.au/suburb/safety-bay/
+Salter Point,6152,2100000,650,10.5,-27.8,https://reiwa.com.au/suburb/salter-point/
+Samson,6163,1230000,665,30.2,-11.3,https://reiwa.com.au/suburb/samson/
+Sawyers Valley,6074,935000,,11.3,,https://reiwa.com.au/suburb/sawyers-valley/
+Scarborough,6019,1450000,1100,15.5,15.8,https://reiwa.com.au/suburb/scarborough/
+Secret Harbour,6173,920000,682,15,4.9,https://reiwa.com.au/suburb/secret-harbour/
+Serpentine,6125,1210000,,38.7,,https://reiwa.com.au/suburb/serpentine/
+Seville Grove,6112,735000,700,13,7.7,https://reiwa.com.au/suburb/seville-grove/
+Shelley,6148,1630000,925,4.6,15.6,https://reiwa.com.au/suburb/shelley/
+Shenton Park,6008,2290000,1250,3.3,6.4,https://reiwa.com.au/suburb/shenton-park/
+Shoalwater,6169,875000,610,11.3,4.3,https://reiwa.com.au/suburb/shoalwater/
+Sinagra,6065,916000,800,18.9,18.5,https://reiwa.com.au/suburb/sinagra/
+Singleton,6175,924000,670,15.4,5.2,https://reiwa.com.au/suburb/singleton/
+Sorrento,6020,1980000,1000,17.9,-13,https://reiwa.com.au/suburb/sorrento/
+South Fremantle,6162,1800000,1200,12.5,20,https://reiwa.com.au/suburb/south-fremantle/
+South Guildford,6055,970000,850,15.5,6.3,https://reiwa.com.au/suburb/south-guildford/
+South Lake,6164,860000,670,15.6,-5.6,https://reiwa.com.au/suburb/south-lake/
+South Perth,6151,2340000,850,17.9,0,https://reiwa.com.au/suburb/south-perth/
+Southern River,6110,1010000,850,12.3,9.7,https://reiwa.com.au/suburb/southern-river/
+Spearwood,6163,935000,740,10.7,5.7,https://reiwa.com.au/suburb/spearwood/
+St James,6102,875000,710,5.7,1.4,https://reiwa.com.au/suburb/st-james/
+Stirling,6021,1430000,1050,9.4,13.5,https://reiwa.com.au/suburb/stirling/
+Stoneville,6081,965000,,16.6,,https://reiwa.com.au/suburb/stoneville/
+Stratton,6056,685000,670,14.2,21.8,https://reiwa.com.au/suburb/stratton/
+Subiaco,6008,2230000,1200,13.6,11.6,https://reiwa.com.au/suburb/subiaco/
+Success,6164,918000,780,13.3,4,https://reiwa.com.au/suburb/success/
+Swan View,6056,785000,712,18.9,13.6,https://reiwa.com.au/suburb/swan-view/
+Swanbourne,6010,2680000,2050,-6.1,28.1,https://reiwa.com.au/suburb/swanbourne/
+Tamala Park,6030,,,,,https://reiwa.com.au/suburb/tamala-park/
+Tapping,6065,980000,800,16,6.7,https://reiwa.com.au/suburb/tapping/
+The Lakes,6556,,,,,https://reiwa.com.au/suburb/the-lakes/
+The Spectacles,6167,,,,,https://reiwa.com.au/suburb/the-spectacles/
+The Vines,6069,1110000,850,-0.2,16.4,https://reiwa.com.au/suburb/the-vines/
+Thornlie,6108,830000,700,18.6,4.5,https://reiwa.com.au/suburb/thornlie/
+Treeby,6164,980000,830,15.1,6.4,https://reiwa.com.au/suburb/treeby/
+Trigg,6029,2820000,1300,22.4,36.8,https://reiwa.com.au/suburb/trigg/
+Tuart Hill,6060,955000,700,17.5,0.7,https://reiwa.com.au/suburb/tuart-hill/
+Two Rocks,6037,758000,620,16.6,3.3,https://reiwa.com.au/suburb/two-rocks/
+Upper Swan,6069,880000,800,1.1,11.1,https://reiwa.com.au/suburb/upper-swan/
+Victoria Park,6100,1140000,750,14.5,-0.9,https://reiwa.com.au/suburb/victoria-park/
+Viveash,6056,843000,800,47.8,0,https://reiwa.com.au/suburb/viveash/
+Waikiki,6169,785000,650,14.2,4.8,https://reiwa.com.au/suburb/waikiki/
+Walliston,6076,915000,800,33.6,,https://reiwa.com.au/suburb/walliston/
+Wandi,6167,855000,780,13.6,14.7,https://reiwa.com.au/suburb/wandi/
+Wangara,6065,,,,,https://reiwa.com.au/suburb/wangara/
+Wanneroo,6065,861000,700,17.9,7.7,https://reiwa.com.au/suburb/wanneroo/
+Warnbro,6169,770000,640,16.8,6.7,https://reiwa.com.au/suburb/warnbro/
+Warwick,6024,1060000,750,22.7,0,https://reiwa.com.au/suburb/warwick/
+Waterford,6152,1700000,850,0.5,-22.7,https://reiwa.com.au/suburb/waterford/
+Watermans Bay,6020,2850000,900,26.7,5,https://reiwa.com.au/suburb/watermans-bay/
+Wattle Grove,6107,960000,850,5.5,9,https://reiwa.com.au/suburb/wattle-grove/
+Wattleup,6166,1200000,,,,https://reiwa.com.au/suburb/wattleup/
+Wellard,6170,775000,690,15.7,6.2,https://reiwa.com.au/suburb/wellard/
+Welshpool,6106,,,,,https://reiwa.com.au/suburb/welshpool/
+Wembley,6014,1940000,900,8.3,0.6,https://reiwa.com.au/suburb/wembley/
+Wembley Downs,6019,1930000,1000,2.6,-2.4,https://reiwa.com.au/suburb/wembley-downs/
+West Leederville,6007,1930000,922,0.3,-12.2,https://reiwa.com.au/suburb/west-leederville/
+West Perth,6005,1460000,760,14.5,1.3,https://reiwa.com.au/suburb/west-perth/
+West Swan,6055,1220000,,-3.3,,https://reiwa.com.au/suburb/west-swan/
+Westminster,6061,779000,750,18,10.3,https://reiwa.com.au/suburb/westminster/
+Whitby,6123,775000,660,14.8,-4.3,https://reiwa.com.au/suburb/whitby/
+White Gum Valley,6162,1570000,880,16.3,-10.2,https://reiwa.com.au/suburb/white-gum-valley/
+Whiteman,6068,,,,,https://reiwa.com.au/suburb/whiteman/
+Willagee,6156,1000000,880,3.9,21.4,https://reiwa.com.au/suburb/willagee/
+Willetton,6155,1382500,830,10.6,10.7,https://reiwa.com.au/suburb/willetton/
+Wilson,6107,950000,737,14.5,1.7,https://reiwa.com.au/suburb/wilson/
+Winthrop,6150,1735000,1000,11.2,11.1,https://reiwa.com.au/suburb/winthrop/
+Woodbridge,6056,994000,1000,18.6,28.2,https://reiwa.com.au/suburb/woodbridge/
+Woodlands,6018,1980000,825,22.3,15.4,https://reiwa.com.au/suburb/woodlands/
+Woodvale,6026,1270000,945,20.8,14.5,https://reiwa.com.au/suburb/woodvale/
+Wooroloo,6558,670000,675,10.3,12.5,https://reiwa.com.au/suburb/wooroloo/
+Wungong,6112,,,,,https://reiwa.com.au/suburb/wungong/
+Yanchep,6035,794000,650,12.6,4.8,https://reiwa.com.au/suburb/yanchep/
+Yangebup,6164,926250,750,16.3,15.4,https://reiwa.com.au/suburb/yangebup/
+Yokine,6060,1258000,850,28.4,21.4,https://reiwa.com.au/suburb/yokine/

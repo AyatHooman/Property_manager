@@ -688,6 +688,27 @@
     .layer-fab-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
     .layer-fab-panel::-webkit-scrollbar-track { background: transparent; }
 
+    /* Collapsible layer-panel groups: header is a small category title, click to
+       expand/collapse. Active dot appears when any toggle inside is on. */
+    .lp-group { display: flex; flex-direction: column; gap: 1px; }
+    .layer-fab-panel .lp-group + .lp-group .lp-head { border-top: 1px solid var(--border); margin-top: 1px; }
+    .lp-head {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+      color: var(--text-3); padding: 5px 4px 3px;
+      cursor: pointer; user-select: none;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .lp-head:hover { color: var(--text); }
+    .lp-caret { font-size: 8px; opacity: 0.6; display: inline-block; transition: transform 0.15s; }
+    .lp-group.collapsed .lp-caret { transform: rotate(-90deg); }
+    .lp-group.collapsed .zone-toggle { display: none; }
+    .lp-group.has-active .lp-head { color: var(--brand-strong); }
+    .lp-group.has-active .lp-head::after {
+      content: '●'; color: var(--brand); font-size: 7px;
+      margin-left: auto; padding-left: 4px;
+    }
+    @media (max-width: 600px) { .lp-head { font-size: 8.5px; padding: 4px 3px 2px; } }
+
     .zone-toggles { display: flex; gap: var(--s-2); flex-wrap: wrap; padding: 0; }
     .zone-toggle {
       display: inline-flex; align-items: center; gap: var(--s-1);
@@ -726,7 +747,7 @@
          Z-index above the tile layer but below popups. */
       position: absolute;
       left: 50%;
-      top: 8px;
+      top: 50px;                      /* sits just below the top-centre search box */
       transform: translateX(-50%);
       z-index: 400;
       pointer-events: auto;
@@ -737,6 +758,137 @@
       gap: 4px 14px;
     }
     .map-legend-floating.empty { display: none; }
+    .map-legend-floating .gradbar {
+      display: inline-flex; flex-direction: column; gap: 1px; vertical-align: middle;
+    }
+    .map-legend-floating .gradient {
+      display: block; height: 8px; width: 108px; border-radius: 2px;
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .map-legend-floating .ticks {
+      display: flex; justify-content: space-between; width: 108px;
+      font-size: 8px; line-height: 1; color: var(--text-2);
+    }
+    .map-legend-floating .ticks span { white-space: nowrap; }
+
+    /* Browser draws a focus rectangle around the bounding box of any clicked
+       SVG path — looks like a rogue rectangle around the polygon. Suppress it. */
+    .leaflet-interactive:focus { outline: none; }
+
+    /* Floating "✕ Clear selection" pill — appears below the search bar when
+       any selection (suburb click highlight, suburb search highlight, or
+       address pin) is active. Click to dismiss everything. */
+    .map-clear-pill {
+      position: absolute; left: 50%; top: 38px;
+      transform: translateX(-50%); z-index: 501;
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-pill);
+      padding: 3px 9px;
+      font-size: 10px; line-height: 1.4;
+      color: var(--text-2); cursor: pointer;
+      box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+      user-select: none; pointer-events: auto;
+      display: none;        /* shown via .visible */
+    }
+    .map-clear-pill.visible { display: block; }
+    .map-clear-pill:hover { color: var(--text); border-color: var(--brand); }
+    @media (max-width: 600px) {
+      .map-clear-pill { top: 34px; font-size: 9px; padding: 2px 7px; }
+    }
+
+    /* Filter panel (sits below the legend when a value-range metric is active) */
+    .map-filter-floating {
+      position: absolute; left: 50%; top: 92px; transform: translateX(-50%);
+      z-index: 401; pointer-events: auto;
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 4px 8px;
+      font-size: 10px; color: var(--text-2);
+      box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+      max-width: calc(100% - 96px); white-space: nowrap;
+    }
+    .map-filter-floating.hidden { display: none; }
+    .map-filter-floating .filter-label { color: var(--text); font-weight: 600; }
+    .map-filter-floating .filter-inputs { display: inline-flex; align-items: center; gap: 3px; }
+    .map-filter-floating .filter-unit-pre,
+    .map-filter-floating .filter-unit-post,
+    .map-filter-floating .sep { color: var(--text-4); }
+    .map-filter-floating input {
+      width: 58px; padding: 2px 5px; font-size: 10px;
+      color: var(--text); background: var(--bg-elev-1);
+      border: 1px solid var(--border); border-radius: var(--r-sm); outline: none;
+      text-align: right;
+    }
+    .map-filter-floating input:focus { border-color: var(--brand); }
+    .map-filter-floating button {
+      color: var(--text-3); background: transparent;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 1px 6px; font-size: 11px; line-height: 1.2; cursor: pointer;
+    }
+    .map-filter-floating button:hover { color: var(--text); border-color: var(--brand); }
+    @media (max-width: 600px) {
+      .map-filter-floating { top: 82px; padding: 3px 6px; gap: 4px; font-size: 9px; max-width: calc(100% - 120px); }
+      .map-filter-floating input { width: 46px; font-size: 9px; padding: 1px 4px; }
+      .map-filter-floating button { padding: 0 5px; font-size: 10px; }
+    }
+
+    /* On-map search (top-centre): address → point, suburb → polygon */
+    .map-search {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+      z-index: 500;
+      width: min(360px, calc(100% - 96px));
+      pointer-events: auto;
+    }
+    .map-search input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: var(--text);
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(6px);
+      outline: none;
+    }
+    .map-search input:focus { border-color: var(--brand); }
+    .map-search-results {
+      margin-top: 4px;
+      background: rgba(20,23,32,.98);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-md);
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+    }
+    .map-search-results.open { display: block; }
+    .map-search-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; font-size: 12px; cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    .map-search-item:last-child { border-bottom: none; }
+    .map-search-item:hover, .map-search-item.active { background: var(--brand-soft); }
+    .map-search-item .icon { font-size: 13px; flex-shrink: 0; }
+    .map-search-item .sub { color: var(--text-4); font-size: 10px; }
+    .map-search-item .loading { color: var(--text-4); }
+    @media (max-width: 600px) {
+      .map-search { width: calc(100% - 120px); top: 6px; }
+      .map-search input { font-size: 11px; padding: 4px 8px; border-radius: var(--r-sm); }
+      .map-search input::placeholder { font-size: 10px; }
+      .map-search-results { max-height: 180px; }
+      .map-search-item { padding: 5px 8px; font-size: 11px; }
+      .map-search-item .icon { font-size: 12px; }
+      .map-search-item .sub { font-size: 9px; }
+    }
     .map-legend-floating .row {
       display: inline-flex; align-items: center; gap: var(--s-1);
       flex-wrap: nowrap; white-space: nowrap;
@@ -1325,9 +1477,22 @@
     .cap-workings__body {
       font-family: 'Courier New', monospace; font-size: 10.5px;
       line-height: 1.65; white-space: pre;
-      overflow-x: auto;
+      overflow: auto;                  /* both axes: long monospace lines + tall blocks */
+      max-height: 65vh;                /* cap height so it doesn't take over the screen */
+      -webkit-overflow-scrolling: touch;
       background: #f4f5f8; border: 1px solid #dde;
       border-radius: 4px; padding: 10px 12px; margin: 4px 0; color: #233;
+    }
+    /* Visible scrollbars on the workings panel so users can see it scrolls. */
+    .cap-workings__body::-webkit-scrollbar { height: 10px; width: 10px; }
+    .cap-workings__body::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,.35); border-radius: 5px;
+      border: 2px solid #f4f5f8;
+    }
+    .cap-workings__body::-webkit-scrollbar-track { background: rgba(0,0,0,.05); border-radius: 5px; }
+    @media (max-width: 600px) {
+      .cap-workings__body { font-size: 9px; max-height: 55vh; padding: 8px 10px; }
+      .cap-workings__body::-webkit-scrollbar { height: 8px; width: 8px; }
     }
 
     /* ── Scenario save / load panel ────────────────────────────────────────── */
@@ -1443,6 +1608,9 @@
     <div class="topbar__focus" role="group" aria-label="City focus">
       <button class="focus-btn" data-focus="mel" type="button" title="Focus on Greater Melbourne">MEL</button>
       <button class="focus-btn" data-focus="per" type="button" title="Focus on Greater Perth">PER</button>
+      <button class="focus-btn" data-focus="bri" type="button" title="Focus on Greater Brisbane">BNE</button>
+      <button class="focus-btn" data-focus="ade" type="button" title="Focus on Greater Adelaide">ADL</button>
+      <button class="focus-btn" data-focus="dar" type="button" title="Focus on Darwin">DAR</button>
     </div>
     <nav class="topbar__tabs">
       <button class="tab-btn active" data-tab="search" type="button">📍 Search</button>
@@ -1704,20 +1872,43 @@
            Leaflet control on _initMap). Kept here so onclick handlers + IDs
            are valid when toggles are wired. -->
       <div class="zone-toggles" id="zone-toggles-seed" style="display:none">
-        <div class="zone-toggle" id="toggle-level-primary"      onclick="toggleLevel('primary')">🏫 Primary</div>
-        <div class="zone-toggle" id="toggle-level-secondary"    onclick="toggleLevel('secondary')">🎓 Secondary</div>
-        <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Transport</div>
-        <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood</div>
-        <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
-        <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
-        <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
-        <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
-        <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
-        <div class="zone-toggle" id="toggle-overlay-avm_median" onclick="togglePriceMetric('avm_median')">🏠 Current price</div>
-        <div class="zone-toggle" id="toggle-overlay-hvi_3"      onclick="togglePriceMetric('hvi_3')">📈 Price · 3mo</div>
-        <div class="zone-toggle" id="toggle-overlay-hvi_12"     onclick="togglePriceMetric('hvi_12')">📈 Price · 12mo</div>
-        <div class="zone-toggle" id="toggle-overlay-rent_cur"   onclick="togglePriceMetric('rent_cur')">💰 Current rent</div>
-        <div class="zone-toggle" id="toggle-overlay-rent_1y"    onclick="togglePriceMetric('rent_1y')">📊 Rent · 12mo</div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>🗺️ View</div>
+          <div class="zone-toggle" id="toggle-overlay-suburbs"    onclick="toggleSuburbs()">🗺️ Suburbs</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>💲 Market</div>
+          <div class="zone-toggle" id="toggle-overlay-avm_median" onclick="togglePriceMetric('avm_median')">🏠 Current price</div>
+          <div class="zone-toggle" id="toggle-overlay-hvi_12"     onclick="togglePriceMetric('hvi_12')">📈 Price · 12mo</div>
+          <div class="zone-toggle" id="toggle-overlay-rent_cur"   onclick="togglePriceMetric('rent_cur')">💰 Current rent</div>
+          <div class="zone-toggle" id="toggle-overlay-rent_1y"    onclick="togglePriceMetric('rent_1y')">📊 Rent · 12mo</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>📊 Demand &amp; Supply</div>
+          <div class="zone-toggle" id="toggle-overlay-yield_pct"            onclick="togglePriceMetric('yield_pct')">💹 Yield</div>
+          <div class="zone-toggle" id="toggle-overlay-afford_gap_pct"       onclick="togglePriceMetric('afford_gap_pct')">🎯 Affordability gap</div>
+          <div class="zone-toggle" id="toggle-overlay-pop_growth_pct"       onclick="togglePriceMetric('pop_growth_pct')">👥 Pop growth (SA2)</div>
+          <div class="zone-toggle" id="toggle-overlay-approvals_per_1k_pop" onclick="togglePriceMetric('approvals_per_1k_pop')">🏗️ Approvals (SA2)</div>
+          <div class="zone-toggle" id="toggle-overlay-demand_supply_ratio"  onclick="togglePriceMetric('demand_supply_ratio')">🔥 Demand pressure</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>🏫 Schools</div>
+          <div class="zone-toggle" id="toggle-level-primary"      onclick="toggleLevel('primary')">🏫 Primary</div>
+          <div class="zone-toggle" id="toggle-level-secondary"    onclick="toggleLevel('secondary')">🎓 Secondary</div>
+          <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>🚉 Transport &amp; Infra</div>
+          <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Transport</div>
+          <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>⚠️ Risk &amp; Safety</div>
+          <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood</div>
+          <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
+          <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
+          <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
+        </div>
       </div>
       <div id="map"></div>
     </div>
@@ -1855,8 +2046,14 @@
           <div class="invest-card__head">💵 Income &amp; running costs (monthly)</div>
           <div class="invest-card__body">
             <div class="invest-row">
-              <span class="invest-label">Rent received</span>
-              <input class="invest-input" id="i-rent" type="number" step="10" value="2000" />
+              <span class="invest-label">Weekly rent (current)</span>
+              <input class="invest-input" id="i-rent-week" type="number" step="10" value="500" />
+              <div class="invest-hint" id="i-rent-hint">Today's asking rent per week. Cash-flow uses the holding-period average — adjusted for vacancy (4 wks/yr), PM fee (7.7%), letting (1 wk + GST), admin ($300/yr), then grown each year and averaged.</div>
+            </div>
+            <div class="invest-row">
+              <span class="invest-label">Rent increase per year</span>
+              <input class="invest-input" id="i-rent-growth" type="number" step="0.1" value="3" />
+              <div class="invest-hint">% per year. Applied as compound growth to the weekly rent across the holding period.</div>
             </div>
             <div class="invest-row">
               <span class="invest-label">House &amp; contents insurance</span>
@@ -2450,21 +2647,17 @@
             <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="ca-surplus">—</span></div>
             <div class="cgt-step">After holding years (sell both)</div>
             <div class="invest-row"><span class="invest-label">Holding years (from Investment tab)</span><span class="invest-out muted" id="ca-years">—</span></div>
-            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="ca-savings-acc">—</span><div class="invest-hint">starting cash − money spent buying the IP + monthly savings × months.</div></div>
-            <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="ca-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining home loan.</div></div>
-            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="ca-home-loan-detail">—</span></div>
-            <div class="invest-row"><span class="invest-label">Investment property equity at sale</span><span class="invest-out good" id="ca-ip-eq">—</span><div class="invest-hint">sale price − selling cost − remaining IP loan − CGT.</div></div>
+            <div class="invest-row"><span class="invest-label">− IP buy cost (deposit + upfront + reno)</span><span class="invest-out bad" id="ca-ipbuy">—</span><div class="invest-hint">One-off cash outflow at settlement: deposit + stamp + LMI + legal + buyer's agent + any reno/capital improvements.</div></div>
+            <div class="invest-row"><span class="invest-label">+ Cash in offset at end</span><span class="invest-out" id="ca-off-end">—</span><div class="invest-hint">Monthly surplus is fed into the offset against the current home loan every month — shields interest, makes the loan pay down faster.</div></div>
+            <div class="invest-row"><span class="invest-label">+ Current home equity at sale</span><span class="invest-out good" id="ca-off-eq">—</span><div class="invest-hint">Grown value × (1 − agent) − remaining home loan (paid down faster thanks to offset).</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-loan">—</span></div>
+            <div class="invest-row" id="ca-phase-row" style="display:none"><span class="invest-label" style="font-size:11px;color:var(--brand-strong);font-weight:600">↳ Offset ≥ loan from</span><span class="invest-out" style="font-size:11px;color:var(--brand-strong);font-weight:600" id="ca-phase-info">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ IP gross equity at sale (before CGT)</span><span class="invest-out good" id="ca-ip-eq">—</span><div class="invest-hint">sale price − selling cost − remaining IP loan.</div></div>
             <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ IP loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="ca-ip-loan-detail">—</span></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A) — no offset</span><span class="invest-out good" id="ca-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
-            <details class="cap-workings"><summary>📐 Show no-offset calculation workings (A)</summary><div class="cap-workings__body" id="ca-work-simple">—</div></details>
-            <div class="cgt-step">With offset on current home loan</div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset start (leftover cash after IP buy)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-start">—</span></div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset balance at end (monthly surplus fed in)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-end">—</span></div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Current home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="ca-off-loan">—</span></div>
-            <div class="invest-row"><span class="invest-label">Current home equity at sale (with offset)</span><span class="invest-out good" id="ca-off-eq">—</span></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A) — with offset</span><span class="invest-out good" id="ca-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
-            <details class="cap-workings"><summary>📐 Show with-offset calculation workings (A)</summary><div class="cap-workings__body" id="ca-work-offset">—</div></details>
-            <div class="invest-row"><span class="invest-label">Offset benefit (extra capital)</span><span class="invest-out good" id="ca-off-benefit">—</span><div class="invest-hint">Lower interest on the current home loan ⇒ more principal paid down ⇒ higher equity at sale.</div></div>
+            <div class="invest-row"><span class="invest-label">− Capital gains tax on IP sale</span><span class="invest-out bad" id="ca-cgt">—</span><div class="invest-hint">From the Investment tab's CGT calc (50% discount or inflation-indexing, depending on selection).</div></div>
+            <div class="invest-row"><span class="invest-label">+ Current cash savings (untouched)</span><span class="invest-out good" id="ca-cash-end">—</span><div class="invest-hint">Your $120k stays in a standard savings account and isn't touched by the IP activity. Added to the total at the end.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (A)</span><span class="invest-out good" id="ca-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show calculation workings (A)</summary><div class="cap-workings__body" id="ca-work-offset">—</div></details>
           </div>
         </div>
 
@@ -2478,21 +2671,15 @@
             <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="cb-surplus">—</span></div>
             <div class="cgt-step">After holding years (sell home)</div>
             <div class="invest-row"><span class="invest-label">Holding years (from Owner tab)</span><span class="invest-out muted" id="cb-years">—</span></div>
-            <div class="invest-row"><span class="invest-label">Cash from selling current home + savings</span><span class="invest-out" id="cb-startcash">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Sale proceeds from current home</span><span class="invest-out good" id="cb-startcash">—</span><div class="invest-hint">Equity from selling the current home (excludes your $120k savings, treated separately).</div></div>
             <div class="invest-row"><span class="invest-label">− New home deposit + upfront</span><span class="invest-out bad" id="cb-buycost">—</span></div>
-            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="cb-savings-acc">—</span><div class="invest-hint">leftover cash after buying + monthly savings × months.</div></div>
-            <div class="invest-row"><span class="invest-label">New home equity at sale (no CGT)</span><span class="invest-out good" id="cb-home-eq">—</span><div class="invest-hint">sale price − selling cost − remaining loan.</div></div>
-            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ new home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cb-home-loan-detail">—</span></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B) — no offset</span><span class="invest-out good" id="cb-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
-            <details class="cap-workings"><summary>📐 Show no-offset calculation workings (B)</summary><div class="cap-workings__body" id="cb-work-simple">—</div></details>
-            <div class="cgt-step">With offset on new home loan</div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset start (leftover after buying new home)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-start">—</span></div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset balance at end (monthly surplus fed in)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-end">—</span></div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">New home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-loan">—</span></div>
-            <div class="invest-row"><span class="invest-label">New home equity at sale (with offset)</span><span class="invest-out good" id="cb-off-eq">—</span></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B) — with offset</span><span class="invest-out good" id="cb-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
-            <details class="cap-workings"><summary>📐 Show with-offset calculation workings (B)</summary><div class="cap-workings__body" id="cb-work-offset">—</div></details>
-            <div class="invest-row"><span class="invest-label">Offset benefit (extra capital)</span><span class="invest-out good" id="cb-off-benefit">—</span><div class="invest-hint">Surplus parked in offset shields loan interest ⇒ more principal paid down.</div></div>
+            <div class="invest-row"><span class="invest-label">+ Cash in offset at end</span><span class="invest-out" id="cb-off-end">—</span><div class="invest-hint">Sale leftover + monthly surplus fed into offset against new home loan every month — shields interest, makes loan pay down faster.</div></div>
+            <div class="invest-row"><span class="invest-label">+ New home equity at sale (no CGT — main residence)</span><span class="invest-out good" id="cb-off-eq">—</span><div class="invest-hint">Sale price − selling cost − remaining loan (paid down faster thanks to offset).</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ new home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cb-off-loan">—</span></div>
+            <div class="invest-row" id="cb-phase-row" style="display:none"><span class="invest-label" style="font-size:11px;color:var(--brand-strong);font-weight:600">↳ Offset ≥ loan from</span><span class="invest-out" style="font-size:11px;color:var(--brand-strong);font-weight:600" id="cb-phase-info">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Current cash savings (untouched)</span><span class="invest-out good" id="cb-cash-end">—</span><div class="invest-hint">Your $120k stays in a standard savings account and isn't touched by the home swap. Added to the total at the end.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (B)</span><span class="invest-out good" id="cb-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show calculation workings (B)</summary><div class="cap-workings__body" id="cb-work-offset">—</div></details>
           </div>
         </div>
 
@@ -2506,19 +2693,13 @@
             <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="cc-surplus">—</span></div>
             <div class="cgt-step">After holding years (sell home)</div>
             <div class="invest-row"><span class="invest-label">Holding years</span><span class="invest-out muted" id="cc-years">—</span></div>
-            <div class="invest-row"><span class="invest-label">Cash savings accumulated</span><span class="invest-out" id="cc-savings-acc">—</span><div class="invest-hint">Starting cash + monthly savings × months. No property purchase cost.</div></div>
-            <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="cc-home-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining home loan.</div></div>
-            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cc-home-loan-detail">—</span></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C) — no offset</span><span class="invest-out good" id="cc-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
-            <details class="cap-workings"><summary>📐 Show no-offset calculation workings (C)</summary><div class="cap-workings__body" id="cc-work-simple">—</div></details>
-            <div class="cgt-step">With offset on current home loan ($120k already in offset)</div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset start (your existing cash savings)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-start">—</span></div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Offset balance at end (monthly surplus fed in)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-end">—</span></div>
-            <div class="invest-row muted"><span class="invest-label" style="font-size:11px">Home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-loan">—</span></div>
-            <div class="invest-row"><span class="invest-label">Current home equity at sale (with offset)</span><span class="invest-out good" id="cc-off-eq">—</span></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C) — with offset</span><span class="invest-out good" id="cc-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
-            <details class="cap-workings"><summary>📐 Show with-offset calculation workings (C)</summary><div class="cap-workings__body" id="cc-work-offset">—</div></details>
-            <div class="invest-row"><span class="invest-label">Offset benefit (extra capital)</span><span class="invest-out good" id="cc-off-benefit">—</span><div class="invest-hint">Your $120k in offset has been shielding interest from day 1 ⇒ loan pays down faster.</div></div>
+            <div class="invest-row"><span class="invest-label">Cash in offset at start</span><span class="invest-out muted" id="cc-off-start">—</span><div class="invest-hint">Your existing cash savings — already in offset against the current home loan from day 1.</div></div>
+            <div class="invest-row"><span class="invest-label">Cash in offset at end</span><span class="invest-out" id="cc-off-end">—</span><div class="invest-hint">Monthly surplus fed in every month; offset balance keeps shielding loan interest.</div></div>
+            <div class="invest-row"><span class="invest-label">Current home equity at sale</span><span class="invest-out good" id="cc-off-eq">—</span><div class="invest-hint">Grown value × (1 − agent) − remaining home loan (paid down faster thanks to offset).</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cc-off-loan">—</span></div>
+            <div class="invest-row" id="cc-phase-row" style="display:none"><span class="invest-label" style="font-size:11px;color:var(--brand-strong);font-weight:600">↳ Offset ≥ loan from</span><span class="invest-out" style="font-size:11px;color:var(--brand-strong);font-weight:600" id="cc-phase-info">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (C)</span><span class="invest-out good" id="cc-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show calculation workings (C)</summary><div class="cap-workings__body" id="cc-work-offset">—</div></details>
           </div>
         </div>
 
@@ -3057,6 +3238,11 @@ function computeAdjusted(r, rates) {
 // ── Map ──────────────────────────────────────────────────────────────────────
 let _map = null;
 let _refMarker = null;
+let _suburbsLayer = null;        // "Suburbs" boundary layer
+let _suburbsClicked = null;      // polygon highlighted by a click on the Suburbs layer
+let _searchMarker = null;        // dropped pin for an address search
+let _searchSuburbLayer = null;   // highlighted polygon for a suburb search
+let _searchDebounce = null;
 
 function _initMap() {
   if (_map) return;
@@ -3102,7 +3288,20 @@ function _initMap() {
     const p = document.getElementById('layer-fab-panel');
     p.style.display = p.style.display === 'none' ? 'flex' : 'none';
   };
-  const mo = new MutationObserver(updateMapLegend);
+  // Collapse every category by default so the panel is a tidy menu; clicking a
+  // header expands that group.
+  panel.querySelectorAll('.lp-group').forEach(g => g.classList.add('collapsed'));
+  panel.addEventListener('click', (e) => {
+    const head = e.target.closest('.lp-head');
+    if (head && head.parentElement.classList.contains('lp-group')) {
+      head.parentElement.classList.toggle('collapsed');
+    }
+  });
+  const _updateGroupActive = () => {
+    panel.querySelectorAll('.lp-group').forEach(g =>
+      g.classList.toggle('has-active', !!g.querySelector('.zone-toggle.active')));
+  };
+  const mo = new MutationObserver(() => { updateMapLegend(); _updateGroupActive(); });
   document.querySelectorAll('.zone-toggle').forEach(t =>
     mo.observe(t, { attributes: true, attributeFilter: ['class'] }));
 
@@ -3119,6 +3318,81 @@ function _initMap() {
   L.DomEvent.disableScrollPropagation(legendDiv);
   _map.getContainer().appendChild(legendDiv);
   updateMapLegend();
+
+  // Top-centre search box: type an address (→ drops a pin) or a suburb (→
+  // highlights its polygon). Shares the Nominatim /api/suggest endpoint.
+  const searchDiv = document.createElement('div');
+  searchDiv.className = 'map-search';
+  searchDiv.innerHTML = `
+    <input id="map-search-input" type="text" autocomplete="off"
+           placeholder="🔍 Search address or suburb…" />
+    <div id="map-search-results" class="map-search-results"></div>`;
+  L.DomEvent.disableClickPropagation(searchDiv);
+  L.DomEvent.disableScrollPropagation(searchDiv);
+  _map.getContainer().appendChild(searchDiv);
+  const searchInput = document.getElementById('map-search-input');
+  searchInput.addEventListener('input', () => {
+    clearTimeout(_searchDebounce);
+    const q = searchInput.value;
+    _searchDebounce = setTimeout(() => runMapSearch(q), 300);
+  });
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { searchInput.value=''; closeMapSearch(); clearMapSelections(); }
+  });
+  _map.getContainer().addEventListener('click', (e) => {
+    if (!e.target.closest('.map-search')) closeMapSearch();
+  });
+
+  // Top-centre "✕ Clear" pill — shown whenever any selection is active.
+  const clearPill = document.createElement('div');
+  clearPill.id = 'map-clear-pill';
+  clearPill.className = 'map-clear-pill';
+  clearPill.textContent = '✕ Clear selection';
+  L.DomEvent.disableClickPropagation(clearPill);
+  clearPill.addEventListener('click', clearMapSelections);
+  _map.getContainer().appendChild(clearPill);
+
+  // Esc anywhere on the page (when not typing into another input) also clears.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)) {
+      clearMapSelections();
+    }
+  });
+
+  // Filter panel — appears below the legend when a value-range layer is active.
+  // Min / max threshold inputs (accept "500k", "1.2m"), unit prefix/suffix, clear.
+  const filterDiv = document.createElement('div');
+  filterDiv.id = 'map-filter-floating';
+  filterDiv.className = 'map-filter-floating hidden';
+  filterDiv.innerHTML = `
+    <span class="filter-label"></span>
+    <span class="filter-inputs">
+      <span class="filter-unit-pre"></span>
+      <input id="filter-min" type="text" inputmode="decimal" autocomplete="off" />
+      <span class="filter-unit-post"></span>
+      <span class="sep">–</span>
+      <span class="filter-unit-pre"></span>
+      <input id="filter-max" type="text" inputmode="decimal" autocomplete="off" />
+      <span class="filter-unit-post"></span>
+    </span>
+    <button id="filter-clear" title="Clear filter">✕</button>`;
+  L.DomEvent.disableClickPropagation(filterDiv);
+  L.DomEvent.disableScrollPropagation(filterDiv);
+  _map.getContainer().appendChild(filterDiv);
+  const fMin = document.getElementById('filter-min');
+  const fMax = document.getElementById('filter-max');
+  const onFilterChange = () => {
+    _priceFilter.min = _parseFilterInput(fMin.value);
+    _priceFilter.max = _parseFilterInput(fMax.value);
+    _applyPriceFilter();
+  };
+  fMin.addEventListener('input', onFilterChange);
+  fMax.addEventListener('input', onFilterChange);
+  document.getElementById('filter-clear').addEventListener('click', () => {
+    fMin.value = ''; fMax.value = '';
+    _priceFilter = { min: null, max: null };
+    _applyPriceFilter();
+  });
 }
 
 function updateMapLegend() {
@@ -3148,10 +3422,33 @@ function updateMapLegend() {
   if (_overlayLayer && _overlayLayer.infra) {
     const line = (color, dashed) =>
       `<span style="display:inline-block;width:18px;height:0;border-top:3px ${dashed?'dashed':'solid'} ${color};vertical-align:middle;margin:0 2px"></span>`;
-    rows.push(`<div class="row"><span class="lbl">Future infra</span>` +
+    const dot = (fill, ring) =>
+      `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${fill};border:1.5px solid ${ring||'#fff'};vertical-align:middle;margin:0 2px"></span>`;
+    rows.push(`<div class="row"><span class="lbl">Infra · transport</span>` +
               `🚆${line('#ff0080',false)}building ${line('#ff0080',true)}planned · ` +
               `🛣${line('#8b5cf6',false)}building ${line('#8b5cf6',true)}planned</div>` +
-              `<div class="row" style="color:#94a3b8;font-size:9px">solid = under construction · dashed = announced (may not yet be funded/approved)</div>`);
+              `<div class="row"><span class="lbl">Infra · amenities</span>` +
+              `🏥${dot('#dc2626')} ${dot('#dc2626','#fbbf24')}new · ` +
+              `🎓${dot('#7c3aed')} ${dot('#7c3aed','#fbbf24')}new · ` +
+              `🏫${dot('#14b8a6','#fbbf24')}new school</div>` +
+              `<div class="row" style="color:#94a3b8;font-size:9px">solid line / plain dot = built · dashed line / gold ring = planned or under construction</div>`);
+  }
+  // Active market metric (price/rent/growth choropleth) — colour bar labelled
+  // with the actual band thresholds (low / median / high) so the colours mean
+  // something concrete.
+  if (_priceActiveMetric && PRICE_METRICS[_priceActiveMetric]) {
+    const meta = PRICE_METRICS[_priceActiveMetric];
+    const order = meta.good === 'low' ? [6,5,4,3,2,1] : [1,2,3,4,5,6];
+    const grad = `linear-gradient(to right, ${order.map(i => PRICE_BAND_COLOR[i]).join(',')})`;
+    const c = _priceCuts;
+    const hasNums = c && c[0] !== c[4];   // real spread (not the all-zero fallback)
+    const ticks = hasNums
+      ? `<span class="ticks"><span>${_fmtLegendNum(_priceActiveMetric, c[0])}</span>` +
+        `<span>${_fmtLegendNum(_priceActiveMetric, c[2])}</span>` +
+        `<span>${_fmtLegendNum(_priceActiveMetric, c[4])}</span></span>`
+      : `<span class="ticks"><span>low</span><span></span><span>high</span></span>`;
+    rows.push(`<div class="row"><span class="lbl">${meta.icon} ${meta.short || meta.label}</span>` +
+              `<span class="gradbar"><span class="gradient" style="background:${grad}"></span>${ticks}</span></div>`);
   }
   el.innerHTML = rows.join('');
   el.classList.toggle('empty', rows.length === 0);
@@ -3609,28 +3906,50 @@ async function toggleOverlay(name) {
       }
     }).addTo(_map);
   } else if (name === 'infra') {
+    // Per-kind colour + radius for the point-style amenities. A gold ring marks
+    // "under construction" so future projects are visually distinct from
+    // already-built ones.
+    const POINT_STYLES = {
+      station_construction:    { fill: '#ff0080', radius: 5, stroke: '#fff' },
+      hospital:                { fill: '#dc2626', radius: 5, stroke: '#fff' },
+      hospital_construction:   { fill: '#dc2626', radius: 6, stroke: '#fbbf24' },
+      school_construction:     { fill: '#14b8a6', radius: 6, stroke: '#fbbf24' },
+      university:              { fill: '#7c3aed', radius: 5, stroke: '#fff' },
+      university_construction: { fill: '#7c3aed', radius: 6, stroke: '#fbbf24' },
+    };
     _overlayLayer[name] = L.geoJSON(_overlayData[name], {
       style(feature) {
         const k = feature.properties?.kind || 'rail_proposed';
         return _infraStyle[k] || _infraStyle.rail_proposed;
       },
       pointToLayer(feature, latlng) {
-        return L.circleMarker(latlng, { radius: 5, fillColor: '#ec4899', color: '#fff', weight: 1.5, fillOpacity: 0.95 });
+        const k = feature.properties?.kind || 'station_construction';
+        const s = POINT_STYLES[k] || { fill: '#ec4899', radius: 5, stroke: '#fff' };
+        return L.circleMarker(latlng, {
+          radius: s.radius, fillColor: s.fill, color: s.stroke,
+          weight: 1.5, fillOpacity: 0.95,
+        });
       },
       onEachFeature(feature, layer) {
         const p = feature.properties || {};
         const kindLabel = {
-          'rail_proposed': '🚆 Proposed rail',
-          'rail_construction': '🚆 Rail under construction',
-          'road_proposed': '🛣️ Proposed road',
-          'road_construction': '🛣️ Road under construction',
-          'station_construction': '🚉 New station',
+          'rail_proposed':           '🚆 Proposed rail',
+          'rail_construction':       '🚆 Rail under construction',
+          'road_proposed':           '🛣️ Proposed road',
+          'road_construction':       '🛣️ Road under construction',
+          'station_construction':    '🚉 New station',
+          'hospital':                '🏥 Hospital',
+          'hospital_construction':   '🏥 New hospital (under construction)',
+          'school_construction':     '🏫 New school (under construction)',
+          'university':              '🎓 University / TAFE',
+          'university_construction': '🎓 New campus (under construction)',
         }[p.kind] || p.kind;
+        const beds = p.beds ? ` · ${p.beds} beds` : '';
         layer.bindPopup(
           `<b>${p.name || 'Planned'}</b><br>` +
-          `<span style="font-size:11px;color:#cbd5e1">${kindLabel}</span>` +
+          `<span style="font-size:11px;color:#cbd5e1">${kindLabel}${beds}</span>` +
           (p.operator ? `<br><span style="font-size:11px;color:#94a3b8">${p.operator}</span>` : '') +
-          `<div style="font-size:9px;color:#64748b;margin-top:3px">OSM proposed/construction tags</div>`
+          `<div style="font-size:9px;color:#64748b;margin-top:3px">OpenStreetMap · gold ring = under construction</div>`
         );
       }
     }).addTo(_map);
@@ -3700,24 +4019,35 @@ const _transportLayer = { trains: null, trams: null, buses: null };
 let _busCanvas = null;
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MARKET METRIC OVERLAYS — sourced from CoreLogic "Mapping the Market AU v5"
-//   hvi_3     = 3-month House Value Index change %
-//   hvi_12    = 12-month House Value Index change %
+// MARKET METRIC OVERLAYS — Perth (WA) from REIWA suburb quick-stats (May 2026);
+// Melbourne (VIC) from realestate.com.au suburb profiles (May 2026). Suburbs
+// outside those exports retain the older CoreLogic "Mapping the Market AU v5".
+//   hvi_12    = 12-month (last-year) house price growth %
 //   rent_cur  = current median weekly rent ($)
-//   rent_1y   = 12-month rent growth %
+//   rent_1y   = 12-month (last-year) rent growth % (REIWA only; REA omits it)
 // Toggle buttons share one data file (market_metrics_suburb.geojson). Only one
 // metric can be active at a time; switching swaps the polygon colours.
 // ══════════════════════════════════════════════════════════════════════════════
 const PRICE_METRICS = {
-  avm_median: { label: 'Current median price',    suffix: '',     good: 'high', icon: '🏠', isPct: false, prefix: '$' },
-  hvi_3:      { label: 'Price growth · 3 months',  suffix: '%',    good: 'high', icon: '📈', isPct: true },
-  hvi_12:     { label: 'Price growth · 12 months', suffix: '%',    good: 'high', icon: '📈', isPct: true },
-  rent_cur:   { label: 'Current median rent',      suffix: '/wk',  good: 'high', icon: '💰', isPct: false, prefix: '$' },
-  rent_1y:    { label: 'Rent growth · 12 months',  suffix: '%',    good: 'high', icon: '📊', isPct: true },
+  avm_median:           { label: 'Current median price',                      short: 'Price',      suffix: '',     good: 'high', icon: '🏠', isPct: false, prefix: '$' },
+  hvi_12:               { label: 'Price growth · 12 months',                  short: 'Price 12mo', suffix: '%',    good: 'high', icon: '📈', isPct: true },
+  rent_cur:             { label: 'Current median rent',                       short: 'Rent',       suffix: '/wk',  good: 'high', icon: '💰', isPct: false, prefix: '$' },
+  rent_1y:              { label: 'Rent growth · 12 months',                   short: 'Rent 12mo',  suffix: '%',    good: 'high', icon: '📊', isPct: true },
+  // Demand & supply (added May-2026)
+  yield_pct:            { label: 'Gross rental yield',                        short: 'Yield',      suffix: '%',    good: 'high', icon: '💹', isPct: true },
+  afford_gap_pct:       { label: 'Affordability gap vs 5 nearest neighbours', short: 'Afford gap', suffix: '%',    good: 'high', icon: '🎯', isPct: true },
+  pop_growth_pct:       { label: 'Population growth · SA2 · FY 2024-25',      short: 'Pop growth', suffix: '%',    good: 'high', icon: '👥', isPct: true },
+  approvals_per_1k_pop: { label: 'New dwellings approved / 1k residents · SA2 · 12mo to Mar 2026', short: 'Approvals',  suffix: '/1k',  good: 'low',  icon: '🏗️', isPct: false, prefix: '' },
+  demand_supply_ratio:  { label: 'Demand pressure — new residents per new dwelling approved (annual)', short: 'Demand pressure', suffix: '', good: 'high', icon: '🔥', isPct: false, prefix: '' },
 };
 let _priceData = null;          // cached fetch
 let _priceLayer = null;         // current Leaflet layer
 let _priceActiveMetric = null;  // 'yield' | 'growth_1y' | ...
+let _priceCuts = null;          // [p10,p25,p50,p75,p90] band cut values for the active metric
+let _priceSortedVals = null;    // all non-null values for the active metric, ascending — used for continuous percentile colouring
+let _priceFilter = { min: null, max: null };   // user-set min/max threshold on the active metric
+let _priceDataRange = { min: null, max: null }; // actual data extent — placeholders in the inputs
+let _priceStyleFn = null;       // current style fn so the filter can restyle without rebuilding the layer
 // 6-step diverging colour scale (low to high, since "high" is good for these metrics)
 const PRICE_BAND_COLOR = { 1:'#ef4444', 2:'#f97316', 3:'#eab308', 4:'#84cc16', 5:'#22c55e', 6:'#16a34a', 0:'#6b7280' };
 
@@ -3735,6 +4065,85 @@ function _bandOf(v, cuts) {
   return 6;
 }
 
+// Percentile of v within the sorted ascending array (0..1). Same value as
+// _bandOf would have produced, but continuous instead of bucketed — so two
+// suburbs whose values are close-but-different get visibly different colours.
+function _percentileOf(v, sortedVals) {
+  if (v == null || !isFinite(v) || !sortedVals || !sortedVals.length) return null;
+  let lo = 0, hi = sortedVals.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (sortedVals[mid] <= v) lo = mid + 1; else hi = mid;
+  }
+  return lo / sortedVals.length;
+}
+
+// Smoothly interpolate the 6-stop red→green ramp at any percentile in [0,1].
+// stops mirror PRICE_BAND_COLOR 1..6.
+function _colorAtPct(pct) {
+  const stops = [
+    [239, 68, 68],  // 1 red
+    [249,115, 22],  // 2 orange
+    [234,179,  8],  // 3 yellow
+    [132,204, 22],  // 4 yellow-green
+    [ 34,197, 94],  // 5 green
+    [ 22,163, 74],  // 6 dark green
+  ];
+  const x = Math.max(0, Math.min(1, pct)) * (stops.length - 1);
+  const i = Math.min(stops.length - 2, Math.floor(x));
+  const f = x - i;
+  const a = stops[i], b = stops[i + 1];
+  return `rgb(${Math.round(a[0]*(1-f)+b[0]*f)},${Math.round(a[1]*(1-f)+b[1]*f)},${Math.round(a[2]*(1-f)+b[2]*f)})`;
+}
+// Accepts "500000", "500k", "1.2M", "−3", "" — returns a Number or null.
+function _parseFilterInput(s) {
+  if (s == null) return null;
+  s = String(s).trim().toLowerCase().replace(/[,_\s$%]/g, '').replace(/−/g, '-');
+  if (!s) return null;
+  let mult = 1;
+  if (s.endsWith('m')) { mult = 1e6; s = s.slice(0, -1); }
+  else if (s.endsWith('k')) { mult = 1e3; s = s.slice(0, -1); }
+  const v = parseFloat(s);
+  return isFinite(v) ? v * mult : null;
+}
+
+// Show / hide / repopulate the min-max filter panel for the active metric.
+function _updateFilterPanel(metric) {
+  const panel = document.getElementById('map-filter-floating');
+  if (!panel) return;                 // panel not built yet (pre-_initMap call)
+  if (!metric) { panel.classList.add('hidden'); return; }
+  const meta = PRICE_METRICS[metric];
+  panel.classList.remove('hidden');
+  panel.querySelector('.filter-label').textContent = `${meta.icon} ${meta.short}`;
+  panel.querySelectorAll('.filter-unit-pre').forEach(e => { e.textContent = meta.prefix || ''; });
+  panel.querySelectorAll('.filter-unit-post').forEach(e => { e.textContent = meta.suffix || ''; });
+  const minIn = panel.querySelector('#filter-min');
+  const maxIn = panel.querySelector('#filter-max');
+  minIn.value = ''; maxIn.value = '';
+  minIn.placeholder = _fmtLegendNum(metric, _priceDataRange.min).replace(/[$%+]/g, '');
+  maxIn.placeholder = _fmtLegendNum(metric, _priceDataRange.max).replace(/[$%+]/g, '');
+}
+
+// Re-style the active layer using the current _priceFilter (no rebuild).
+function _applyPriceFilter() {
+  if (_priceLayer && _priceStyleFn) _priceLayer.setStyle(_priceStyleFn);
+}
+
+// Compact value for the legend colour-bar ticks: $1.2M / $850k / $760 / +12% / 24.
+function _fmtLegendNum(metric, v) {
+  if (v == null || !isFinite(v)) return '–';
+  const cfg = PRICE_METRICS[metric];
+  if (cfg.isPct) { const s = v > 0 ? '+' : ''; return `${s}${Math.round(v)}%`; }
+  if (metric === 'avm_median') {
+    if (v >= 1e6) return `$${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1)}M`;
+    if (v >= 1e3) return `$${Math.round(v / 1e3)}k`;
+  }
+  const prefix = cfg.prefix || '';
+  // Small ratios (e.g. demand pressure 0.5–5) need a decimal to be readable.
+  if (Math.abs(v) < 10) return `${prefix}${v.toFixed(1)}`;
+  return `${prefix}${Math.round(v)}`;
+}
+
 async function togglePriceMetric(metric) {
   _initMap();
   const btn = document.getElementById('toggle-overlay-' + metric);
@@ -3743,6 +4152,11 @@ async function togglePriceMetric(metric) {
     if (_priceLayer) { _map.removeLayer(_priceLayer); _priceLayer = null; }
     btn.classList.remove('active');
     _priceActiveMetric = null;
+    _priceCuts = null;
+    _priceSortedVals = null;
+    _priceFilter = { min: null, max: null };
+    _priceStyleFn = null;
+    _updateFilterPanel(null);     // hide the filter panel
     return;
   }
   // Clear any other active price-metric button (some metrics live only in
@@ -3757,9 +4171,7 @@ async function togglePriceMetric(metric) {
   if (!_priceData) {
     btn.classList.add('loading');
     try {
-      const r = await fetch('/static/overlays/market_metrics_suburb.geojson');
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      _priceData = await r.json();
+      await _ensureMarketData();
     } catch (e) {
       btn.classList.remove('loading');
       alert('Failed to load market metrics: ' + e.message);
@@ -3768,18 +4180,42 @@ async function togglePriceMetric(metric) {
     btn.classList.remove('loading');
   }
 
-  // Compute bands across all features for this metric
+  // Compute bands + data extent across all features for this metric
   const values = _priceData.features.map(f => f.properties?.[metric]);
   const cuts = _priceBands(values) || [0, 0, 0, 0, 0];
+  _priceCuts = cuts;              // expose to the legend so it can label the colour bar
+  const valid = values.filter(v => v != null && isFinite(v));
+  _priceSortedVals = valid.slice().sort((a, b) => a - b);   // used for continuous percentile colour
+  _priceDataRange = valid.length
+    ? { min: Math.min(...valid), max: Math.max(...valid) }
+    : { min: null, max: null };
+  _priceFilter = { min: null, max: null };   // reset filter on metric switch
+  _updateFilterPanel(metric);                // populate placeholders + show
   const meta = PRICE_METRICS[metric];
 
+  // Style fn that honours both the band colour and the active min/max filter.
+  // Stored on the global so the filter inputs can restyle without rebuilding.
+  _priceStyleFn = function(feature) {
+    const v = feature.properties?.[metric];
+    if (v == null || !isFinite(v)) {
+      return { color: '#6b7280', weight: 0.3, fillColor: '#6b7280', fillOpacity: 0.05 };
+    }
+    const inRange =
+      (_priceFilter.min == null || v >= _priceFilter.min) &&
+      (_priceFilter.max == null || v <= _priceFilter.max);
+    if (!inRange) {
+      return { color: '#475569', weight: 0.2, fillColor: '#475569', fillOpacity: 0.03 };
+    }
+    // Continuous percentile colour — every distinct value gets a distinct shade,
+    // so neighbours with close-but-different values are visibly different.
+    let pct = _percentileOf(v, _priceSortedVals);
+    if (pct == null) pct = 0.5;
+    if (meta.good === 'low') pct = 1 - pct;   // invert so low = green for "good: low" metrics
+    const c = _colorAtPct(pct);
+    return { color: c, weight: 0.7, fillColor: c, fillOpacity: 0.55 };
+  };
   _priceLayer = L.geoJSON(_priceData, {
-    style(feature) {
-      const v = feature.properties?.[metric];
-      const b = _bandOf(v, cuts);
-      const c = PRICE_BAND_COLOR[b];
-      return { color: c, weight: 0.7, fillColor: c, fillOpacity: v == null ? 0.05 : 0.55 };
-    },
+    style: _priceStyleFn,
     onEachFeature(feature, layer) {
       const p = feature.properties || {};
       const v = p[metric];
@@ -3792,7 +4228,11 @@ async function togglePriceMetric(metric) {
           const sign = val > 0 ? '+' : '';
           return `<b>${sign}${val.toFixed(2)}${cfg.suffix}</b>`;
         }
-        return `<b>${cfg.prefix || ''}${Math.round(val).toLocaleString()}${cfg.suffix}</b>`;
+        // Show 2 decimal places for small values (ratios, low approvals) so e.g.
+        // demand pressure 2.31 doesn't read as "2", and 0.16 approvals doesn't
+        // read as "0". Big numbers (prices) stay as comma-formatted integers.
+        const f = Math.abs(val) < 100 ? val.toFixed(2) : Math.round(val).toLocaleString();
+        return `<b>${cfg.prefix || ''}${f}${cfg.suffix}</b>`;
       };
       const valStr = fmtMetric(metric, v);
       // Skip the median context line when the active metric IS the median price
@@ -3805,12 +4245,208 @@ async function togglePriceMetric(metric) {
           ? `<div style="font-size:11px">${PRICE_METRICS[m].icon} ${PRICE_METRICS[m].label}: ${fmtMetric(m, p[m])}</div>`
           : '')
         .filter(Boolean).join('');
-      const cite = `<div style="font-size:9px;color:#f59e0b;margin-top:3px">⚠ Cotality "Mapping the Market AU v5" · Houses · refreshed Jan 2025 (v6 token-locked)<br><a href="https://storymaps.arcgis.com/stories/73cf706f64484856aa2ef514531edfad" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">↗ Check current numbers on the May-2026 story map</a></div>`;
+      const cite = _marketCite(p);
       layer.bindPopup(`<b>${meta.icon} ${label}</b><br>${meta.label}: ${valStr}${medianStr}${allMetrics ? '<hr style="margin:5px 0;border-color:#374151">'+allMetrics : ''}${cite}`);
     },
   }).addTo(_map);
   btn.classList.add('active');
   _priceActiveMetric = metric;
+}
+
+// Format any single market metric value for popups (% or $/wk/median).
+function _fmtMarketMetric(mKey, val) {
+  if (val == null || !isFinite(val)) return '<span style="color:#64748b">—</span>';
+  const cfg = PRICE_METRICS[mKey];
+  if (cfg.isPct) { const sign = val > 0 ? '+' : ''; return `<b>${sign}${val.toFixed(2)}${cfg.suffix}</b>`; }
+  // Small values (ratios, low rates) need decimals; big values (prices) stay integer.
+  const f = Math.abs(val) < 100 ? val.toFixed(2) : Math.round(val).toLocaleString();
+  return `<b>${cfg.prefix || ''}${f}${cfg.suffix}</b>`;
+}
+
+// Source citation line for a market-metrics feature (REIWA / REA / CoreLogic).
+function _marketCite(p) {
+  if (p.src === 'REIWA-May2026')
+    return `<div style="font-size:9px;color:#f59e0b;margin-top:3px">⚠ REIWA suburb quick-stats · Houses · captured May 2026 · growth = last-year (YoY)${p.source_url ? `<br><a href="${p.source_url}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">↗ View this suburb on REIWA</a>` : ''}</div>`;
+  if (p.src === 'REA-May2026')
+    return `<div style="font-size:9px;color:#f59e0b;margin-top:3px">⚠ realestate.com.au suburb profile · Houses · captured May 2026 · growth = last-year (12m); rent growth not reported${p.source_url ? `<br><a href="${p.source_url}" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">↗ View this suburb on realestate.com.au</a>` : ''}</div>`;
+  return `<div style="font-size:9px;color:#f59e0b;margin-top:3px">⚠ Cotality "Mapping the Market AU v5" · Houses · refreshed Jan 2025 (v6 token-locked)<br><a href="https://storymaps.arcgis.com/stories/73cf706f64484856aa2ef514531edfad" target="_blank" rel="noopener" style="color:#60a5fa;text-decoration:underline">↗ Check current numbers on the May-2026 story map</a></div>`;
+}
+
+// Full popup for a suburb polygon: name + every available market metric.
+function _marketPopupHTML(p) {
+  const label = `${p.suburb || ''}${p.state ? ` (${p.state})` : ''}`;
+  const allMetrics = Object.keys(PRICE_METRICS)
+    .map(m => p[m] != null
+      ? `<div style="font-size:11px">${PRICE_METRICS[m].icon} ${PRICE_METRICS[m].label}: ${_fmtMarketMetric(m, p[m])}</div>`
+      : '')
+    .filter(Boolean).join('');
+  return `<b>🗺️ ${label}</b>${allMetrics ? '<hr style="margin:5px 0;border-color:#374151">'+allMetrics : ''}${_marketCite(p)}`;
+}
+
+// Load + cache the shared market-metrics GeoJSON (suburb polygons + metrics).
+async function _ensureMarketData() {
+  if (_priceData) return _priceData;
+  const r = await fetch('/static/overlays/market_metrics_suburb.geojson');
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  _priceData = await r.json();
+  return _priceData;
+}
+
+// "Suburbs" layer — plain suburb boundaries with a name tooltip + metrics popup.
+async function toggleSuburbs() {
+  _initMap();
+  const btn = document.getElementById('toggle-overlay-suburbs');
+  if (_suburbsLayer) {
+    _map.removeLayer(_suburbsLayer); _suburbsLayer = null;
+    _suburbsClicked = null;
+    _updateClearPill();
+    btn.classList.remove('active');
+    return;
+  }
+  btn.classList.add('loading');
+  try { await _ensureMarketData(); }
+  catch (e) { btn.classList.remove('loading'); alert('Failed to load suburbs: ' + e.message); return; }
+  btn.classList.remove('loading');
+  const SUBURB_BASE    = { color: '#60a5fa', weight: 1,   fillColor: '#60a5fa', fillOpacity: 0.05 };
+  const SUBURB_CLICKED = { color: '#f59e0b', weight: 3,   fillColor: '#f59e0b', fillOpacity: 0.22 };
+  _suburbsLayer = L.geoJSON(_priceData, {
+    style: SUBURB_BASE,
+    onEachFeature(feature, layer) {
+      const p = feature.properties || {};
+      if (p.suburb) layer.bindTooltip(p.suburb, { sticky: true, direction: 'top' });
+      layer.bindPopup(_marketPopupHTML(p));
+      // Click → highlight this polygon with the amber "selected" style. Reset
+      // the previous click-highlight first so only one stays active at a time.
+      layer.on('click', () => {
+        if (_suburbsClicked && _suburbsClicked !== layer) _suburbsClicked.setStyle(SUBURB_BASE);
+        layer.setStyle(SUBURB_CLICKED);
+        _suburbsClicked = layer;
+        _updateClearPill();
+      });
+    },
+  }).addTo(_map);
+  btn.classList.add('active');
+}
+
+// Unified clear — wipes every "selection" state on the map: suburb-layer click
+// highlight, suburb-search highlight, and the dropped address pin.
+function clearMapSelections() {
+  if (_suburbsClicked) {
+    try { _suburbsClicked.setStyle({ color: '#60a5fa', weight: 1, fillColor: '#60a5fa', fillOpacity: 0.05 }); } catch {}
+    _suburbsClicked = null;
+  }
+  if (_searchSuburbLayer) { _map.removeLayer(_searchSuburbLayer); _searchSuburbLayer = null; }
+  if (_searchMarker)      { _map.removeLayer(_searchMarker);      _searchMarker = null; }
+  _updateClearPill();
+}
+
+function _updateClearPill() {
+  const el = document.getElementById('map-clear-pill');
+  if (!el) return;
+  const visible = !!(_suburbsClicked || _searchSuburbLayer || _searchMarker);
+  el.classList.toggle('visible', visible);
+}
+
+// ── On-map search: address → point, suburb → polygon ─────────────────────────
+function _normSub(s) {
+  return (s || '').toLowerCase().replace(/\([^)]*\)/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function closeMapSearch() {
+  const box = document.getElementById('map-search-results');
+  if (box) { box.classList.remove('open'); box.innerHTML = ''; }
+}
+
+// Highlight one suburb polygon by name (from the cached market-metrics data).
+function focusSuburb(name, state) {
+  if (_searchSuburbLayer) { _map.removeLayer(_searchSuburbLayer); _searchSuburbLayer = null; }
+  const key = _normSub(name);
+  const feat = (_priceData?.features || []).find(f =>
+    _normSub(f.properties?.suburb) === key &&
+    (!state || f.properties?.state === state));
+  if (!feat) return;
+  _searchSuburbLayer = L.geoJSON(feat, {
+    style: { color: '#f59e0b', weight: 2.5, fillColor: '#f59e0b', fillOpacity: 0.18 },
+  }).addTo(_map);
+  _searchSuburbLayer.bindPopup(_marketPopupHTML(feat.properties || {}));
+  try { _map.fitBounds(_searchSuburbLayer.getBounds(), { padding: [40, 40], maxZoom: 14 }); } catch {}
+  _searchSuburbLayer.openPopup();
+  _updateClearPill();
+}
+
+// Drop a labelled pin for an address search result.
+function dropSearchPoint(lat, lng, label) {
+  if (_searchMarker) { _map.removeLayer(_searchMarker); _searchMarker = null; }
+  _searchMarker = L.marker([lat, lng]).addTo(_map);
+  if (label) _searchMarker.bindPopup(`<b>📍 ${label}</b>`).openPopup();
+  _map.setView([lat, lng], 16);
+  _updateClearPill();
+}
+
+async function runMapSearch(q) {
+  const box = document.getElementById('map-search-results');
+  if (!box) return;
+  q = q.trim();
+  if (q.length < 2) { closeMapSearch(); return; }
+  box.classList.add('open');
+  box.innerHTML = '<div class="map-search-item"><span class="loading">🔍 Searching…</span></div>';
+
+  // 1. Local suburb matches from the market-metrics polygons.
+  let subItems = [];
+  try {
+    await _ensureMarketData();
+    const nq = _normSub(q);
+    const seen = new Set();
+    for (const f of _priceData.features) {
+      const name = f.properties?.suburb; if (!name) continue;
+      const ns = _normSub(name);
+      if (!ns.includes(nq)) continue;
+      const id = ns + '|' + (f.properties.state || '');
+      if (seen.has(id)) continue;
+      seen.add(id);
+      subItems.push({ kind: 'suburb', name, state: f.properties.state || '',
+                      postcode: f.properties.postcode || '' });
+      if (subItems.length >= 6) break;
+    }
+    subItems.sort((a, b) => (_normSub(a.name) === nq ? -1 : 0) - (_normSub(b.name) === nq ? -1 : 0));
+  } catch {}
+
+  // 2. Address matches via Nominatim (shared /api/suggest endpoint).
+  let addrItems = [];
+  try {
+    const resp = await fetch(`/api/suggest?q=${encodeURIComponent(q)}`);
+    const data = await resp.json();
+    if (Array.isArray(data)) addrItems = data.slice(0, 6).map(d => ({ kind: 'address', ...d }));
+  } catch {}
+
+  renderMapSearchResults(subItems, addrItems);
+}
+
+function renderMapSearchResults(subItems, addrItems) {
+  const box = document.getElementById('map-search-results');
+  if (!box) return;
+  if (!subItems.length && !addrItems.length) {
+    box.innerHTML = '<div class="map-search-item"><span class="loading">No matches</span></div>';
+    return;
+  }
+  box.innerHTML = '';
+  const add = (html, onClick) => {
+    const el = document.createElement('div');
+    el.className = 'map-search-item';
+    el.innerHTML = html;
+    el.addEventListener('click', () => {
+      document.getElementById('map-search-input').value = '';
+      closeMapSearch();
+      onClick();
+    });
+    box.appendChild(el);
+  };
+  subItems.forEach(s => add(
+    `<span class="icon">🗺️</span><div><div>${s.name}</div><div class="sub">Suburb${s.state ? ' · ' + s.state : ''}${s.postcode ? ' · ' + s.postcode : ''}</div></div>`,
+    () => focusSuburb(s.name, s.state)));
+  addrItems.forEach(a => add(
+    `<span class="icon">📍</span><div><div>${a.label}</div><div class="sub">Address${a.suburb ? ' · ' + a.suburb : ''}${a.state ? ' ' + a.state : ''}</div></div>`,
+    () => dropSearchPoint(parseFloat(a.lat), parseFloat(a.lng), a.label)));
 }
 
 async function toggleTransport() {
@@ -4178,8 +4814,11 @@ function soldAgo(dateStr) {
 //   default postcode prefix when filtering overlays.
 // ══════════════════════════════════════════════════════════════════════════════
 const CITY_FOCUS_CFG = {
-  mel: { center: [-37.8136, 144.9631], zoom: 11, stampPct: 4.0, label: 'Melbourne' },
-  per: { center: [-31.9505, 115.8605], zoom: 11, stampPct: 5.5, label: 'Perth' },
+  mel: { center: [-37.8136, 144.9631], zoom: 11, stampPct: 4.0,  label: 'Melbourne' },
+  per: { center: [-31.9505, 115.8605], zoom: 11, stampPct: 5.5,  label: 'Perth'     },
+  bri: { center: [-27.4698, 153.0251], zoom: 11, stampPct: 5.75, label: 'Brisbane'  },
+  ade: { center: [-34.9285, 138.6007], zoom: 11, stampPct: 5.0,  label: 'Adelaide'  },
+  dar: { center: [-12.4634, 130.8456], zoom: 12, stampPct: 5.45, label: 'Darwin'    },
 };
 function getCityFocus() {
   const key = localStorage.getItem('cityFocus') || 'mel';
@@ -4287,7 +4926,39 @@ function recalcInvest() {
   const stampPct= (+_$('i-stamp-pct').value|| 0) / 100;
   const lmi     = +_$('i-lmi').value       || 0;
   const legal   = +_$('i-legal').value     || 0;
-  const rent    = +_$('i-rent').value      || 0;
+  // Weekly rent typed by the user (today's asking rent), turned into an
+  // averaged effective MONTHLY rent across the holding period:
+  //   • each year's gross is grown by `rentGrowthA` (compound)
+  //   • routine landlord costs are netted out per year:
+  //       vacancy       — 4 weeks/year (collect 48 of 52)
+  //       property mgmt — 7% + GST = 7.7% of rent collected
+  //       letting fee   — 1 week + GST per turnover (assumed annual)
+  //       admin         — ~$300/year (flat, not grown — minor for IRR)
+  //   • net annual is summed across N years and divided by N×12 to give the
+  //     "averaged monthly rent" used by the cash-flow + negative gearing.
+  // All four cost lines are tax-deductible, so netting them out of "rent"
+  // gives the same NG/cash-flow result as listing them as separate expense
+  // lines.
+  const weekRentCur = +_$('i-rent-week').value      || 0;
+  const rentGrowthA = (+_$('i-rent-growth').value   || 0) / 100;
+  const yrs         = Math.max(1, years);
+  let netAnnualSum = 0, netY1 = 0, netLastYr = 0;
+  for (let k = 0; k < yrs; k++) {
+    const w  = weekRentCur * Math.pow(1 + rentGrowthA, k);
+    const ag = w * 48;                       // annual gross collected
+    const pm = ag * 0.077;                   // property management fee
+    const lf = w * 1.10;                     // letting fee 1 wk + GST
+    const ad = 300;                          // admin
+    const net = ag - pm - lf - ad;
+    netAnnualSum += net;
+    if (k === 0)        netY1     = net;
+    if (k === yrs - 1)  netLastYr = net;
+  }
+  const rent = (netAnnualSum / yrs) / 12;    // averaged effective monthly rent
+  const rentHint = _$('i-rent-hint');
+  if (rentHint) rentHint.textContent =
+    `Effective monthly used in calcs: ${fmtMoney(rent)} (averaged across ${yrs} yr at ${(rentGrowthA*100).toFixed(1)}% rent growth). ` +
+    `Yr 1 net ${fmtMoney(netY1/12)}/mo → Yr ${yrs} net ${fmtMoney(netLastYr/12)}/mo, after vacancy / PM / letting / admin.`;
   const ins     = +_$('i-insurance').value || 0;
   const council = +_$('i-council').value   || 0;
   const landTax = +_$('i-land-tax').value  || 0;
@@ -4368,7 +5039,9 @@ function recalcInvest() {
   _$('o-hold-total').textContent = fmtMoney(holdTotal);
 
   // ── Capital growth & exit ──
-  const growthOverN  = growthA * years;                                  // F33
+  // Compound growth — annual rate compounded over the holding period.
+  // (Previously used linear growth, which materially under-stated long holds.)
+  const growthOverN  = Math.pow(1 + growthA, years) - 1;                 // total % gain
   const salePriceEst = price * (1 + growthOverN);                        // estimated sale price
   const sellCostsEst = salePriceEst * sellPct;                           // agent commission + advertising
   const breakEvenA = (price > 0 && years > 0)
@@ -4506,6 +5179,7 @@ function recalcInvest() {
   window._INV = {
     years, price, loan, rate: rateA,
     deposit, upfront: stamp + lmi + legal + buyerAgent,  // cash paid at purchase
+    reno,                                         // capital improvements (cash out + part of CGT cost base)
     monthlyPmt,                                   // IP P&I payment
     runningMo: ins + council + landTax + repairs, // IP monthly running costs
     rent, ngRefundMo: ngRefundM,
@@ -4516,7 +5190,8 @@ function recalcInvest() {
 
 // Recompute on any input change
 ['i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
- 'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax','i-repairs',
+ 'i-buyer-agent','i-reno','i-rent-week','i-rent-growth',
+ 'i-insurance','i-council','i-land-tax','i-repairs',
  'i-growth','i-inflation','i-sell-pct','i-p1-income','i-p2-income'].forEach(id => {
   const el = _$(id);
   if (el) el.addEventListener('input', recalcInvest);
@@ -4574,8 +5249,9 @@ function recalcOwner() {
   const runningCosts = (rates + ins + maint) * 12 * years;
   const holdTotal = interestPaid + runningCosts;   // principal NOT included
 
-  // Sale
-  const salePrice = price * (1 + growthA * years);
+  // Sale — compound growth (annual rate compounded over the holding period;
+  // previously used linear growth which materially under-stated long holds).
+  const salePrice = price * Math.pow(1 + growthA, years);
   const sellCosts = salePrice * sellPct;
   const gain      = salePrice - price;                       // CGT-exempt
   const inflPortion = price * (Math.pow(1 + inflA, years) - 1);
@@ -4737,6 +5413,22 @@ function _wRow(r) {
 // and a no-offset shadow for interest comparison.
 // rows[]: { month, balOff, balNoOff, offset, effBal, interest, principalOff }
 // Snapshot months: 1, 12, 36, 60, holdMonths.
+// Update the visible "↳ Phase change" row for a Capital-tab scenario with the
+// crossover and loan-payoff milestones from a simOffsetLog result. Hides the
+// row when neither milestone was reached within the holding period.
+function _showPhaseRow(rowId, infoId, sim) {
+  const row  = document.getElementById(rowId);
+  const info = document.getElementById(infoId);
+  if (!row || !info) return;
+  const cm = sim.crossoverMonth, pm = sim.payoffMonth;
+  if (!cm && !pm) { row.style.display = 'none'; return; }
+  const parts = [];
+  if (cm) parts.push(`offset overtakes loan at month ${cm} (~${(cm/12).toFixed(1)} yrs)`);
+  if (pm) parts.push(`loan fully paid by month ${pm} (~${(pm/12).toFixed(1)} yrs)`);
+  info.textContent = parts.join(' · ');
+  row.style.display = 'flex';
+}
+
 function simOffsetLog(loan, rateA, termYears, holdMonths, startOffset, monthlySurplus) {
   const payment = loanPaymentMo(loan, rateA, termYears);
   if (loan <= 0 || holdMonths <= 0) {
@@ -4744,25 +5436,66 @@ function simOffsetLog(loan, rateA, termYears, holdMonths, startOffset, monthlySu
     return { payment, remainingLoan: loan, finalOffset: fin,
              totalInterest: 0, principalPaid: 0,
              totalInterestNoOff: 0, interestSaved: 0,
-             remainingLoanNoOff: loan, rows: [] };
+             remainingLoanNoOff: loan, rows: [],
+             crossoverMonth: 0, payoffMonth: 0, offsetAtCross: startOffset || 0,
+             interestBefore: 0, interestAfter: 0,
+             principalBefore: 0, principalAfter: 0,
+             monthsBefore: 0, monthsAfter: holdMonths };
   }
   const rm = rateA / 12;
-  const snaps = new Set([1, 12, 36, 60, holdMonths]);
   let bal = loan, balN = loan;
   let offset = Math.max(0, startOffset || 0);
   let totalInterest = 0, totalInterestNoOff = 0, principalPaid = 0;
+  // Phase markers: month when offset first overtakes the (positive) loan, and
+  // month when the loan first reaches zero. These split the holding period
+  // into a "before" phase (offset partially shielding) and an "after" phase
+  // (zero interest, then loan paid off, surplus + freed payment grow offset).
+  let crossoverMonth = null, payoffMonth = null;
+  let interestBefore = 0, interestAfter = 0;
+  let principalBefore = 0, principalAfter = 0;
+  let offsetAtCross = 0, monthsBefore = 0, monthsAfter = 0;
   const rows = [];
+  // Always snapshot at months 1, 12, 36, 60, and last; crossover/payoff months
+  // are added once we hit them so the workings table shows the phase change.
+  const snaps = new Set([1, 12, 36, 60, holdMonths]);
   for (let m = 1; m <= holdMonths; m++) {
+    // Offset behaviour: while offset < loan, the offset reduces the interest-
+    // charging portion of the loan. Once offset >= loan, no interest is
+    // charged at all (effBal = 0) and the full P&I payment goes to principal,
+    // paying the loan off faster. After the loan is fully repaid, the fixed
+    // monthly payment is no longer owed to the bank — the user keeps it, so
+    // it flows back into the offset balance (alongside the regular monthly
+    // surplus). The excess offset balance over the loan never earns interest
+    // — it just sits there as cash.
+    const balPrev = bal;
     const effBal   = Math.max(0, bal - offset);
     const interest = effBal * rm;
     let principal  = payment - interest;
-    if (principal > bal) principal = bal;
+    if (principal > bal) principal = bal;          // can't pay more than what's owed
     if (principal < 0)   principal = 0;
     bal -= principal;
     totalInterest += interest;
     principalPaid += principal;
-    offset += monthlySurplus;
+    // If the loan ran out before the full P&I payment was consumed, the
+    // unused part is "freed-up" cash → fed back into offset alongside surplus.
+    const paymentLeftover = payment - interest - principal;
+    offset += monthlySurplus + paymentLeftover;
     if (offset < 0) offset = 0;
+    // Track phase boundaries.
+    if (crossoverMonth === null && balPrev > 0 && offset >= balPrev) {
+      crossoverMonth = m;
+      offsetAtCross = offset;
+      snaps.add(m);
+    }
+    if (payoffMonth === null && bal <= 0.5 && balPrev > 0.5) {
+      payoffMonth = m;
+      snaps.add(m);
+    }
+    if (crossoverMonth === null) {
+      interestBefore += interest; principalBefore += principal; monthsBefore += 1;
+    } else {
+      interestAfter += interest;  principalAfter += principal;  monthsAfter += 1;
+    }
     const intN  = balN * rm;
     let   prinN = payment - intN;
     if (prinN > balN) prinN = balN;
@@ -4776,7 +5509,12 @@ function simOffsetLog(loan, rateA, termYears, holdMonths, startOffset, monthlySu
   return { payment, remainingLoan: Math.max(0, bal), finalOffset: offset,
            totalInterest, principalPaid,
            totalInterestNoOff, interestSaved: totalInterestNoOff - totalInterest,
-           remainingLoanNoOff: Math.max(0, balN), rows };
+           remainingLoanNoOff: Math.max(0, balN), rows,
+           // Phase milestones — null if never reached within the holding period.
+           crossoverMonth, payoffMonth, offsetAtCross,
+           interestBefore, interestAfter,
+           principalBefore, principalAfter,
+           monthsBefore, monthsAfter };
 }
 
 function recalcCapital() {
@@ -4821,9 +5559,16 @@ function recalcCapital() {
     const surplusA = afterTaxMo - livingMo - ipCashMo - curRepay;
 
     // After holding years (sell BOTH)
-    // 1. Cash savings accumulated
-    const cashSpentOnIP = inv.deposit + inv.upfront;          // money paid at IP settlement
-    const cashSavingsA  = cashNow - cashSpentOnIP + surplusA * aMonths;
+    // 1. Activity cash flow over the holding period (treats the $120k cash
+    //    savings as UNTOUCHED — added back to the total at the very end).
+    //    cashSavingsA below now means: net cash generated by the activity
+    //    (monthly surplus × months − initial IP buy cost − reno), NOT
+    //    including today's $120k. The $120k is added separately to `aTotal`.
+    //    `inv.reno` (capital improvements / renovations) is a real cash
+    //    outflow on top of deposit + upfront; it ALSO inflates the CGT cost
+    //    base (already reflected in inv.cgt) — that's the correct ATO treatment.
+    const cashSpentOnIP = inv.deposit + inv.upfront + (inv.reno || 0);   // total cash outlay
+    const cashSavingsA  = surplusA * aMonths - cashSpentOnIP; // activity-only net cash
 
     // 2. Current home equity at sale
     const curHomeValEnd  = homeVal * Math.pow(1 + homeGrow, aYears);
@@ -4833,7 +5578,8 @@ function recalcCapital() {
     // 3. IP equity at sale (sale price − selling cost − remaining IP loan − CGT)
     const ipEqEnd = inv.saleEnd - inv.sellCost - inv.remainingLoan - inv.cgt;
 
-    aTotal = cashSavingsA + curHomeEqEnd + ipEqEnd;
+    // Sum of all activity negatives + positives, then add today's untouched $120k.
+    aTotal = cashSavingsA + curHomeEqEnd + ipEqEnd + cashNow;
 
     // Render Scenario A
     _$('ca-income').textContent     = fmtMoney(afterTaxMo) + '/mo';
@@ -4844,35 +5590,40 @@ function recalcCapital() {
     _$('ca-surplus').classList.toggle('good', surplusA >= 0);
     _$('ca-surplus').classList.toggle('bad',  surplusA < 0);
     _$('ca-years').textContent      = aYears + ' yrs';
-    _$('ca-savings-acc').textContent= fmtMoney(cashSavingsA);
-    _$('ca-home-eq').textContent    = fmtMoney(curHomeEqEnd);
-    _$('ca-home-loan-detail').textContent =
-      `${fmtMoney(curLoan)} → ${fmtMoney(curHomeLoanEnd)}  (paid off ${fmtMoney(curLoan - curHomeLoanEnd)})`;
-    _$('ca-ip-eq').textContent      = fmtMoney(ipEqEnd);
+    _$('ca-ipbuy').textContent      = '−' + fmtMoney(cashSpentOnIP);
+    // IP equity split into gross + CGT so the tax is visible on screen
+    // (used to be lumped together with a hint). ipEqEnd (net) is what flows
+    // into the total — same value, just two visible lines.
+    const ipEqGross = inv.saleEnd - inv.sellCost - inv.remainingLoan;
+    _$('ca-ip-eq').textContent      = '+' + fmtMoney(ipEqGross);
+    _$('ca-cgt').textContent        = '−' + fmtMoney(inv.cgt);
     _$('ca-ip-loan-detail').textContent =
       `${fmtMoney(inv.loan)} → ${fmtMoney(inv.remainingLoan)}  (paid off ${fmtMoney(inv.loan - inv.remainingLoan)})`;
-    _$('ca-total').textContent      = fmtMoney(aTotal);
-    _$('ca-total').classList.toggle('good', aTotal >= 0);
-    _$('ca-total').classList.toggle('bad',  aTotal < 0);
+    _$('ca-cash-end').textContent   = '+' + fmtMoney(cashNow);
 
-    // ── Offset variant: surplus + leftover cash sit in offset against the
-    //    current home loan (non-deductible — best place for offset). IP loan
-    //    is left untouched so its interest stays fully deductible.
+    // ── Offset path (now the ONLY path shown for A):
+    //   • Cash savings ($120k) stays in a standard savings account, untouched.
+    //   • Monthly surplus is directed into the offset against the current home
+    //     loan every month → shields loan interest → loan pays down faster.
+    //   • IP loan is never offset (interest stays tax-deductible).
+    //   • IP buy cost (deposit + upfront + reno) is a one-off outflow at t=0,
+    //     accounted for as a separate negative line.
     const aTotalSimple = aTotal;
-    const offStartA  = Math.max(0, cashNow - cashSpentOnIP);
+    const offStartA  = 0;                                       // offset starts empty (cash not in offset)
     const simA       = simOffsetLog(curLoan, curRate, term, aMonths, offStartA, surplusA);
     const curEqA_off = curHomeValEnd * (1 - agentPct) - simA.remainingLoan;
-    const aTotalOff  = simA.finalOffset + curEqA_off + ipEqEnd;
-    _$('ca-off-start').textContent = fmtMoney(offStartA);
-    _$('ca-off-end').textContent   = fmtMoney(simA.finalOffset);
+    const aTotalOff  = simA.finalOffset + curEqA_off + ipEqEnd + cashNow - cashSpentOnIP;
+    _$('ca-off-end').textContent   = '+' + fmtMoney(simA.finalOffset);
     _$('ca-off-loan').textContent  =
       `${fmtMoney(curLoan)} → ${fmtMoney(simA.remainingLoan)}  (paid off ${fmtMoney(curLoan - simA.remainingLoan)})`;
-    _$('ca-off-eq').textContent    = fmtMoney(curEqA_off);
+    _$('ca-off-eq').textContent    = '+' + fmtMoney(curEqA_off);
     _$('ca-off-total').textContent = fmtMoney(aTotalOff);
-    _$('ca-off-benefit').textContent = '+' + fmtMoney(aTotalOff - aTotal);
+    _$('ca-off-total').classList.toggle('good', aTotalOff >= 0);
+    _$('ca-off-total').classList.toggle('bad',  aTotalOff < 0);
+    _showPhaseRow('ca-phase-row', 'ca-phase-info', simA);
     aTotal = aTotalOff;  // verdict uses offset-aware total
-    // ── Workings: Scenario A no-offset ────────────────────────────────────
-    {
+    // ── Workings: Scenario A no-offset (DISABLED — A is offset-aware only)
+    if (false) {
       const D = '\u2500'.repeat(78);
       let w = D + '\n';
       w += '  SCENARIO A \u00b7 Keep current home + buy investment property\n';
@@ -4884,12 +5635,12 @@ function recalcCapital() {
       w += _wLine('  \u2212 Current home loan repayment', -curRepay, '/mo') + '\n';
       w += _wLine('  = Monthly surplus', surplusA, '/mo') + '\n';
       w += '\n';
-      w += 'ACCUMULATED CASH  (' + aYears + ' yrs = ' + aMonths + ' months)\n';
-      w += _wLine('Cash savings today', cashNow) + '\n';
-      w += _wLine('  \u2212 IP deposit + upfront costs', -cashSpentOnIP) + '\n';
+      w += 'ACTIVITY CASH FLOW  (' + aYears + ' yrs = ' + aMonths + ' months\u2014 today\'s ' + _wm$(cashNow) + ' is untouched, added at the end)\n';
+      w += _wLine('  \u2212 IP deposit + upfront + reno', -cashSpentOnIP,
+                  _wm$(inv.deposit) + ' + ' + _wm$(inv.upfront) + (inv.reno ? ' + ' + _wm$(inv.reno) + ' reno' : '')) + '\n';
       w += _wLine('  + Monthly surplus \u00d7 ' + aMonths + ' mo', surplusA * aMonths,
                   _wm$(surplusA) + ' \u00d7 ' + aMonths) + '\n';
-      w += _wLine('  = Cash savings at end', cashSavingsA) + '\n';
+      w += _wLine('  = Activity cash flow', cashSavingsA) + '\n';
       w += '\n';
       w += 'CURRENT HOME EQUITY  (standard P&I, no offset)\n';
       w += _wLine('Home value today', homeVal) + '\n';
@@ -4907,9 +5658,10 @@ function recalcCapital() {
       w += _wLine('  = IP equity', ipEqEnd) + '\n';
       w += '\n';
       w += 'TOTAL  (no offset)\n';
-      w += _wLine('  Cash savings', cashSavingsA) + '\n';
+      w += _wLine('  Activity cash flow', cashSavingsA) + '\n';
       w += _wLine('  + Current home equity', curHomeEqEnd) + '\n';
       w += _wLine('  + IP equity', ipEqEnd) + '\n';
+      w += _wLine('  + Current cash savings (untouched)', cashNow) + '\n';
       w += '  ' + '\u2550'.repeat(64) + '\n';
       w += _wLine('  = TOTAL CAPITAL (A, no offset)', aTotalSimple) + '\n';
       const el = _$('ca-work-simple'); if (el) el.textContent = w;
@@ -4936,6 +5688,20 @@ function recalcCapital() {
       w += TH + '\n' + TS + '\n';
       simA.rows.forEach(r => { w += _wRow(r) + '\n'; });
       w += '\n';
+      if (simA.crossoverMonth) {
+        const cm = simA.crossoverMonth, pm = simA.payoffMonth;
+        w += 'PHASE SPLIT  (offset overtakes loan)\n';
+        w += _wLine('Crossover month', cm, '~' + (cm/12).toFixed(1) + ' yrs') + '\n';
+        w += _wLine('Offset balance at crossover', simA.offsetAtCross) + '\n';
+        w += '  Phase 1 — BEFORE (' + simA.monthsBefore + ' months)\n';
+        w += _wLine('    Interest paid', simA.interestBefore) + '\n';
+        w += _wLine('    Principal paid', simA.principalBefore) + '\n';
+        w += '  Phase 2 — AFTER (' + simA.monthsAfter + ' months)\n';
+        w += _wLine('    Interest paid', simA.interestAfter, 'effBal = 0') + '\n';
+        w += _wLine('    Principal paid', simA.principalAfter, 'full payment → principal') + '\n';
+        if (pm) w += _wLine('    Loan fully repaid at month', pm, '~' + (pm/12).toFixed(1) + ' yrs in') + '\n';
+        w += '\n';
+      }
       w += 'INTEREST COMPARISON\n';
       w += _wLine('Total interest paid  (with offset)', simA.totalInterest) + '\n';
       w += _wLine('Total interest paid  (without offset)', simA.totalInterestNoOff) + '\n';
@@ -4975,16 +5741,20 @@ function recalcCapital() {
     const newHomeCashMo = own.monthlyPmt + own.runningMo;
     const surplusB = afterTaxMo - livingMo - newHomeCashMo;
 
-    // At t=0: sell current home → use proceeds + savings as upfront for new home
-    const startCashB     = equityNow + cashNow;                // sale proceeds + savings
+    // At t=0: sell current home → use sale proceeds as upfront for new home.
+    // Today's $120k cash savings is treated as UNTOUCHED — it does NOT fund
+    // the new-home deposit and is added back to the total at the very end.
+    const startCashB     = equityNow;                          // sale proceeds (only)
     const buyCostB       = own.deposit + own.upfront;          // cash needed at settlement
-    const leftoverAtBuy  = startCashB - buyCostB;
-    const cashSavingsB   = leftoverAtBuy + surplusB * bMonths;
+    const leftoverAtBuy  = startCashB - buyCostB;              // leftover from sale only
+    const cashSavingsB   = leftoverAtBuy + surplusB * bMonths; // activity-only net cash
 
     // After holding years (sell new home — no CGT, main residence)
     const newHomeEqEnd = own.saleEnd - own.sellCost - own.remainingLoan;
 
-    bTotal = cashSavingsB + newHomeEqEnd;
+    // Sum activity items + add today's untouched $120k.
+    bTotal = cashSavingsB + newHomeEqEnd + cashNow;
+    const bTotalSimple = bTotal;   // no-offset shadow total, kept for the workings dump comparison
 
     // Render Scenario B
     _$('cb-income').textContent     = fmtMoney(afterTaxMo) + '/mo';
@@ -4994,33 +5764,39 @@ function recalcCapital() {
     _$('cb-surplus').classList.toggle('good', surplusB >= 0);
     _$('cb-surplus').classList.toggle('bad',  surplusB < 0);
     _$('cb-years').textContent      = bYears + ' yrs';
-    _$('cb-startcash').textContent  = fmtMoney(startCashB);
+    _$('cb-startcash').textContent  = '+' + fmtMoney(equityNow);
     _$('cb-buycost').textContent    = '−' + fmtMoney(buyCostB);
-    _$('cb-savings-acc').textContent= fmtMoney(cashSavingsB);
-    _$('cb-home-eq').textContent    = fmtMoney(newHomeEqEnd);
-    _$('cb-home-loan-detail').textContent =
-      `${fmtMoney(own.loan)} → ${fmtMoney(own.remainingLoan)}  (paid off ${fmtMoney(own.loan - own.remainingLoan)})`;
-    _$('cb-total').textContent      = fmtMoney(bTotal);
-    _$('cb-total').classList.toggle('good', bTotal >= 0);
-    _$('cb-total').classList.toggle('bad',  bTotal < 0);
+    _$('cb-cash-end').textContent   = '+' + fmtMoney(cashNow);
 
-    // ── Offset variant: leftover cash + monthly surplus sit in offset
-    //    against the new home loan.
-    const bTotalSimple = bTotal;
+    // ── Offset path (now the ONLY path shown for B):
+    //   • $120k cash savings stays in a standard savings account, untouched.
+    //   • Sale leftover (equityNow − buyCostB) goes into the offset against
+    //     the new home loan from day 1, shielding interest from the start.
+    //   • Monthly surplus is also fed into that offset every month.
+    //   • Loan pays down faster → larger home equity at sale.
+    //   To avoid double-counting in the visible breakdown, we show three
+    //   separate sum lines (sale, − buy, + monthly surplus over years) whose
+    //   sum equals simB.finalOffset; the new-home-equity row already reflects
+    //   the offset benefit.
     const offStartB = Math.max(0, leftoverAtBuy);
     const simB      = simOffsetLog(own.loan, own.rate, term, bMonths, offStartB, surplusB);
     const newEqB_off = own.saleEnd - own.sellCost - simB.remainingLoan;
-    const bTotalOff  = simB.finalOffset + newEqB_off;
-    _$('cb-off-start').textContent = fmtMoney(offStartB);
-    _$('cb-off-end').textContent   = fmtMoney(simB.finalOffset);
+    // TOTAL = sum of the displayed rows so the user's mental check matches.
+    // When sale > buy, the leftover sits in offset from day 1 (simB takes
+    // care of the loan paydown). When sale < buy, the deficit is correctly
+    // subtracted here (no magical floor at 0).
+    const bTotalOff  = (equityNow - buyCostB) + surplusB * bMonths + newEqB_off + cashNow;
+    _$('cb-off-end').textContent   = '+' + fmtMoney(surplusB * bMonths);
     _$('cb-off-loan').textContent  =
       `${fmtMoney(own.loan)} → ${fmtMoney(simB.remainingLoan)}  (paid off ${fmtMoney(own.loan - simB.remainingLoan)})`;
-    _$('cb-off-eq').textContent    = fmtMoney(newEqB_off);
+    _$('cb-off-eq').textContent    = '+' + fmtMoney(newEqB_off);
     _$('cb-off-total').textContent = fmtMoney(bTotalOff);
-    _$('cb-off-benefit').textContent = '+' + fmtMoney(bTotalOff - bTotal);
+    _$('cb-off-total').classList.toggle('good', bTotalOff >= 0);
+    _$('cb-off-total').classList.toggle('bad',  bTotalOff < 0);
+    _showPhaseRow('cb-phase-row', 'cb-phase-info', simB);
     bTotal = bTotalOff;
-    // ── Workings: Scenario B no-offset ────────────────────────────────────
-    {
+    // ── Workings: Scenario B no-offset (DISABLED — B is offset-aware only)
+    if (false) {
       const D = '\u2500'.repeat(78);
       let w = D + '\n';
       w += '  SCENARIO B \u00b7 Sell current home + buy bigger/new home\n';
@@ -5031,19 +5807,17 @@ function recalcCapital() {
       w += _wLine('  \u2212 New home cash cost (P&I + running)', -newHomeCashMo, '/mo') + '\n';
       w += _wLine('  = Monthly surplus', surplusB, '/mo') + '\n';
       w += '\n';
-      w += 'CASH AT START  (after selling current home)\n';
+      w += 'SALE & NEW HOME BUY  (today\'s ' + _wm$(cashNow) + ' cash is untouched, added at the end)\n';
       w += _wLine('Current home equity if sold now', equityNow,
                   _wm$(homeVal) + ' \u00d7 (1\u2212' + (agentPct*100).toFixed(1) + '%) \u2212 ' + _wm$(curLoan)) + '\n';
-      w += _wLine('  + Savings today', cashNow) + '\n';
-      w += _wLine('  = Starting cash', startCashB) + '\n';
       w += _wLine('  \u2212 New home deposit + upfront', -buyCostB) + '\n';
       w += _wLine('  = Leftover cash after buying', leftoverAtBuy) + '\n';
       w += '\n';
-      w += 'ACCUMULATED CASH  (' + bYears + ' yrs = ' + bMonths + ' months)\n';
+      w += 'ACTIVITY CASH FLOW  (' + bYears + ' yrs = ' + bMonths + ' months)\n';
       w += _wLine('Leftover at buy', leftoverAtBuy) + '\n';
       w += _wLine('  + Monthly surplus \u00d7 ' + bMonths + ' mo', surplusB * bMonths,
                   _wm$(surplusB) + ' \u00d7 ' + bMonths) + '\n';
-      w += _wLine('  = Cash savings at end', cashSavingsB) + '\n';
+      w += _wLine('  = Activity cash flow', cashSavingsB) + '\n';
       w += '\n';
       w += 'NEW HOME EQUITY  (standard P&I, no offset, no CGT \u2014 main residence)\n';
       w += _wLine('New home projected sale price', own.saleEnd) + '\n';
@@ -5052,8 +5826,9 @@ function recalcCapital() {
       w += _wLine('  = New home equity', newHomeEqEnd) + '\n';
       w += '\n';
       w += 'TOTAL  (no offset)\n';
-      w += _wLine('  Cash savings', cashSavingsB) + '\n';
+      w += _wLine('  Activity cash flow', cashSavingsB) + '\n';
       w += _wLine('  + New home equity', newHomeEqEnd) + '\n';
+      w += _wLine('  + Current cash savings (untouched)', cashNow) + '\n';
       w += '  ' + '\u2550'.repeat(64) + '\n';
       w += _wLine('  = TOTAL CAPITAL (B, no offset)', bTotalSimple) + '\n';
       const el = _$('cb-work-simple'); if (el) el.textContent = w;
@@ -5080,6 +5855,20 @@ function recalcCapital() {
       w += TH + '\n' + TS + '\n';
       simB.rows.forEach(r => { w += _wRow(r) + '\n'; });
       w += '\n';
+      if (simB.crossoverMonth) {
+        const cm = simB.crossoverMonth, pm = simB.payoffMonth;
+        w += 'PHASE SPLIT  (offset overtakes loan)\n';
+        w += _wLine('Crossover month', cm, '~' + (cm/12).toFixed(1) + ' yrs') + '\n';
+        w += _wLine('Offset balance at crossover', simB.offsetAtCross) + '\n';
+        w += '  Phase 1 — BEFORE (' + simB.monthsBefore + ' months)\n';
+        w += _wLine('    Interest paid', simB.interestBefore) + '\n';
+        w += _wLine('    Principal paid', simB.principalBefore) + '\n';
+        w += '  Phase 2 — AFTER (' + simB.monthsAfter + ' months)\n';
+        w += _wLine('    Interest paid', simB.interestAfter, 'effBal = 0') + '\n';
+        w += _wLine('    Principal paid', simB.principalAfter, 'full payment → principal') + '\n';
+        if (pm) w += _wLine('    Loan fully repaid at month', pm, '~' + (pm/12).toFixed(1) + ' yrs in') + '\n';
+        w += '\n';
+      }
       w += 'INTEREST COMPARISON\n';
       w += _wLine('Total interest paid  (with offset)', simB.totalInterest) + '\n';
       w += _wLine('Total interest paid  (without offset)', simB.totalInterestNoOff) + '\n';
@@ -5127,17 +5916,13 @@ function recalcCapital() {
   _$('cc-surplus').classList.toggle('good', surplusC >= 0);
   _$('cc-surplus').classList.toggle('bad',  surplusC < 0);
   _$('cc-years').textContent           = cYears + ' yrs';
-  _$('cc-savings-acc').textContent     = fmtMoney(cashSavingsC);
-  _$('cc-home-eq').textContent         = fmtMoney(curHomeEqEndC);
-  _$('cc-home-loan-detail').textContent=
-    `${fmtMoney(curLoan)} → ${fmtMoney(curHomeLoanEndC)}  (paid off ${fmtMoney(curLoan - curHomeLoanEndC)})`;
-  _$('cc-total').textContent           = fmtMoney(cTotal);
-  _$('cc-total').classList.toggle('good', cTotal >= 0);
-  _$('cc-total').classList.toggle('bad',  cTotal < 0);
 
-  // ── Offset variant (C): $120k cash sits in offset against the current
-  //    home loan from day 1, and the monthly surplus is fed in every month.
-  const cTotalSimple = cTotal;
+  // Scenario C only: your $120k cash is already in the offset against the
+  // current home loan and stays there for the whole holding period. Monthly
+  // surplus is fed into the same offset.  This is the only view shown for C.
+  // We still compute the no-offset shadow total so the workings dump can
+  // quantify the offset benefit for educational reference.
+  const cTotalSimple = cashSavingsC + curHomeEqEndC;
   const simC       = simOffsetLog(curLoan, curRate, term, cMonths, cashNow, surplusC);
   const curEqC_off = curHomeValEndC * (1 - agentPct) - simC.remainingLoan;
   const cTotalOff  = simC.finalOffset + curEqC_off;
@@ -5147,10 +5932,12 @@ function recalcCapital() {
     `${fmtMoney(curLoan)} → ${fmtMoney(simC.remainingLoan)}  (paid off ${fmtMoney(curLoan - simC.remainingLoan)})`;
   _$('cc-off-eq').textContent    = fmtMoney(curEqC_off);
   _$('cc-off-total').textContent = fmtMoney(cTotalOff);
-  _$('cc-off-benefit').textContent = '+' + fmtMoney(cTotalOff - cTotal);
+  _$('cc-off-total').classList.toggle('good', cTotalOff >= 0);
+  _$('cc-off-total').classList.toggle('bad',  cTotalOff < 0);
+  _showPhaseRow('cc-phase-row', 'cc-phase-info', simC);
   const cTotalForVerdict = cTotalOff;
-  // ── Workings: Scenario C no-offset ────────────────────────────────────
-  {
+  // ── Workings: Scenario C no-offset (DISABLED — cash is in offset by default)
+  if (false) {
     const D = '\u2500'.repeat(78);
     let w = D + '\n';
     w += '  SCENARIO C \u00b7 Keep current home, no new purchase\n';
@@ -5205,6 +5992,29 @@ function recalcCapital() {
     w += TH + '\n' + TS + '\n';
     simC.rows.forEach(r => { w += _wRow(r) + '\n'; });
     w += '\n';
+    // Phase split — visible when the offset overtakes the loan within the hold.
+    if (simC.crossoverMonth) {
+      const cm = simC.crossoverMonth, pm = simC.payoffMonth;
+      w += 'PHASE SPLIT  (offset overtakes loan)\n';
+      w += _wLine('Crossover month', cm, '~' + (cm/12).toFixed(1) + ' yrs') + '\n';
+      w += _wLine('Offset balance at crossover', simC.offsetAtCross) + '\n';
+      w += '\n';
+      w += '  Phase 1 — BEFORE crossover (months 1–' + (cm-1) + ', ' + simC.monthsBefore + ' months)\n';
+      w += _wLine('    Interest paid', simC.interestBefore) + '\n';
+      w += _wLine('    Principal paid', simC.principalBefore) + '\n';
+      w += '\n';
+      w += '  Phase 2 — AFTER crossover (months ' + cm + '–' + cMonths + ', ' + simC.monthsAfter + ' months)\n';
+      w += _wLine('    Interest paid', simC.interestAfter,
+                  'effBal = 0 → no interest') + '\n';
+      w += _wLine('    Principal paid', simC.principalAfter,
+                  'full P&I payment goes to principal') + '\n';
+      if (pm)
+        w += _wLine('    Loan fully repaid at month', pm,
+                    '~' + (pm/12).toFixed(1) + ' yrs in') + '\n';
+      else
+        w += _wLine('    Loan remaining at end', simC.remainingLoan) + '\n';
+      w += '\n';
+    }
     w += 'INTEREST COMPARISON\n';
     w += _wLine('Total interest paid  (with offset)', simC.totalInterest) + '\n';
     w += _wLine('Total interest paid  (without offset)', simC.totalInterestNoOff) + '\n';
@@ -5253,7 +6063,8 @@ function recalcCapital() {
 const SCEN_INPUT_IDS = [
   // Investment tab
   'i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
-  'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax',
+  'i-buyer-agent','i-reno','i-rent-week','i-rent-growth',
+  'i-insurance','i-council','i-land-tax',
   'i-repairs','i-growth','i-inflation','i-sell-pct','i-p1-income','i-p2-income',
   // Owner-occupied tab
   'oo-price','oo-lvr','oo-rate','oo-stamp-pct','oo-lmi','oo-legal',
@@ -5286,6 +6097,12 @@ async function scenLoad(name) {
   const {data} = await res.json();
   SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.value = data[id]; });
   SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.checked = data[id]; });
+  // Migration: old saves stored monthly rent under `i-rent`. New schema uses
+  // weekly rent under `i-rent-week`. Convert when loading an older scenario.
+  if (data['i-rent'] !== undefined && _$('i-rent-week') && !data['i-rent-week']) {
+    const oldMo = parseFloat(data['i-rent']);
+    if (isFinite(oldMo)) _$('i-rent-week').value = Math.round(oldMo * 12 / 52);
+  }
   if (data['__cgt-method']) {
     const r = document.querySelector(`input[name="cgt-method"][value="${data['__cgt-method']}"]`);
     if (r) r.checked = true;
@@ -5341,100 +6158,6 @@ _$('scen-save-btn').addEventListener('click', async () => {
   const name = (_$('scen-name-input').value || '').trim();
   if (!name) { _$('scen-name-input').focus(); return; }
   await scenSave(name);
-  _$('scen-name-input').value = '';
-});
-_$('scen-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') _$('scen-save-btn').click(); });
-document.addEventListener('click', e => {
-  const panel = _$('scen-panel'), btn = _$('scen-btn');
-  if (panel && panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target))
-    closeScenPanel();
-});
-
-</script>
-  // Investment tab
-  'i-loan','i-lvr','i-rate','i-years','i-stamp-pct','i-lmi','i-legal',
-  'i-buyer-agent','i-reno','i-rent','i-insurance','i-council','i-land-tax',
-  'i-repairs','i-growth','i-inflation','i-sell-pct','i-p1-income','i-p2-income',
-  // Owner-occupied tab
-  'oo-price','oo-lvr','oo-rate','oo-stamp-pct','oo-lmi','oo-legal',
-  'oo-buyer-agent','oo-rates','oo-insurance','oo-maint',
-  'oo-growth','oo-inflation','oo-years','oo-sell-pct',
-  // Capital tab
-  'cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
-  'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years',
-];
-const SCEN_CHECK_IDS = ['i-ng-on'];
-
-function _scenGetAll() {
-  try { return JSON.parse(localStorage.getItem(SCEN_STORE) || '{}'); } catch { return {}; }
-}
-function _scenSaveAll(obj) { localStorage.setItem(SCEN_STORE, JSON.stringify(obj)); }
-
-function scenSave(name) {
-  if (!name) return;
-  const data = {};
-  SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el) data[id] = el.value; });
-  SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el) data[id] = el.checked; });
-  const cgtEl = document.querySelector('input[name="cgt-method"]:checked');
-  if (cgtEl) data['__cgt-method'] = cgtEl.value;
-  const all = _scenGetAll();
-  all[name] = data;
-  _scenSaveAll(all);
-  renderScenList();
-}
-
-function scenLoad(name) {
-  const data = (_scenGetAll())[name]; if (!data) return;
-  SCEN_INPUT_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.value = data[id]; });
-  SCEN_CHECK_IDS.forEach(id => { const el = _$(id); if (el && data[id] !== undefined) el.checked = data[id]; });
-  if (data['__cgt-method']) {
-    const r = document.querySelector(`input[name="cgt-method"][value="${data['__cgt-method']}"]`);
-    if (r) r.checked = true;
-  }
-  if (typeof recalcInvest  === 'function') recalcInvest();
-  if (typeof recalcOwner   === 'function') recalcOwner();
-  if (typeof recalcCapital === 'function') recalcCapital();
-  closeScenPanel();
-}
-
-function scenDelete(name) {
-  const all = _scenGetAll(); delete all[name]; _scenSaveAll(all); renderScenList();
-}
-
-function renderScenList() {
-  const list = _$('scen-list'); if (!list) return;
-  const names = Object.keys(_scenGetAll());
-  if (!names.length) {
-    list.innerHTML = '<div class="scen-empty">No saved scenarios yet.</div>'; return;
-  }
-  list.innerHTML = names.map(n =>
-    `<div class="scen-item">` +
-    `<span class="scen-item__name" title="${n}">${n}</span>` +
-    `<button class="scen-item__load" data-name="${n}" type="button">Load</button>` +
-    `<button class="scen-item__del"  data-name="${n}" type="button">✕</button>` +
-    `</div>`).join('');
-  list.querySelectorAll('.scen-item__load').forEach(b => b.onclick = () => scenLoad(b.dataset.name));
-  list.querySelectorAll('.scen-item__del').forEach(b => b.onclick  = () => scenDelete(b.dataset.name));
-}
-
-function openScenPanel()  {
-  renderScenList();
-  _$('scen-panel').classList.add('open');
-  _$('scen-btn').classList.add('active');
-  _$('scen-name-input').focus();
-}
-function closeScenPanel() {
-  _$('scen-panel').classList.remove('open');
-  _$('scen-btn').classList.remove('active');
-}
-
-_$('scen-btn').addEventListener('click', () =>
-  _$('scen-panel').classList.contains('open') ? closeScenPanel() : openScenPanel());
-_$('scen-close').addEventListener('click', closeScenPanel);
-_$('scen-save-btn').addEventListener('click', () => {
-  const name = (_$('scen-name-input').value || '').trim();
-  if (!name) { _$('scen-name-input').focus(); return; }
-  scenSave(name);
   _$('scen-name-input').value = '';
 });
 _$('scen-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') _$('scen-save-btn').click(); });

@@ -1,0 +1,51 @@
+﻿rank_alphabetical,suburb,postcode,median_house_price_aud,median_house_rent_per_week_aud,sales_price_growth_pct_yoy,rental_price_growth_pct_yoy,source_url,notes
+51,Bullsbrook,6084,767500,775,20.9,10.7,https://reiwa.com.au/suburb/bullsbrook/,
+52,Burns Beach,6028,1680000,1350,18.0,-10.0,https://reiwa.com.au/suburb/burns-beach/,
+53,Burswood,6100,1380000,880,-8.5,3.5,https://reiwa.com.au/suburb/burswood/,
+54,Bushmead,6055,1130000,1000,15.3,8.1,https://reiwa.com.au/suburb/bushmead/,
+55,Butler,6036,781000,675,15.6,9.4,https://reiwa.com.au/suburb/butler/,
+56,Byford,6122,820000,690,19.7,6.2,https://reiwa.com.au/suburb/byford/,
+57,Calista,6167,661000,562,13.4,8.1,https://reiwa.com.au/suburb/calista/,
+58,Camillo,6111,690000,615,16.7,4.2,https://reiwa.com.au/suburb/camillo/,
+59,Canning Mills,6111,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/canning-mills/,N/A: REIWA shows insufficient house sales/rental data.
+60,Canning Vale,6155,1100000,840,17.6,7.7,https://reiwa.com.au/suburb/canning-vale/,
+61,Cannington,6107,771000,780,26.3,11.4,https://reiwa.com.au/suburb/cannington/,
+62,Carabooda,6033,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/carabooda/,N/A: REIWA shows insufficient house sales/rental data.
+63,Cardup,6122,1700000,N/A,28.8,N/A,https://reiwa.com.au/suburb/cardup/,N/A rent: REIWA shows insufficient house rental data.
+64,Carine,6020,1630000,965,20.9,4.9,https://reiwa.com.au/suburb/carine/,
+65,Carlisle,6101,971000,790,20.9,6.8,https://reiwa.com.au/suburb/carlisle/,
+66,Carmel,6076,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/carmel/,N/A: REIWA shows insufficient house sales/rental data.
+67,Carramar,6031,1000000,875,13.3,12.2,https://reiwa.com.au/suburb/carramar/,
+68,Casuarina,6167,1450000,800,38.8,N/A,https://reiwa.com.au/suburb/casuarina/,N/A rental growth: REIWA shows insufficient house rental growth data.
+69,Caversham,6055,890000,850,12.3,13.3,https://reiwa.com.au/suburb/caversham/,
+70,Champion Lakes,6111,823000,760,14.2,11.8,https://reiwa.com.au/suburb/champion-lakes/,
+71,Chidlow,6556,950000,N/A,36.5,N/A,https://reiwa.com.au/suburb/chidlow/,N/A rent: REIWA shows insufficient house rental data.
+72,Churchlands,6018,2190000,1250,4.3,6.4,https://reiwa.com.au/suburb/churchlands/,
+73,City Beach,6015,3700000,1525,23.3,8.9,https://reiwa.com.au/suburb/city-beach/,
+74,Claremont,6010,2500000,1175,21.2,21.8,https://reiwa.com.au/suburb/claremont/,
+75,Clarkson,6030,830000,700,18.0,7.7,https://reiwa.com.au/suburb/clarkson/,
+76,Cloverdale,6105,855000,700,17.9,7.7,https://reiwa.com.au/suburb/cloverdale/,
+77,Cockburn Central,6164,890000,810,12.7,30.6,https://reiwa.com.au/suburb/cockburn-central/,
+78,Como,6152,1600000,850,12.7,6.3,https://reiwa.com.au/suburb/como/,
+79,Connolly,6027,1370000,975,24.6,8.3,https://reiwa.com.au/suburb/connolly/,
+80,Coogee,6166,1430000,1050,7.5,32.1,https://reiwa.com.au/suburb/coogee/,
+81,Coolbellup,6163,916000,700,16.6,0.0,https://reiwa.com.au/suburb/coolbellup/,
+82,Coolbinia,6050,2100000,1375,22.8,61.8,https://reiwa.com.au/suburb/coolbinia/,High rental growth may reflect small sample/changed mix; verify before relying on it.
+83,Cooloongup,6168,725000,650,15.1,16.1,https://reiwa.com.au/suburb/cooloongup/,
+84,Cottesloe,6011,3330000,1625,5.6,32.7,https://reiwa.com.au/suburb/cottesloe/,
+85,Craigie,6025,951000,750,17.3,10.8,https://reiwa.com.au/suburb/craigie/,
+86,Crawley,6009,1820000,920,30.3,6.4,https://reiwa.com.au/suburb/crawley/,
+87,Cullacabardee,6067,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/cullacabardee/,N/A: REIWA page did not return usable house data; postcode from suburb reference.
+88,Currambine,6028,1020000,850,11.1,12.6,https://reiwa.com.au/suburb/currambine/,
+89,Daglish,6008,1970000,1175,14.1,17.5,https://reiwa.com.au/suburb/daglish/,
+90,Dalkeith,6009,4100000,1375,17.1,-8.3,https://reiwa.com.au/suburb/dalkeith/,
+91,Darch,6065,1090000,870,13.2,16.0,https://reiwa.com.au/suburb/darch/,
+92,Darling Downs,6122,1510000,N/A,81.9,N/A,https://reiwa.com.au/suburb/darling-downs/,N/A rent: REIWA shows insufficient house rental data; sales growth may be sample-sensitive.
+93,Darlington,6070,1290000,N/A,12.4,N/A,https://reiwa.com.au/suburb/darlington/,N/A rent: REIWA shows insufficient house rental data.
+94,Dayton,6055,800000,715,11.1,-2.1,https://reiwa.com.au/suburb/dayton/,
+95,Dianella,6059,1165000,750,23.9,7.1,https://reiwa.com.au/suburb/dianella/,
+96,Doubleview,6018,1400000,950,14.8,18.8,https://reiwa.com.au/suburb/doubleview/,
+97,Doobarda,6112,N/A,N/A,N/A,N/A,https://reiwa.com.au/suburb/doobarda/,N/A: new/industrial locality; REIWA page did not return usable house data; postcode from suburb reference.
+98,Duncraig,6023,1400000,917,11.1,17.3,https://reiwa.com.au/suburb/duncraig/,
+99,East Cannington,6107,830000,750,16.9,0.0,https://reiwa.com.au/suburb/east-cannington/,
+100,East Fremantle,6158,2203000,1000,10.1,-2.4,https://reiwa.com.au/suburb/east-fremantle/,

@@ -1,0 +1,357 @@
+suburb,postcode,median_house_price_aud,median_house_rent_per_week_aud,house_gross_yield_pct,house_price_growth_12m_pct,source_url
+Abbotsford,3067,1271000,850,3.6,2.3,https://www.realestate.com.au/vic/abbotsford-3067/
+Aberfeldie,3040,1828000,730,2.2,-7.2,https://www.realestate.com.au/vic/aberfeldie-3040/
+Aintree,3336,710000,530,3.9,3.7,https://www.realestate.com.au/vic/aintree-3336/
+Airport West,3042,1010000,610,3.6,7.5,https://www.realestate.com.au/vic/airport-west-3042/
+Albanvale,3021,665000,478,3.8,8.7,https://www.realestate.com.au/vic/albanvale-3021/
+Albert Park,3206,2412500,993,2.7,2.9,https://www.realestate.com.au/vic/albert-park-3206/
+Albion,3020,795000,510,3.3,8.2,https://www.realestate.com.au/vic/albion-3020/
+Alphington,3078,1741500,868,2.8,-2.2,https://www.realestate.com.au/vic/alphington-3078/
+Altona,3018,1173000,650,3,-0.9,https://www.realestate.com.au/vic/altona-3018/
+Altona Meadows,3028,775000,530,3.7,8.4,https://www.realestate.com.au/vic/altona-meadows-3028/
+Altona North,3025,960000,680,3.5,3.2,https://www.realestate.com.au/vic/altona-north-3025/
+Ardeer,3022,705000,500,3.2,4.4,https://www.realestate.com.au/vic/ardeer-3022/
+Armadale,3143,2253750,1050,2.9,-11.6,https://www.realestate.com.au/vic/armadale-3143/
+Ascot Vale,3032,1312500,713,3.1,2.9,https://www.realestate.com.au/vic/ascot-vale-3032/
+Ashburton,3147,1980000,895,2.5,6.3,https://www.realestate.com.au/vic/ashburton-3147/
+Ashwood,3147,1480000,688,2.7,2.6,https://www.realestate.com.au/vic/ashwood-3147/
+Aspendale,3195,1433750,800,2.9,11.5,https://www.realestate.com.au/vic/aspendale-3195/
+Aspendale Gardens,3195,1310000,820,3.4,7.4,https://www.realestate.com.au/vic/aspendale-gardens-3195/
+Attwood,3049,900000,560,3.7,12.5,https://www.realestate.com.au/vic/attwood-3049/
+Avondale Heights,3034,1020000,600,3.2,4.1,https://www.realestate.com.au/vic/avondale-heights-3034/
+Balaclava,3183,1400000,900,3.1,3.6,https://www.realestate.com.au/vic/balaclava-3183/
+Bayswater,3153,971000,625,3.7,10.6,https://www.realestate.com.au/vic/bayswater-3153/
+Bayswater North,3153,921250,600,3.7,1.8,https://www.realestate.com.au/vic/bayswater-north-3153/
+Beaconsfield,3807,1012000,605,3.4,4.3,https://www.realestate.com.au/vic/beaconsfield-3807/
+Beaumaris,3193,2100000,1111,3.2,5,https://www.realestate.com.au/vic/beaumaris-3193/
+Bellfield,3081,1020000,610,3.2,-0.2,https://www.realestate.com.au/vic/bellfield-3081/
+Bentleigh,3204,1735000,920,2.8,6.5,https://www.realestate.com.au/vic/bentleigh-3204/
+Bentleigh East,3165,1550000,900,3.1,3.3,https://www.realestate.com.au/vic/bentleigh-east-3165/
+Berwick,3806,920000,620,3.5,5.8,https://www.realestate.com.au/vic/berwick-3806/
+Black Rock,3193,2315000,1250,2.9,-2.8,https://www.realestate.com.au/vic/black-rock-3193/
+Blackburn,3130,1620000,695,2.5,8,https://www.realestate.com.au/vic/blackburn-3130/
+Blackburn North,3130,1432000,710,2.7,12.5,https://www.realestate.com.au/vic/blackburn-north-3130/
+Blackburn South,3130,1370000,650,2.8,0.4,https://www.realestate.com.au/vic/blackburn-south-3130/
+Blairgowrie,3942,1450000,673,3.1,3.6,https://www.realestate.com.au/vic/blairgowrie-3942/
+Bonbeach,3196,1242500,775,3.4,20.3,https://www.realestate.com.au/vic/bonbeach-3196/
+Bonnie Brook,3335,681500,500,4,0.4,https://www.realestate.com.au/vic/bonnie-brook-3335/
+Boronia,3155,894500,620,3.8,5.2,https://www.realestate.com.au/vic/boronia-3155/
+Botanic Ridge,3977,972500,650,3.8,8.1,https://www.realestate.com.au/vic/botanic-ridge-3977/
+Box Hill,3128,1660500,655,2.5,-2.2,https://www.realestate.com.au/vic/box-hill-3128/
+Box Hill North,3129,1395000,698,2.9,5.4,https://www.realestate.com.au/vic/box-hill-north-3129/
+Box Hill South,3128,1519000,720,2.7,7.6,https://www.realestate.com.au/vic/box-hill-south-3128/
+Braeside,3195,,,,,https://www.realestate.com.au/vic/braeside-3195/
+Braybrook,3019,760000,600,3.6,1.5,https://www.realestate.com.au/vic/braybrook-3019/
+Briar Hill,3088,986500,725,3.3,-0.9,https://www.realestate.com.au/vic/briar-hill-3088/
+Brighton,3186,3250000,1400,2.4,2,https://www.realestate.com.au/vic/brighton-3186/
+Brighton East,3187,2147500,1200,3.1,4.5,https://www.realestate.com.au/vic/brighton-east-3187/
+Broadmeadows,3047,650000,510,4.1,9.8,https://www.realestate.com.au/vic/broadmeadows-3047/
+Brookfield,3338,620000,450,3.7,12.7,https://www.realestate.com.au/vic/brookfield-3338/
+Brooklyn,3012,872500,580,3.4,7.7,https://www.realestate.com.au/vic/brooklyn-3012/
+Brunswick,3056,1300000,800,3.4,3.2,https://www.realestate.com.au/vic/brunswick-3056/
+Brunswick East,3057,1369500,830,3.5,0.5,https://www.realestate.com.au/vic/brunswick-east-3057/
+Brunswick West,3055,1310000,770,3.6,-0.8,https://www.realestate.com.au/vic/brunswick-west-3055/
+Bulleen,3105,1370000,750,3.2,5,https://www.realestate.com.au/vic/bulleen-3105/
+Bundoora,3083,895000,600,3.8,5.4,https://www.realestate.com.au/vic/bundoora-3083/
+Burnley,3121,1425000,900,3.4,21.8,https://www.realestate.com.au/vic/burnley-3121/
+Burnside,3023,825000,570,3.5,4.7,https://www.realestate.com.au/vic/burnside-3023/
+Burnside Heights,3023,795000,560,3.6,7.8,https://www.realestate.com.au/vic/burnside-heights-3023/
+Cairnlea,3023,930500,600,3.7,7,https://www.realestate.com.au/vic/cairnlea-3023/
+Calder Park,3037,,,,,https://www.realestate.com.au/vic/calder-park-3037/
+Camberwell,3124,2550000,1100,2.5,-1.9,https://www.realestate.com.au/vic/camberwell-3124/
+Campbellfield,3061,700000,530,4.1,9.4,https://www.realestate.com.au/vic/campbellfield-3061/
+Canterbury,3126,3421500,1200,2,-2.2,https://www.realestate.com.au/vic/canterbury-3126/
+Capel Sound,3940,752500,575,4,3.1,https://www.realestate.com.au/vic/capel-sound-3940/
+Carlton,3053,1450000,866,3.4,6.6,https://www.realestate.com.au/vic/carlton-3053/
+Carlton North,3054,1600500,850,3.1,-2.9,https://www.realestate.com.au/vic/carlton-north-3054/
+Carnegie,3163,1673000,835,3,0.1,https://www.realestate.com.au/vic/carnegie-3163/
+Caroline Springs,3023,796600,550,3.6,7.7,https://www.realestate.com.au/vic/caroline-springs-3023/
+Carrum,3197,1100000,735,3.6,18.3,https://www.realestate.com.au/vic/carrum-3197/
+Carrum Downs,3201,802450,600,4.1,12.2,https://www.realestate.com.au/vic/carrum-downs-3201/
+Caulfield,3162,1930000,998,2.8,-12.3,https://www.realestate.com.au/vic/caulfield-3162/
+Caulfield East,3145,1663000,780,3,3.1,https://www.realestate.com.au/vic/caulfield-east-3145/
+Caulfield North,3161,2107500,955,2.8,-5.5,https://www.realestate.com.au/vic/caulfield-north-3161/
+Caulfield South,3162,1900000,1000,3,7.7,https://www.realestate.com.au/vic/caulfield-south-3162/
+Chadstone,3148,1335000,673,2.9,11.3,https://www.realestate.com.au/vic/chadstone-3148/
+Chelsea,3196,1082000,680,3.4,13.9,https://www.realestate.com.au/vic/chelsea-3196/
+Chelsea Heights,3196,1020000,640,3.4,7.4,https://www.realestate.com.au/vic/chelsea-heights-3196/
+Cheltenham,3192,1294500,750,3.3,7.7,https://www.realestate.com.au/vic/cheltenham-3192/
+Chirnside Park,3116,950000,675,3.9,11.8,https://www.realestate.com.au/vic/chirnside-park-3116/
+Clarinda,3169,1110000,650,3.5,7.5,https://www.realestate.com.au/vic/clarinda-3169/
+Clayton,3168,1310000,650,2.9,3.2,https://www.realestate.com.au/vic/clayton-3168/
+Clayton South,3169,985000,680,3.3,3.7,https://www.realestate.com.au/vic/clayton-south-3169/
+Clifton Hill,3068,1605000,850,3.2,4.9,https://www.realestate.com.au/vic/clifton-hill-3068/
+Clyde,3978,720000,590,4.3,4.4,https://www.realestate.com.au/vic/clyde-3978/
+Clyde North,3978,750000,600,4.2,3.5,https://www.realestate.com.au/vic/clyde-north-3978/
+Cobblebank,3338,630000,450,3.9,0,https://www.realestate.com.au/vic/cobblebank-3338/
+Coburg,3058,1225000,745,3.3,6.5,https://www.realestate.com.au/vic/coburg-3058/
+Coburg North,3058,995000,670,3.5,1.8,https://www.realestate.com.au/vic/coburg-north-3058/
+Collingwood,3066,1328000,800,3.5,14.9,https://www.realestate.com.au/vic/collingwood-3066/
+Coolaroo,3048,633500,495,4.3,13.1,https://www.realestate.com.au/vic/coolaroo-3048/
+Cranbourne,3977,720000,550,4,9.1,https://www.realestate.com.au/vic/cranbourne-3977/
+Cranbourne East,3977,749500,590,4.1,6,https://www.realestate.com.au/vic/cranbourne-east-3977/
+Cranbourne North,3977,775000,590,4,7.6,https://www.realestate.com.au/vic/cranbourne-north-3977/
+Cranbourne South,3977,821000,635,3.7,4.3,https://www.realestate.com.au/vic/cranbourne-south-3977/
+Cranbourne West,3977,725000,580,4.2,5.5,https://www.realestate.com.au/vic/cranbourne-west-3977/
+Cremorne,3121,1270000,810,3.5,-1.6,https://www.realestate.com.au/vic/cremorne-3121/
+Croydon,3136,966000,650,3.6,9.5,https://www.realestate.com.au/vic/croydon-3136/
+Croydon Hills,3136,1178500,750,3.8,5,https://www.realestate.com.au/vic/croydon-hills-3136/
+Croydon North,3136,1135000,700,3.8,14.8,https://www.realestate.com.au/vic/croydon-north-3136/
+Croydon South,3136,955000,635,3.7,6.1,https://www.realestate.com.au/vic/croydon-south-3136/
+Dallas,3047,620000,500,4.2,12,https://www.realestate.com.au/vic/dallas-3047/
+Dandenong,3175,763000,560,3.8,5.2,https://www.realestate.com.au/vic/dandenong-3175/
+Dandenong North,3175,810000,550,3.9,6.6,https://www.realestate.com.au/vic/dandenong-north-3175/
+Dandenong South,3175,,,,,https://www.realestate.com.au/vic/dandenong-south-3175/
+Deer Park,3023,708000,500,3.7,5.7,https://www.realestate.com.au/vic/deer-park-3023/
+Delahey,3037,748500,500,3.8,14,https://www.realestate.com.au/vic/delahey-3037/
+Derrimut,3026,833500,600,3.8,11.9,https://www.realestate.com.au/vic/derrimut-3026/
+Diamond Creek,3089,1091000,675,3.8,2.2,https://www.realestate.com.au/vic/diamond-creek-3089/
+Diggers Rest,3427,670000,508,3.9,4.5,https://www.realestate.com.au/vic/diggers-rest-3427/
+Dingley Village,3172,1206000,700,3.5,9.4,https://www.realestate.com.au/vic/dingley-village-3172/
+Docklands,3008,1367500,1125,3.1,-18.6,https://www.realestate.com.au/vic/docklands-3008/
+Doncaster,3108,1530000,820,3.1,4.7,https://www.realestate.com.au/vic/doncaster-3108/
+Doncaster East,3109,1626500,800,2.8,3.6,https://www.realestate.com.au/vic/doncaster-east-3109/
+Donnybrook,3064,657000,500,3.9,0.8,https://www.realestate.com.au/vic/donnybrook-3064/
+Donvale,3111,1640000,800,3.2,4.5,https://www.realestate.com.au/vic/donvale-3111/
+Doreen,3754,810000,560,3.7,6.6,https://www.realestate.com.au/vic/doreen-3754/
+Doveton,3177,642000,528,4.1,5.8,https://www.realestate.com.au/vic/doveton-3177/
+Dromana,3936,985000,650,3.3,1.8,https://www.realestate.com.au/vic/dromana-3936/
+Eaglemont,3084,2382500,870,2.5,-4.7,https://www.realestate.com.au/vic/eaglemont-3084/
+East Melbourne,3002,3050000,1175,2.5,-21.8,https://www.realestate.com.au/vic/east-melbourne-3002/
+Edithvale,3196,1331000,788,2.9,4.2,https://www.realestate.com.au/vic/edithvale-3196/
+Elsternwick,3185,2015000,960,2.7,3.3,https://www.realestate.com.au/vic/elsternwick-3185/
+Eltham,3095,1300000,750,3.4,5.3,https://www.realestate.com.au/vic/eltham-3095/
+Eltham North,3095,1300000,780,3.5,4,https://www.realestate.com.au/vic/eltham-north-3095/
+Endeavour Hills,3802,857000,600,3.9,7.1,https://www.realestate.com.au/vic/endeavour-hills-3802/
+Epping,3076,732500,550,3.8,10.4,https://www.realestate.com.au/vic/epping-3076/
+Eumemmerring,3177,726000,590,4.1,15.7,https://www.realestate.com.au/vic/eumemmerring-3177/
+Fairfield,3078,1730000,815,2.7,5,https://www.realestate.com.au/vic/fairfield-3078/
+Fawkner,3060,844000,575,3.8,8.8,https://www.realestate.com.au/vic/fawkner-3060/
+Ferntree Gully,3156,950000,630,3.5,9.2,https://www.realestate.com.au/vic/ferntree-gully-3156/
+Fitzroy,3065,1525000,965,3.6,-13.6,https://www.realestate.com.au/vic/fitzroy-3065/
+Fitzroy North,3068,1697950,873,3,12.9,https://www.realestate.com.au/vic/fitzroy-north-3068/
+Flemington,3031,1150000,680,3.4,9,https://www.realestate.com.au/vic/flemington-3031/
+Footscray,3011,902250,628,3.7,-4.5,https://www.realestate.com.au/vic/footscray-3011/
+Forest Hill,3131,1239000,651,3.1,4.6,https://www.realestate.com.au/vic/forest-hill-3131/
+Frankston,3199,850000,595,3.8,14.9,https://www.realestate.com.au/vic/frankston-3199/
+Frankston North,3200,703000,500,3.9,15.3,https://www.realestate.com.au/vic/frankston-north-3200/
+Frankston South,3199,1225000,700,3.4,5.8,https://www.realestate.com.au/vic/frankston-south-3199/
+Gardenvale,3185,2130000,1100,2.8,16.1,https://www.realestate.com.au/vic/gardenvale-3185/
+Gladstone Park,3043,807500,550,3.9,9.4,https://www.realestate.com.au/vic/gladstone-park-3043/
+Glen Huntly,3163,1830000,895,2.8,21.2,https://www.realestate.com.au/vic/glen-huntly-3163/
+Glen Iris,3146,2600000,1050,2.5,13.4,https://www.realestate.com.au/vic/glen-iris-3146/
+Glen Waverley,3150,1785000,780,2.2,7.9,https://www.realestate.com.au/vic/glen-waverley-3150/
+Glenroy,3046,857500,575,3.6,4.6,https://www.realestate.com.au/vic/glenroy-3046/
+Gowanbrae,3043,912750,635,3.9,1.1,https://www.realestate.com.au/vic/gowanbrae-3043/
+Greensborough,3088,1040000,635,3.5,2,https://www.realestate.com.au/vic/greensborough-3088/
+Greenvale,3059,880000,630,4,2.9,https://www.realestate.com.au/vic/greenvale-3059/
+Hadfield,3046,900000,573,3.7,5.9,https://www.realestate.com.au/vic/hadfield-3046/
+Hallam,3803,790000,560,4,8.2,https://www.realestate.com.au/vic/hallam-3803/
+Hampton,3188,2294000,1268,3,-1.3,https://www.realestate.com.au/vic/hampton-3188/
+Hampton East,3188,1470000,850,3.3,1.9,https://www.realestate.com.au/vic/hampton-east-3188/
+Hampton Park,3976,715000,550,4,7.5,https://www.realestate.com.au/vic/hampton-park-3976/
+Hawthorn,3122,2780000,995,2.7,-3.5,https://www.realestate.com.au/vic/hawthorn-3122/
+Hawthorn East,3123,2490000,1050,2.6,-4.7,https://www.realestate.com.au/vic/hawthorn-east-3123/
+Heatherton,3202,1107500,800,3.9,0.7,https://www.realestate.com.au/vic/heatherton-3202/
+Heathmont,3135,1040500,650,3.4,0.2,https://www.realestate.com.au/vic/heathmont-3135/
+Heidelberg,3084,1507000,700,2.8,9.4,https://www.realestate.com.au/vic/heidelberg-3084/
+Heidelberg Heights,3081,915000,595,3.3,3.8,https://www.realestate.com.au/vic/heidelberg-heights-3081/
+Heidelberg West,3081,800000,570,3.4,1.5,https://www.realestate.com.au/vic/heidelberg-west-3081/
+Highett,3190,1475000,928,3,3.2,https://www.realestate.com.au/vic/highett-3190/
+Hillside,3037,820000,530,3.5,2.5,https://www.realestate.com.au/vic/hillside-3037/
+Hoppers Crossing,3029,690000,480,3.6,9.5,https://www.realestate.com.au/vic/hoppers-crossing-3029/
+Hughesdale,3166,1646000,700,2.8,15.1,https://www.realestate.com.au/vic/hughesdale-3166/
+Huntingdale,3166,1295000,680,2.8,8.4,https://www.realestate.com.au/vic/huntingdale-3166/
+Hurstbridge,3099,990000,600,3.6,3.5,https://www.realestate.com.au/vic/hurstbridge-3099/
+Ivanhoe,3079,1832000,798,3.2,2.4,https://www.realestate.com.au/vic/ivanhoe-3079/
+Ivanhoe East,3079,2380000,830,2.5,0.1,https://www.realestate.com.au/vic/ivanhoe-east-3079/
+Jacana,3047,682500,490,4,12.2,https://www.realestate.com.au/vic/jacana-3047/
+Junction Village,3977,728750,620,4.1,8.8,https://www.realestate.com.au/vic/junction-village-3977/
+Kalkallo,3064,650000,490,4,1.6,https://www.realestate.com.au/vic/kalkallo-3064/
+Kealba,3021,751000,500,3.8,7.3,https://www.realestate.com.au/vic/kealba-3021/
+Keilor,3036,1102000,655,3.5,0.2,https://www.realestate.com.au/vic/keilor-3036/
+Keilor Downs,3038,873000,560,3.7,9.1,https://www.realestate.com.au/vic/keilor-downs-3038/
+Keilor East,3033,1100000,650,3.3,9.2,https://www.realestate.com.au/vic/keilor-east-3033/
+Keilor Lodge,3038,1120500,715,3.3,13.4,https://www.realestate.com.au/vic/keilor-lodge-3038/
+Keilor North,3036,,,,,https://www.realestate.com.au/vic/keilor-north-3036/
+Keilor Park,3042,930000,580,3.8,15,https://www.realestate.com.au/vic/keilor-park-3042/
+Kensington,3031,1127500,700,3.4,6.9,https://www.realestate.com.au/vic/kensington-3031/
+Kew,3101,2595000,1150,2.4,-1.2,https://www.realestate.com.au/vic/kew-3101/
+Kew East,3102,2300000,995,2.3,6.4,https://www.realestate.com.au/vic/kew-east-3102/
+Keysborough,3173,965000,720,3.9,6.3,https://www.realestate.com.au/vic/keysborough-3173/
+Kilsyth,3137,849500,650,3.9,5.7,https://www.realestate.com.au/vic/kilsyth-3137/
+Kilsyth South,3137,1080000,715,3.6,-2.4,https://www.realestate.com.au/vic/kilsyth-south-3137/
+Kings Park,3021,666500,500,3.8,7.5,https://www.realestate.com.au/vic/kings-park-3021/
+Kingsbury,3083,865000,550,3.3,8.5,https://www.realestate.com.au/vic/kingsbury-3083/
+Kingsville,3012,1195000,728,3.2,-3.3,https://www.realestate.com.au/vic/kingsville-3012/
+Knoxfield,3180,1026000,660,3.5,9.2,https://www.realestate.com.au/vic/knoxfield-3180/
+Kooyong,3144,4535000,1375,2.4,-5.9,https://www.realestate.com.au/vic/kooyong-3144/
+Lalor,3075,775000,533,3.7,9.9,https://www.realestate.com.au/vic/lalor-3075/
+Langwarrin,3910,900000,650,3.9,5.3,https://www.realestate.com.au/vic/langwarrin-3910/
+Laverton,3028,620000,435,3.9,5.1,https://www.realestate.com.au/vic/laverton-3028/
+Lilydale,3140,900000,610,3.8,7.3,https://www.realestate.com.au/vic/lilydale-3140/
+Lower Plenty,3093,1390000,630,2.9,-12.4,https://www.realestate.com.au/vic/lower-plenty-3093/
+Lynbrook,3975,880000,625,3.8,13.2,https://www.realestate.com.au/vic/lynbrook-3975/
+Lyndhurst,3975,981000,650,3.7,6.1,https://www.realestate.com.au/vic/lyndhurst-3975/
+Lysterfield,3156,1453000,650,3.6,7.6,https://www.realestate.com.au/vic/lysterfield-3156/
+Macleod,3085,1201000,623,3,7.7,https://www.realestate.com.au/vic/macleod-3085/
+Maidstone,3012,862250,630,3.8,4.5,https://www.realestate.com.au/vic/maidstone-3012/
+Malvern,3144,2572500,1225,2.6,-19.6,https://www.realestate.com.au/vic/malvern-3144/
+Malvern East,3145,2140000,818,2.9,4,https://www.realestate.com.au/vic/malvern-east-3145/
+Mambourin,3024,645500,450,3.7,3.7,https://www.realestate.com.au/vic/mambourin-3024/
+Manor Lakes,3024,659125,465,3.8,3.3,https://www.realestate.com.au/vic/manor-lakes-3024/
+Maribyrnong,3032,1000000,700,3.7,-9.1,https://www.realestate.com.au/vic/maribyrnong-3032/
+McCrae,3938,1230000,715,3.3,1.4,https://www.realestate.com.au/vic/mccrae-3938/
+McKinnon,3204,1856000,1070,2.7,3.4,https://www.realestate.com.au/vic/mckinnon-3204/
+Meadow Heights,3048,680000,520,4.2,13.3,https://www.realestate.com.au/vic/meadow-heights-3048/
+Melbourne,3000,465000,650,2.3,-57.7,https://www.realestate.com.au/vic/melbourne-3000/
+Melbourne Airport,3045,,,,,https://www.realestate.com.au/vic/melbourne-airport-3045/
+Melton,3337,548000,410,3.9,14.8,https://www.realestate.com.au/vic/melton-3337/
+Melton South,3338,580000,420,3.8,11.5,https://www.realestate.com.au/vic/melton-south-3338/
+Melton West,3337,610000,430,3.7,12.6,https://www.realestate.com.au/vic/melton-west-3337/
+Mentone,3194,1365000,795,3.3,3,https://www.realestate.com.au/vic/mentone-3194/
+Mernda,3754,736900,550,3.8,5.3,https://www.realestate.com.au/vic/mernda-3754/
+Mickleham,3064,705000,530,4,4.4,https://www.realestate.com.au/vic/mickleham-3064/
+Middle Park,3206,3202500,1100,2.4,22.2,https://www.realestate.com.au/vic/middle-park-3206/
+Mill Park,3082,858000,560,3.6,8.6,https://www.realestate.com.au/vic/mill-park-3082/
+Mitcham,3132,1250000,650,3,8.7,https://www.realestate.com.au/vic/mitcham-3132/
+Mont Albert,3127,2417500,750,2.5,-0.4,https://www.realestate.com.au/vic/mont-albert-3127/
+Mont Albert North,3129,1780000,850,2.7,12,https://www.realestate.com.au/vic/mont-albert-north-3129/
+Montmorency,3094,1180000,695,3.1,4.9,https://www.realestate.com.au/vic/montmorency-3094/
+Montrose,3765,1000000,665,3.7,6.2,https://www.realestate.com.au/vic/montrose-3765/
+Moonee Ponds,3039,1565000,750,3.2,4.3,https://www.realestate.com.au/vic/moonee-ponds-3039/
+Moorabbin,3189,1303750,815,3.5,3.8,https://www.realestate.com.au/vic/moorabbin-3189/
+Moorabbin Airport,3194,,,,,https://www.realestate.com.au/vic/moorabbin-airport-3194/
+Mooroolbark,3138,862000,630,3.9,5.5,https://www.realestate.com.au/vic/mooroolbark-3138/
+Mordialloc,3195,1366000,800,3.2,6.3,https://www.realestate.com.au/vic/mordialloc-3195/
+Mornington,3931,1155000,730,3.4,6.5,https://www.realestate.com.au/vic/mornington-3931/
+Mount Eliza,3930,1700000,1000,3.2,5.4,https://www.realestate.com.au/vic/mount-eliza-3930/
+Mount Evelyn,3796,906000,620,3.7,8.2,https://www.realestate.com.au/vic/mount-evelyn-3796/
+Mount Martha,3934,1450000,845,3.4,4.7,https://www.realestate.com.au/vic/mount-martha-3934/
+Mount Waverley,3149,1650000,750,2.5,1.5,https://www.realestate.com.au/vic/mount-waverley-3149/
+Mulgrave,3170,1140000,670,3.3,5.6,https://www.realestate.com.au/vic/mulgrave-3170/
+Murrumbeena,3163,1656944,830,2.9,2.3,https://www.realestate.com.au/vic/murrumbeena-3163/
+Narre Warren,3805,815000,580,3.8,8.7,https://www.realestate.com.au/vic/narre-warren-3805/
+Narre Warren North,3804,1625000,765,2.8,-6.2,https://www.realestate.com.au/vic/narre-warren-north-3804/
+Narre Warren South,3805,865000,620,3.8,7.1,https://www.realestate.com.au/vic/narre-warren-south-3805/
+Newport,3015,1250000,720,3.3,0,https://www.realestate.com.au/vic/newport-3015/
+Niddrie,3042,1250000,700,3,-0.8,https://www.realestate.com.au/vic/niddrie-3042/
+Noble Park,3174,837000,575,3.8,8.7,https://www.realestate.com.au/vic/noble-park-3174/
+Noble Park North,3174,822500,570,4,5.5,https://www.realestate.com.au/vic/noble-park-north-3174/
+North Melbourne,3051,1240000,780,3.5,-4.6,https://www.realestate.com.au/vic/north-melbourne-3051/
+North Warrandyte,3113,1400000,845,3.2,-4.4,https://www.realestate.com.au/vic/north-warrandyte-3113/
+Northcote,3070,1742500,850,2.9,8.6,https://www.realestate.com.au/vic/northcote-3070/
+Notting Hill,3168,1171000,693,2.5,2.9,https://www.realestate.com.au/vic/notting-hill-3168/
+Nunawading,3131,1185000,655,3.2,0.9,https://www.realestate.com.au/vic/nunawading-3131/
+Oak Park,3046,1150100,650,3.5,6.2,https://www.realestate.com.au/vic/oak-park-3046/
+Oakleigh,3166,1410000,683,2.8,10.6,https://www.realestate.com.au/vic/oakleigh-3166/
+Oakleigh East,3166,1196000,650,2.8,1.8,https://www.realestate.com.au/vic/oakleigh-east-3166/
+Oakleigh South,3167,1255000,745,3.3,7.3,https://www.realestate.com.au/vic/oakleigh-south-3167/
+Officer,3809,755000,590,4.2,5.2,https://www.realestate.com.au/vic/officer-3809/
+Pakenham,3810,712000,550,4.1,9.1,https://www.realestate.com.au/vic/pakenham-3810/
+Park Orchards,3114,1915000,1275,3.3,-8.6,https://www.realestate.com.au/vic/park-orchards-3114/
+Parkdale,3195,1628500,800,3.1,11.5,https://www.realestate.com.au/vic/parkdale-3195/
+Parkville,3052,1796944,1100,2.9,4,https://www.realestate.com.au/vic/parkville-3052/
+Pascoe Vale,3044,1151000,640,3.2,9.6,https://www.realestate.com.au/vic/pascoe-vale-3044/
+Pascoe Vale South,3044,1300000,700,3,9.1,https://www.realestate.com.au/vic/pascoe-vale-south-3044/
+Patterson Lakes,3197,1335000,863,3.6,11.3,https://www.realestate.com.au/vic/patterson-lakes-3197/
+Plumpton,3335,,,,,https://www.realestate.com.au/vic/plumpton-3335/
+Point Cook,3030,820000,570,3.6,8.1,https://www.realestate.com.au/vic/point-cook-3030/
+Port Melbourne,3207,1550000,970,3.2,-0.1,https://www.realestate.com.au/vic/port-melbourne-3207/
+Portsea,3944,2825000,850,2.4,-24.7,https://www.realestate.com.au/vic/portsea-3944/
+Prahran,3181,1600000,900,3.1,0.3,https://www.realestate.com.au/vic/prahran-3181/
+Princes Hill,3054,1895000,988,2.9,11.1,https://www.realestate.com.au/vic/princes-hill-3054/
+Research,3095,1716250,750,3.3,13.3,https://www.realestate.com.au/vic/research-3095/
+Reservoir,3073,950000,580,3.3,5.6,https://www.realestate.com.au/vic/reservoir-3073/
+Richmond,3121,1365000,875,3.4,-0.9,https://www.realestate.com.au/vic/richmond-3121/
+Ringwood,3134,1041000,650,3.4,3.3,https://www.realestate.com.au/vic/ringwood-3134/
+Ringwood East,3135,1020000,630,3.5,1.7,https://www.realestate.com.au/vic/ringwood-east-3135/
+Ringwood North,3134,1275000,695,3.1,6.7,https://www.realestate.com.au/vic/ringwood-north-3134/
+Ripponlea,3185,1735000,840,2.7,-13,https://www.realestate.com.au/vic/ripponlea-3185/
+Rockbank,3335,632500,480,4.1,1.6,https://www.realestate.com.au/vic/rockbank-3335/
+Rosanna,3084,1419000,708,2.8,3.4,https://www.realestate.com.au/vic/rosanna-3084/
+Rosebud,3939,800000,575,3.9,3.9,https://www.realestate.com.au/vic/rosebud-3939/
+Rowville,3178,1160000,695,3.5,10.5,https://www.realestate.com.au/vic/rowville-3178/
+Roxburgh Park,3064,720000,560,4.1,9.3,https://www.realestate.com.au/vic/roxburgh-park-3064/
+Rye,3941,950000,600,3.7,-0.5,https://www.realestate.com.au/vic/rye-3941/
+Safety Beach,3936,1153000,750,3.4,0.3,https://www.realestate.com.au/vic/safety-beach-3936/
+Sandhurst,3977,1100000,750,3.8,8.4,https://www.realestate.com.au/vic/sandhurst-3977/
+Sandringham,3191,2010000,1198,2.8,-2,https://www.realestate.com.au/vic/sandringham-3191/
+Sassafras,3787,975000,770,3.5,4.8,https://www.realestate.com.au/vic/sassafras-3787/
+Scoresby,3179,1008800,630,3.4,3.5,https://www.realestate.com.au/vic/scoresby-3179/
+Seabrook,3028,781500,530,3.9,3.9,https://www.realestate.com.au/vic/seabrook-3028/
+Seaford,3198,910000,620,3.7,9.6,https://www.realestate.com.au/vic/seaford-3198/
+Seaholme,3018,1350000,685,3,9.3,https://www.realestate.com.au/vic/seaholme-3018/
+Seddon,3011,1100000,700,3.3,0,https://www.realestate.com.au/vic/seddon-3011/
+Selby,3159,892670,725,3.9,5,https://www.realestate.com.au/vic/selby-3159/
+Skye,3977,860000,650,4,8.9,https://www.realestate.com.au/vic/skye-3977/
+Somerton,3062,,,,,https://www.realestate.com.au/vic/somerton-3062/
+Sorrento,3943,1838500,795,2.6,2.1,https://www.realestate.com.au/vic/sorrento-3943/
+South Kingsville,3015,1050000,700,3.5,-0.7,https://www.realestate.com.au/vic/south-kingsville-3015/
+South Melbourne,3205,1700000,840,3.2,11.8,https://www.realestate.com.au/vic/south-melbourne-3205/
+South Morang,3752,792000,550,3.8,9.7,https://www.realestate.com.au/vic/south-morang-3752/
+South Wharf,3006,,,,,https://www.realestate.com.au/vic/south-wharf-3006/
+South Yarra,3141,2050000,928,2.8,2.5,https://www.realestate.com.au/vic/south-yarra-3141/
+Southbank,3006,476000,698,3.7,-62.2,https://www.realestate.com.au/vic/southbank-3006/
+Spotswood,3015,1155000,750,3.4,-4.4,https://www.realestate.com.au/vic/spotswood-3015/
+Springvale,3171,935000,640,3.6,12.7,https://www.realestate.com.au/vic/springvale-3171/
+Springvale South,3172,863000,640,3.8,4.9,https://www.realestate.com.au/vic/springvale-south-3172/
+St Albans,3021,724000,500,3.6,10.5,https://www.realestate.com.au/vic/st-albans-3021/
+St Helena,3088,1150000,750,3.5,-3.1,https://www.realestate.com.au/vic/st-helena-3088/
+St Kilda,3182,1620000,850,2.8,-7.4,https://www.realestate.com.au/vic/st-kilda-3182/
+St Kilda East,3183,1709000,890,2.9,1.9,https://www.realestate.com.au/vic/st-kilda-east-3183/
+St Kilda West,3182,2370000,1175,2.9,7.2,https://www.realestate.com.au/vic/st-kilda-west-3182/
+Strathmore,3041,1550000,800,2.9,-5.8,https://www.realestate.com.au/vic/strathmore-3041/
+Strathmore Heights,3041,1165000,740,3.3,16.5,https://www.realestate.com.au/vic/strathmore-heights-3041/
+Strathtulloh,3338,630000,470,3.9,0.5,https://www.realestate.com.au/vic/strathtulloh-3338/
+Sunbury,3429,720000,550,3.9,6.7,https://www.realestate.com.au/vic/sunbury-3429/
+Sunshine,3020,861500,525,3.2,12,https://www.realestate.com.au/vic/sunshine-3020/
+Sunshine North,3020,776000,540,3.5,5.6,https://www.realestate.com.au/vic/sunshine-north-3020/
+Sunshine West,3020,760000,500,3.5,11,https://www.realestate.com.au/vic/sunshine-west-3020/
+Surrey Hills,3127,2201000,900,2.3,-4.9,https://www.realestate.com.au/vic/surrey-hills-3127/
+Sydenham,3037,750500,500,3.6,10,https://www.realestate.com.au/vic/sydenham-3037/
+Tarneit,3029,675000,523,4.1,3.9,https://www.realestate.com.au/vic/tarneit-3029/
+Taylors Hill,3037,922500,560,3.4,7,https://www.realestate.com.au/vic/taylors-hill-3037/
+Taylors Lakes,3038,973000,580,3.3,5.2,https://www.realestate.com.au/vic/taylors-lakes-3038/
+Tecoma,3160,914250,675,4,4.9,https://www.realestate.com.au/vic/tecoma-3160/
+Templestowe,3106,1655500,913,3.2,-2.6,https://www.realestate.com.au/vic/templestowe-3106/
+Templestowe Lower,3107,1365000,750,3.1,1.1,https://www.realestate.com.au/vic/templestowe-lower-3107/
+The Basin,3154,916500,650,3.8,5.3,https://www.realestate.com.au/vic/the-basin-3154/
+Thomastown,3074,785000,530,3.8,8.1,https://www.realestate.com.au/vic/thomastown-3074/
+Thornbury,3071,1465000,800,3,8.6,https://www.realestate.com.au/vic/thornbury-3071/
+Thornhill Park,3335,620750,450,4.2,5.4,https://www.realestate.com.au/vic/thornhill-park-3335/
+Toorak,3142,4575000,1500,1.9,-20.1,https://www.realestate.com.au/vic/toorak-3142/
+Tootgarook,3941,890000,588,4.1,4.6,https://www.realestate.com.au/vic/tootgarook-3941/
+Tottenham,3012,,,,,https://www.realestate.com.au/vic/tottenham-3012/
+Travancore,3032,1250000,760,3,-33.3,https://www.realestate.com.au/vic/travancore-3032/
+Truganina,3029,675050,520,4.2,2.6,https://www.realestate.com.au/vic/truganina-3029/
+Tullamarine,3043,820000,585,3.7,11.7,https://www.realestate.com.au/vic/tullamarine-3043/
+Upper Ferntree Gully,3156,920001,660,3.6,5.1,https://www.realestate.com.au/vic/upper-ferntree-gully-3156/
+Upwey,3158,880000,720,4,0,https://www.realestate.com.au/vic/upwey-3158/
+Vermont,3133,1348000,680,3,9.6,https://www.realestate.com.au/vic/vermont-3133/
+Vermont South,3133,1520000,750,2.9,3.7,https://www.realestate.com.au/vic/vermont-south-3133/
+Viewbank,3084,1193500,695,3,1.9,https://www.realestate.com.au/vic/viewbank-3084/
+Wantirna,3152,1166500,680,3.3,6.1,https://www.realestate.com.au/vic/wantirna-3152/
+Wantirna South,3152,1292500,680,3.3,5.9,https://www.realestate.com.au/vic/wantirna-south-3152/
+Warrandyte,3113,1487500,850,3.5,5.8,https://www.realestate.com.au/vic/warrandyte-3113/
+Warrandyte South,3134,2505000,1175,3.2,3.5,https://www.realestate.com.au/vic/warrandyte-south-3134/
+Warranwood,3134,1285000,800,3.7,-3.4,https://www.realestate.com.au/vic/warranwood-3134/
+Waterways,3195,1600000,900,3.3,8.4,https://www.realestate.com.au/vic/waterways-3195/
+Watsonia,3087,1010000,580,3.3,6.7,https://www.realestate.com.au/vic/watsonia-3087/
+Watsonia North,3087,945500,620,3.4,5.1,https://www.realestate.com.au/vic/watsonia-north-3087/
+Wattle Glen,3096,1061000,725,3.8,1.1,https://www.realestate.com.au/vic/wattle-glen-3096/
+Weir Views,3338,620000,460,3.7,7.3,https://www.realestate.com.au/vic/weir-views-3338/
+Werribee,3030,660000,470,3.7,7.8,https://www.realestate.com.au/vic/werribee-3030/
+West Footscray,3012,1022444,650,3.1,12.4,https://www.realestate.com.au/vic/west-footscray-3012/
+West Melbourne,3003,1405000,780,3.4,8.2,https://www.realestate.com.au/vic/west-melbourne-3003/
+Westmeadows,3049,744500,550,4,11.1,https://www.realestate.com.au/vic/westmeadows-3049/
+Wheelers Hill,3150,1507000,750,2.8,7.6,https://www.realestate.com.au/vic/wheelers-hill-3150/
+Williams Landing,3027,867500,600,3.9,7.5,https://www.realestate.com.au/vic/williams-landing-3027/
+Williamstown,3016,1585000,800,2.7,4.6,https://www.realestate.com.au/vic/williamstown-3016/
+Williamstown North,3016,1235000,770,3,-3.1,https://www.realestate.com.au/vic/williamstown-north-3016/
+Windsor,3181,1401500,850,3.2,2.1,https://www.realestate.com.au/vic/windsor-3181/
+Wollert,3750,712000,560,4.3,3.6,https://www.realestate.com.au/vic/wollert-3750/
+Wonga Park,3115,1700000,835,3.6,4.9,https://www.realestate.com.au/vic/wonga-park-3115/
+Wyndham Vale,3024,615000,450,3.8,6,https://www.realestate.com.au/vic/wyndham-vale-3024/
+Yallambie,3085,1003750,650,3.2,-2.1,https://www.realestate.com.au/vic/yallambie-3085/
+Yarraville,3013,1185000,700,3.1,5.3,https://www.realestate.com.au/vic/yarraville-3013/

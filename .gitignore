@@ -23,3 +23,15 @@ fix_encoding.py
 
 # Stray git bundles
 *.bundle
+
+# ── Security: never commit these ────────────────────────────────────────────
+# Server logs contain the auth token in request URLs (?token=...) + client IPs
+*.log
+*.err
+server*.log
+server*.err
+_srv*.log
+# Local secrets — real AUTH_TOKEN, any private config. Loaded by start-server.bat.
+.secrets.bat
+secrets.env
+*.local.bat

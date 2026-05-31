@@ -1,0 +1,51 @@
+rank_alphabetical,suburb,postcode,median_house_price_aud,median_house_rent_per_week_aud,sales_price_growth_pct,rental_price_growth_pct,source_url,notes
+1,Alexander Heights,6064,890000,760,16.6,1.3,https://reiwa.com.au/suburb/alexander-heights/,OK
+2,Alfred Cove,6154,1595000,840,14.2,12.0,https://reiwa.com.au/suburb/alfred-cove/,OK
+3,Alkimos,6038,830000,720,17.7,5.9,https://reiwa.com.au/suburb/alkimos/,OK
+4,Anketell,6167,771000,700,14.2,0.0,https://reiwa.com.au/suburb/anketell/,OK
+5,Applecross,6153,2750000,1000,0.4,0.0,https://reiwa.com.au/suburb/applecross/,OK
+6,Ardross,6153,1860000,1000,12.7,-9.1,https://reiwa.com.au/suburb/ardross/,OK
+7,Armadale,6112,650000,615,15.0,6.0,https://reiwa.com.au/suburb/armadale/,OK
+8,Ascot,6104,1300000,800,27.1,12.7,https://reiwa.com.au/suburb/ascot/,OK
+9,Ashby,6065,890000,695,21.5,3.7,https://reiwa.com.au/suburb/ashby/,OK
+10,Ashendon,6111,,,,,https://reiwa.com.au/suburb/ashendon/,No REIWA stats page/data found in this check
+11,Ashfield,6054,818000,730,1.0,21.7,https://reiwa.com.au/suburb/ashfield/,OK
+12,Attadale,6156,2200000,950,18.9,-13.6,https://reiwa.com.au/suburb/attadale/,OK
+13,Atwell,6164,965000,750,10.9,7.1,https://reiwa.com.au/suburb/atwell/,OK
+14,Aubin Grove,6164,940000,760,10.8,9.4,https://reiwa.com.au/suburb/aubin-grove/,OK
+15,Aveley,6069,830000,780,12.2,13.9,https://reiwa.com.au/suburb/aveley/,OK
+16,Bailup,6082,,,,,https://reiwa.com.au/suburb/bailup/,"REIWA shows N/A for median sales price, rent, sales growth and rental growth"
+17,Balcatta,6021,960000,750,20.0,8.7,https://reiwa.com.au/suburb/balcatta/,OK
+18,Baldivis,6171,810000,680,14.9,4.6,https://reiwa.com.au/suburb/baldivis/,OK
+19,Balga,6061,735000,700,18.5,7.7,https://reiwa.com.au/suburb/balga/,OK
+20,Ballajura,6066,880501,750,17.4,11.9,https://reiwa.com.au/suburb/ballajura/,OK
+21,Banjup,6164,,950,,29.3,https://reiwa.com.au/suburb/banjup/,REIWA shows N/A for median sales price and sales growth; rental data available
+22,Banksia Grove,6031,800000,730,16.8,7.4,https://reiwa.com.au/suburb/banksia-grove/,OK
+23,Baskerville,6056,,700,,1.4,https://reiwa.com.au/suburb/baskerville/,REIWA shows N/A for median sales price and sales growth; rental data available
+24,Bassendean,6054,950000,737,15.9,5.3,https://reiwa.com.au/suburb/bassendean/,OK
+25,Bateman,6150,1525000,800,21.6,1.3,https://reiwa.com.au/suburb/bateman/,OK
+26,Bayswater,6053,1200000,790,24.4,8.2,https://reiwa.com.au/suburb/bayswater/,OK
+27,Beaconsfield,6162,1330000,850,10.8,4.9,https://reiwa.com.au/suburb/beaconsfield/,OK
+28,Beckenham,6107,813000,700,17.0,7.7,https://reiwa.com.au/suburb/beckenham/,OK
+29,Bedford,6052,1175000,775,19.0,3.3,https://reiwa.com.au/suburb/bedford/,OK
+30,Bedfordale,6112,1405000,,16.8,,https://reiwa.com.au/suburb/bedfordale/,REIWA quick stats show N/A for median rental price/rental growth
+31,Beechboro,6063,831500,730,17.9,9.0,https://reiwa.com.au/suburb/beechboro/,OK
+32,Beechina,6556,,,,,https://reiwa.com.au/suburb/beechina/,"REIWA shows N/A for median sales price, rent, sales growth and rental growth"
+33,Beeliar,6164,996000,730,20.0,7.4,https://reiwa.com.au/suburb/beeliar/,OK
+34,Beldon,6027,955000,750,10.7,12.8,https://reiwa.com.au/suburb/beldon/,OK
+35,Belhus,6069,,,,,https://reiwa.com.au/suburb/belhus/,"REIWA shows N/A for median sales price, rent, sales growth and rental growth"
+36,Bellevue,6056,758500,830,23.2,59.6,https://reiwa.com.au/suburb/bellevue/,"OK; rental growth unusually high, verify before decisions"
+37,Belmont,6104,886500,790,21.3,6.8,https://reiwa.com.au/suburb/belmont/,OK
+38,Bentley,6102,806000,780,15.1,11.4,https://reiwa.com.au/suburb/bentley/,OK
+39,Bennett Springs,6063,920000,850,16.8,7.6,https://reiwa.com.au/suburb/bennett-springs/,OK
+40,Bertram,6167,762500,690,12.1,6.2,https://reiwa.com.au/suburb/bertram/,OK
+41,Bibra Lake,6163,1037000,625,15.2,-21.9,https://reiwa.com.au/suburb/bibra-lake/,"OK; rental growth negative, verify before decisions"
+42,Bickley,6076,830000,,-34.6,,https://reiwa.com.au/suburb/bickley/,REIWA shows N/A for median rental price/rental growth; sales growth may be volatile due to low volume
+43,Bicton,6157,1980000,900,19.6,0.0,https://reiwa.com.au/suburb/bicton/,OK
+44,Booragoon,6154,1620000,870,17.4,2.7,https://reiwa.com.au/suburb/booragoon/,OK
+45,Boya,6056,1025000,700,6.8,-22.2,https://reiwa.com.au/suburb/boya/,"OK; rental growth negative, verify before decisions"
+46,Brabham,6055,843000,760,17.1,1.3,https://reiwa.com.au/suburb/brabham/,OK
+47,Brentwood,6153,1490000,800,46.8,12.7,https://reiwa.com.au/suburb/brentwood/,"OK; very high growth, check sale volume before decisions"
+48,Brigadoon,6069,,,,,https://reiwa.com.au/suburb/brigadoon/,"REIWA shows N/A for median sales price, rent, sales growth and rental growth"
+49,Brookdale,6112,700000,650,16.7,8.3,https://reiwa.com.au/suburb/brookdale/,OK
+50,Bull Creek,6149,1500000,800,13.6,0.6,https://reiwa.com.au/suburb/bull-creek/,OK

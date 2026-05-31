@@ -313,12 +313,18 @@ _RTREE_CACHE = {}   # layer name -> rtree.index.Index   (lazy, opened on demand)
 
 def _rtree_for(layer: str):
     """Lazy-open the libspatialindex R-tree for a layer. Cached process-wide
-    so we don't pay open cost per request."""
+    so we don't pay open cost per request. Returns None (uncached) while the
+    index is mid-build so the next request retries once the build finishes."""
     idx = _RTREE_CACHE.get(layer)
     if idx is not None:
         return idx
     base = os.path.join(_RTREE_DIR, layer)
     if not (os.path.exists(base + ".idx") and os.path.exists(base + ".dat")):
+        return None
+    # An empty / unfinished .idx file is the build script's mid-run state —
+    # libspatialindex throws InvalidPageException trying to open it. Skip
+    # rather than crash; the user gets a 503 + "index building" hint.
+    if os.path.getsize(base + ".idx") == 0:
         return None
     try:
         import rtree
@@ -328,7 +334,13 @@ def _rtree_for(layer: str):
     p.dimension = 2
     p.dat_extension = "dat"
     p.idx_extension = "idx"
-    idx = rtree.index.Index(base, properties=p)
+    try:
+        idx = rtree.index.Index(base, properties=p)
+    except Exception:
+        # Concurrent writes from build_spatial_index.py can also leave the
+        # index in transient invalid states; surface the error to the client
+        # instead of erroring out the whole request.
+        return None
     _RTREE_CACHE[layer] = idx
     return idx
 

@@ -295,89 +295,133 @@ def api_suggest():
         return jsonify({"error": str(e)}), 500
 
 
-# ── API: Vicmap Property easements — proxy to DEECA OpenData WFS ──────────────
+# ── API: bbox queries against the LOCAL spatial index ────────────────────────
 #
-# Statewide easements (Victoria) are way too big to ship as a static geojson —
-# we pass through the current map viewport bbox to the public WFS endpoint and
-# stream the result back to the browser. Server-side so the browser never has
-# to worry about CORS. The WFS layer is published as part of "Vicmap Property"
-# at https://opendata.maps.vic.gov.au/.
+# Easements + lots are downloaded ONCE to disk (data/build_easements_vic.py,
+# data/build_lots_melb.py) and indexed via data/build_spatial_index.py into:
+#   - data/{easements,lots}.idx + .dat  → libspatialindex on-disk R-tree
+#   - data/spatial.db                   → SQLite payload store (id, pfi, geom)
 #
-# We try a small list of likely layer names — the GeoServer publishes the
-# easement dataset under one of these; whichever one returns 200 first wins
-# and is cached in memory for the rest of the process lifetime.
-_EASEMENT_WFS = "https://opendata.maps.vic.gov.au/geoserver/wfs"
-_EASEMENT_LAYER_CANDIDATES = [
-    "open-data-platform:easement",                  # Vicmap Property — cadastral easements (LineString)
-    "open-data-platform:v_s_easement_approved",     # planning-scheme easements (approved)
-    "open-data-platform:v_s_easement_proposed",     # planning-scheme easements (proposed)
-]
-_EASEMENT_LAYER_CACHED = None  # set on first successful probe
+# Every browser request hits these LOCAL files — nothing leaves the machine
+# after the initial bulk download. The wire payload per request is tens of KB
+# (just the features in the current viewport), not the full 200 / 780 MB file.
+
+_SPATIAL_DB = os.path.join(os.path.dirname(__file__), "..", "data", "spatial.db")
+_RTREE_DIR  = os.path.join(os.path.dirname(__file__), "..", "data")
+_RTREE_CACHE = {}   # layer name -> rtree.index.Index   (lazy, opened on demand)
 
 
-def _easements_pick_layer(timeout: int = 10):
-    """Return the working WFS layer name, probing once per process."""
-    global _EASEMENT_LAYER_CACHED
-    if _EASEMENT_LAYER_CACHED:
-        return _EASEMENT_LAYER_CACHED
-    import httpx
-    with httpx.Client(timeout=timeout) as client:
-        for layer in _EASEMENT_LAYER_CANDIDATES:
-            try:
-                r = client.get(_EASEMENT_WFS, params={
-                    "service": "WFS", "version": "2.0.0", "request": "DescribeFeatureType",
-                    "typeName": layer,
+def _rtree_for(layer: str):
+    """Lazy-open the libspatialindex R-tree for a layer. Cached process-wide
+    so we don't pay open cost per request."""
+    idx = _RTREE_CACHE.get(layer)
+    if idx is not None:
+        return idx
+    base = os.path.join(_RTREE_DIR, layer)
+    if not (os.path.exists(base + ".idx") and os.path.exists(base + ".dat")):
+        return None
+    try:
+        import rtree
+    except ImportError:
+        return None
+    p = rtree.index.Property()
+    p.dimension = 2
+    p.dat_extension = "dat"
+    p.idx_extension = "idx"
+    idx = rtree.index.Index(base, properties=p)
+    _RTREE_CACHE[layer] = idx
+    return idx
+
+
+def _spatial_conn():
+    """Read-only SQLite connection. The DB is built once and never written
+    to from the web process."""
+    uri = f"file:{os.path.abspath(_SPATIAL_DB)}?mode=ro"
+    return sqlite3.connect(uri, uri=True, timeout=10)
+
+
+def _bbox_query(layer: str, w: float, s: float, e: float, n: float, cap: int = 10000):
+    """Return up to `cap` features from `layer` whose bbox intersects (w,s,e,n)
+    as a GeoJSON FeatureCollection (dict)."""
+    if layer not in ("easements", "lots"):
+        return None
+    if not os.path.exists(_SPATIAL_DB):
+        return None
+    idx = _rtree_for(layer)
+    if idx is None:
+        return None
+
+    # 1. Spatial filter — R-tree returns the candidate feature IDs in O(log N).
+    ids = list(idx.intersection((w, s, e, n)))
+    if not ids:
+        return {"type": "FeatureCollection", "features": []}
+    if len(ids) > cap:
+        ids = ids[:cap]
+
+    # 2. Payload lookup — SQLite primary-key fetch is O(1) per id.
+    # We chunk because SQLite has a 999-parameter limit by default.
+    feats = []
+    con = _spatial_conn()
+    try:
+        cur = con.cursor()
+        for chunk_start in range(0, len(ids), 900):
+            chunk = ids[chunk_start:chunk_start + 900]
+            placeholders = ",".join("?" * len(chunk))
+            sql = f"SELECT pfi, status, geom FROM {layer} WHERE id IN ({placeholders})"
+            for pfi, status, geom in cur.execute(sql, chunk):
+                try:
+                    g = json.loads(geom)
+                except Exception:
+                    continue
+                feats.append({
+                    "type": "Feature",
+                    "geometry": g,
+                    "properties": {"pfi": pfi, "status": status},
                 })
-                if r.status_code == 200 and ("<xsd:schema" in r.text or "<schema" in r.text):
-                    _EASEMENT_LAYER_CACHED = layer
-                    return layer
-            except Exception:
-                continue
-    return None
+    finally:
+        con.close()
+    return {"type": "FeatureCollection", "features": feats}
 
 
 @app.route("/api/easements")
 def api_easements():
-    """Fetch Vicmap easements that intersect the given lat/lng bbox.
-
-    Query params: w, s, e, n (WGS84). Returns a GeoJSON FeatureCollection.
-    The endpoint is intentionally aggressive about bbox size — anything larger
-    than ~0.05 degrees square (≈5km) is rejected to keep payloads sane, since
-    the browser is already gated on zoom ≥ 17.
-    """
+    """Easements intersecting the lat/lng bbox (LOCAL DB, no network)."""
     try:
-        w = float(request.args.get("w"))
-        s = float(request.args.get("s"))
-        e = float(request.args.get("e"))
-        n = float(request.args.get("n"))
+        w = float(request.args.get("w")); s = float(request.args.get("s"))
+        e = float(request.args.get("e")); n = float(request.args.get("n"))
     except (TypeError, ValueError):
         return jsonify({"error": "w,s,e,n (WGS84) required"}), 400
     if not (w < e and s < n):
         return jsonify({"error": "invalid bbox"}), 400
-    if (e - w) > 0.06 or (n - s) > 0.06:
+    # Refuse implausibly large bboxes — the front-end is already gated on
+    # zoom ≥ 13, but a defensive cap stops a single request from pulling
+    # half the state into memory if zoom-gating ever breaks.
+    if (e - w) > 0.5 or (n - s) > 0.5:
         return jsonify({"type": "FeatureCollection", "features": [],
                         "warning": "bbox too large — zoom in further"}), 200
+    fc = _bbox_query("easements", w, s, e, n)
+    if fc is None:
+        return jsonify({"error": "spatial DB missing. Run data/build_spatial_index.py."}), 503
+    return jsonify(fc)
 
-    layer = _easements_pick_layer()
-    if not layer:
-        return jsonify({"error": "No working Vicmap easement layer found; "
-                                  "update _EASEMENT_LAYER_CANDIDATES in src/web.py"}), 502
 
-    import httpx
-    params = {
-        "service": "WFS", "version": "2.0.0", "request": "GetFeature",
-        "typeName": layer, "outputFormat": "application/json",
-        "srsName": "EPSG:4326", "count": "2000",
-        "CQL_FILTER": f"BBOX(geom,{w},{s},{e},{n},'EPSG:4326')",
-    }
+@app.route("/api/lots")
+def api_lots():
+    """Lot / parcel polygons intersecting the lat/lng bbox (LOCAL DB)."""
     try:
-        with httpx.Client(timeout=20) as client:
-            r = client.get(_EASEMENT_WFS, params=params)
-            if r.status_code != 200:
-                return jsonify({"error": f"upstream {r.status_code}"}), 502
-            return Response(r.content, mimetype="application/json")
-    except Exception as ex:
-        return jsonify({"error": str(ex)}), 502
+        w = float(request.args.get("w")); s = float(request.args.get("s"))
+        e = float(request.args.get("e")); n = float(request.args.get("n"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "w,s,e,n (WGS84) required"}), 400
+    if not (w < e and s < n):
+        return jsonify({"error": "invalid bbox"}), 400
+    if (e - w) > 0.5 or (n - s) > 0.5:
+        return jsonify({"type": "FeatureCollection", "features": [],
+                        "warning": "bbox too large — zoom in further"}), 200
+    fc = _bbox_query("lots", w, s, e, n)
+    if fc is None:
+        return jsonify({"error": "spatial DB missing. Run data/build_spatial_index.py."}), 503
+    return jsonify(fc)
 
 
 # ── API: fetch reference-property specs from a Domain URL ─────────────

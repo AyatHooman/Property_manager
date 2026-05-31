@@ -891,11 +891,11 @@
       .map-search-item .icon { font-size: 12px; }
       .map-search-item .sub { font-size: 9px; }
     }
-    /* ── Measurement tool: icon-only, compact. One 30px button when idle; when
-       active, the FAB stays put and an inline icon row + tiny result chip
-       slide out to the LEFT of it. No text — just emoji. ─────────────────── */
+    /* ── Measurement tool: icon-only, compact. One 30px button at the BOTTOM-
+       RIGHT corner of the map; when active, the FAB stays put and an inline
+       icon row + tiny result chip slide out to the LEFT. ─────────────────── */
     .map-measure-wrap {
-      position: absolute; top: 50px; right: 10px; z-index: 600;
+      position: absolute; bottom: 12px; right: 10px; z-index: 600;
       display: flex; flex-direction: row-reverse; align-items: center;
       gap: 4px; pointer-events: auto;
     }
@@ -1962,10 +1962,10 @@
         </div>
         <div class="lp-group">
           <div class="lp-head"><span class="lp-caret">▾</span>📐 Property (VIC)</div>
-          <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements (statewide)</div>
-          <div class="zone-toggle" id="toggle-overlay-lots"       onclick="toggleLots()">▦ Lots (Greater Melbourne)</div>
+          <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements</div>
+          <div class="zone-toggle" id="toggle-overlay-lots"       onclick="toggleLots()">▦ Lots</div>
           <div style="font-size:9px;color:#64748b;padding:2px 6px;line-height:1.3">
-            Easements: 1.3M Vicmap lines (~200 MB raw / 22 MB gzipped). Lots: ~2M cadastral parcels (~250 MB / 30 MB gz). Both unlock at zoom 13+; first load ~30 s.
+            Vicmap data, served from this PC's local spatial index. Only the features in the current view are fetched (refresh on pan/zoom). Both unlock at zoom 13+.
           </div>
         </div>
       </div>
@@ -3364,7 +3364,7 @@ function _initMap() {
     panel.querySelectorAll('.lp-group').forEach(g =>
       g.classList.toggle('has-active', !!g.querySelector('.zone-toggle.active')));
   };
-  const mo = new MutationObserver(() => { updateMapLegend(); _updateGroupActive(); });
+  const mo = new MutationObserver(() => { updateMapLegend(); _updateGroupActive(); _appStateSave(); });
   document.querySelectorAll('.zone-toggle').forEach(t =>
     mo.observe(t, { attributes: true, attributeFilter: ['class'] }));
 
@@ -3589,11 +3589,21 @@ function _initMap() {
     _mmRedraw(true);
     _mmRecompute(true);
   }
-  // Sync easements + lots toggle gates with current zoom (both buttons are
-  // disabled below their MIN_ZOOM since rendering 1-2M features globally
-  // would crash). Layer auto-hides if user zooms out past the threshold.
+  // Sync easements + lots toggle gates with current zoom + refresh their
+  // bbox-queried features on every pan/zoom. Both layers are disabled below
+  // their MIN_ZOOM (browser would receive an oversized payload otherwise).
   _easementsUpdateGate(); _lotsUpdateGate();
-  _map.on('zoomend', () => { _easementsUpdateGate(); _lotsUpdateGate(); });
+  _map.on('zoomend', () => {
+    _easementsUpdateGate(); _lotsUpdateGate();
+    _easementsRefresh();    _lotsRefresh();
+    _appStateSave();
+  });
+  _map.on('moveend', () => {
+    _easementsRefresh();    _lotsRefresh();
+    _appStateSave();
+  });
+  _map.on('baselayerchange', _appStateSave);
+  _appStateInit({ streets, satWithLabels });
 
   mmFab.onclick = () => { if (MM.active) _mmStop(); else _mmStart(); };
   mmRow.querySelectorAll('.mm-icon[data-mode]').forEach(el => {
@@ -3620,6 +3630,74 @@ function _initMap() {
       _map.on('mousemove', _mmOnMove);
     }
   };
+}
+
+// ─── State persistence via localStorage ─────────────────────────────────────
+// Mobile Chrome reclaims memory on minimise and reloads the tab when you
+// switch back, losing scroll, zoom, and which layers are on. We save the
+// minimum useful state on every pan/zoom/toggle and restore it on load so
+// users don't have to redo everything when they return to the tab.
+const APP_STATE_KEY = 'pm_app_state_v1';
+
+function _appStateSave() {
+  if (!_map) return;
+  try {
+    const activeIds = [];
+    document.querySelectorAll('.zone-toggle.active').forEach(t => activeIds.push(t.id));
+    // Detect current basemap by walking the map's layers — `streets` and
+    // `satellite` are L.tileLayers with distinct URL templates.
+    let basemap = 'streets';
+    _map.eachLayer(l => {
+      if (l && l._url && l._url.indexOf('arcgisonline.com') !== -1) basemap = 'satellite';
+    });
+    const c = _map.getCenter();
+    localStorage.setItem(APP_STATE_KEY, JSON.stringify({
+      v: 1,
+      center: [+c.lat.toFixed(6), +c.lng.toFixed(6)],
+      zoom: _map.getZoom(),
+      layers: activeIds,
+      basemap,
+      ts: Date.now(),
+    }));
+  } catch (_) { /* localStorage full / blocked — ignore */ }
+}
+
+function _appStateLoad() {
+  try {
+    const raw = localStorage.getItem(APP_STATE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    // Discard if older than 30 days — stale views are usually not useful.
+    if (!s || !s.ts || Date.now() - s.ts > 30 * 24 * 3600 * 1000) return null;
+    return s;
+  } catch (_) { return null; }
+}
+
+function _appStateInit(bases) {
+  const s = _appStateLoad();
+  if (!s) return;
+  // 1. Restore view (center + zoom).
+  if (Array.isArray(s.center) && s.center.length === 2 && typeof s.zoom === 'number') {
+    _map.setView(s.center, s.zoom, { animate: false });
+  }
+  // 2. Restore base map if it was satellite (default is streets).
+  if (s.basemap === 'satellite' && bases && bases.satWithLabels) {
+    if (bases.streets && _map.hasLayer(bases.streets)) _map.removeLayer(bases.streets);
+    bases.satWithLabels.addTo(_map);
+  }
+  // 3. Restore active overlays. Each toggle is just a click on its element —
+  //    the toggle handlers do the right thing (load layers, register
+  //    refresh hooks, etc.). Defer so any in-flight init finishes first.
+  if (Array.isArray(s.layers) && s.layers.length) {
+    setTimeout(() => {
+      s.layers.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('active') && !el.classList.contains('disabled')) {
+          el.click();
+        }
+      });
+    }, 50);
+  }
 }
 
 function updateMapLegend() {
@@ -4244,17 +4322,17 @@ async function toggleOverlay(name) {
   btn.classList.add('active');
 }
 
-// ─── Easements (Vicmap Property — entire Victoria, vector-tiled in-browser) ──
-// We ship one big GeoJSON (~1.3M LineStrings, ~150MB raw) and let
-// Leaflet.VectorGrid slice it into Canvas-rendered vector tiles client-side
-// via geojson-vt. The browser parses the file once on first toggle, after
-// which panning/zooming is smooth at all zooms. Status: 'A'=Active (cyan
-// solid), 'R'=Retired (grey dashed). Fields kept on each feature: pfi, status.
+// ─── Easements (Vicmap) — bbox-queried against the LOCAL spatial index ───────
+// The full 1.3M-feature dataset lives on this PC (data/easements.idx + .dat
+// + spatial.db). The browser only ever requests the lines in its current
+// viewport from /api/easements?w=&s=&e=&n=. Each request returns at most a
+// few thousand features (tens of KB), refreshed on every map moveend.
+const _EASE_MIN_ZOOM = 13;
 const _easements = {
   on: false,
-  layer: null,      // L.vectorGrid.slicer instance
-  loading: false,
-  data: null,       // parsed FeatureCollection (cached after first fetch)
+  layer: null,        // current L.geoJSON
+  abortCtrl: null,    // AbortController for in-flight bbox request
+  lastKey: '',        // skip identical bbox+zoom requests
 };
 
 function mmHintEasement(msg) {
@@ -4262,56 +4340,65 @@ function mmHintEasement(msg) {
   if (btn) btn.title = msg;
 }
 
-// Multi-pass styles — Leaflet.VectorGrid draws each style entry as a
-// separate stroke on the same feature. We use a dark halo first, then a
-// bright line on top so the lines stay visible on both light (OSM) and
-// dark (satellite) base maps.
-const _EASE_STYLE_ACTIVE = [
-  { weight: 5,   color: '#0f172a', opacity: 0.85 },              // dark halo
-  { weight: 2.5, color: '#fbbf24', opacity: 1.0  },              // bright yellow stroke
-];
-const _EASE_STYLE_RETIRED = [
-  { weight: 4,   color: '#0f172a', opacity: 0.65 },
-  { weight: 1.5, color: '#e2e8f0', opacity: 0.95, dashArray: [3, 3] },
-];
+function _easeStyle(feature) {
+  // Bright stroke (gold for Active, light grey dashed for Retired). Weight 3
+  // is bold enough to stand out against satellite tiles without halo passes.
+  const s = (feature.properties || {}).status || '';
+  return s === 'A'
+    ? { color: '#fbbf24', weight: 3,   opacity: 1.0 }
+    : { color: '#e2e8f0', weight: 1.5, opacity: 0.85, dashArray: '3,3' };
+}
 
-// Minimum zoom for showing easements. With 1.3M LineStrings, rendering one
-// global canvas tile at low zoom would freeze the browser; we gate both the
-// VectorGrid layer (won't request tiles below this zoom) AND the toggle
-// button (disabled until the user is zoomed in this far).
-const _EASE_MIN_ZOOM = 13;
+function _easePopup(feature, layer) {
+  const p = feature.properties || {};
+  const statusLbl = { 'A': 'Active', 'R': 'Retired' }[p.status] || p.status || 'Unknown';
+  layer.bindPopup(
+    `<b>📐 Easement</b>` +
+    `<br><span style="font-size:11px;color:#cbd5e1">${statusLbl}</span>` +
+    (p.pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${p.pfi}</span>` : '') +
+    `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · LOCAL DB</div>`
+  );
+}
 
-function _easementsBuildLayer(geojson) {
-  // VectorGrid.slicer needs each feature to know its own style; we wrap the
-  // raw geojson and provide vectorTileLayerStyles keyed by the geojson-vt
-  // layer name (default "sliced"). The style fn receives the feature
-  // properties and zoom; we colour by status.
-  return L.vectorGrid.slicer(geojson, {
-    rendererFactory: L.canvas.tile,
-    minZoom: _EASE_MIN_ZOOM,
-    maxZoom: 22,
-    interactive: true,
-    pane: 'overlayPane',
-    vectorTileLayerStyles: {
-      sliced(props, zoom) {
-        const s = (props && props.status) || '';
-        return s === 'A' ? _EASE_STYLE_ACTIVE : _EASE_STYLE_RETIRED;
-      },
-    },
-    getFeatureId(f) { return f.properties && f.properties.pfi; },
-  }).on('click', (e) => {
-    const p = (e.layer && e.layer.properties) || {};
-    const statusLbl = { 'A': 'Active', 'R': 'Retired' }[p.status] || p.status || 'Unknown';
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent(
-        `<b>📐 Easement</b>` +
-        `<br><span style="font-size:11px;color:#cbd5e1">${statusLbl}</span>` +
-        (p.pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${p.pfi}</span>` : '') +
-        `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · DEECA OpenData</div>`
-      )
-      .openOn(_map);
-  });
+function _easeKey(b, z) {
+  return `${z}|${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`;
+}
+
+async function _easementsRefresh() {
+  if (!_easements.on) return;
+  const z = _map.getZoom();
+  if (z < _EASE_MIN_ZOOM) return;
+  const b = _map.getBounds();
+  const key = _easeKey(b, z);
+  if (key === _easements.lastKey) return;
+  _easements.lastKey = key;
+  if (_easements.abortCtrl) _easements.abortCtrl.abort();
+  const ctrl = new AbortController();
+  _easements.abortCtrl = ctrl;
+  const btn = document.getElementById('toggle-overlay-easements');
+  if (btn) btn.classList.add('loading');
+  try {
+    const url = `/api/easements?w=${b.getWest()}&s=${b.getSouth()}&e=${b.getEast()}&n=${b.getNorth()}`;
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const fc = await r.json();
+    if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
+    _easements.layer = L.geoJSON(fc, {
+      renderer: L.canvas({ padding: 0.2 }),
+      style: _easeStyle,
+      onEachFeature: _easePopup,
+      pane: 'overlayPane',
+    }).addTo(_map);
+    const n = fc.features ? fc.features.length : 0;
+    mmHintEasement(n ? `${n.toLocaleString()} easements in view` : 'No easements here.');
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      console.error('easements bbox fetch failed', e);
+      mmHintEasement('Fetch failed — is the local spatial index built?');
+    }
+  } finally {
+    if (btn) btn.classList.remove('loading');
+  }
 }
 
 // Sync the easements toggle button's enabled state with the current zoom.
@@ -4339,113 +4426,119 @@ function _easementsUpdateGate() {
   }
 }
 
-async function toggleEasements() {
+function toggleEasements() {
   _initMap();
   const btn = document.getElementById('toggle-overlay-easements');
   const z = _map.getZoom();
   if (_easements.on) {
     _easements.on = false;
+    _easements.lastKey = '';
+    if (_easements.abortCtrl) _easements.abortCtrl.abort();
     if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
     btn.classList.remove('active');
     updateMapLegend();
     return;
   }
   if (z < _EASE_MIN_ZOOM) {
-    alert(`Zoom in to ${_EASE_MIN_ZOOM}+ first (you're at ${z}).\n\n` +
-          `Rendering 1.3M easements at low zoom would crash the browser.`);
+    alert(`Zoom in to ${_EASE_MIN_ZOOM}+ first (you're at ${z}).`);
     return;
   }
-  // Mobile guard — the 200MB GeoJSON will likely OOM-crash a phone tab. Warn
-  // the user explicitly and let them opt in if they really want to try.
-  const isMobile = window.matchMedia('(max-width: 600px)').matches;
-  if (isMobile && !_easements.data) {
-    const ok = confirm(
-      "📐 Easements is a 200 MB dataset (~1.3M lines).\n\n" +
-      "It works smoothly on desktop but may crash a phone browser.\n\n" +
-      "Continue anyway?"
-    );
-    if (!ok) return;
-  }
-  if (!_easements.data) {
-    btn.classList.add('loading');
-    mmHintEasement('Loading 1.3M easements — first load may take 20–60 s.');
-    try {
-      const r = await fetch('/static/overlays/easements_vic.geojson');
-      if (!r.ok) {
-        btn.classList.remove('loading');
-        mmHintEasement('Easements file missing. Run data/build_easements_vic.py to fetch it.');
-        alert('Easements GeoJSON not found at /static/overlays/easements_vic.geojson.\n' +
-              'Run:  python data/build_easements_vic.py  to download it (~3 min, ~200 MB).');
-        return;
-      }
-      _easements.data = await r.json();
-    } catch (e) {
-      btn.classList.remove('loading');
-      mmHintEasement('Easements load failed (see console).');
-      console.error('easements load failed', e);
-      return;
-    }
-    btn.classList.remove('loading');
-  }
-  _easements.layer = _easementsBuildLayer(_easements.data).addTo(_map);
   _easements.on = true;
   btn.classList.add('active');
-  const n = _easements.data.features ? _easements.data.features.length : 0;
-  mmHintEasement(`${n.toLocaleString()} easements loaded statewide`);
   updateMapLegend();
+  _easementsRefresh();   // initial fetch for current view (moveend hook re-fires on pan)
 }
 
-// ─── Lots / parcels (Vicmap Property — Greater Melbourne, vector-tiled) ─────
-// Same architecture as easements: one big pre-built GeoJSON served gzipped
-// by Flask, sliced into Canvas vector tiles in-browser via geojson-vt.
-// Polygons, not lines. Multi-pass style so the outline is visible against
-// both OSM (light) and satellite (mixed) base maps. On-click fetches the
-// lot/plan/LGA details from /api/lot-detail.
+// ─── Lots / parcels — bbox-queried against the LOCAL spatial index ──────────
+// The full ~2.3M-parcel Greater Melbourne dataset lives on this PC. Browser
+// fetches only the lots in its current viewport from /api/lots. Click a lot
+// to get the full lot/plan/LGA via /api/lot-detail (also local: WFS lookup
+// keyed by PFI from v_parcel_mp).
 const _LOTS_MIN_ZOOM = 13;
-const _lots = { on: false, layer: null, data: null };
+const _lots = {
+  on: false,
+  layer: null,
+  abortCtrl: null,
+  lastKey: '',
+};
 
-// Two-pass: dark halo first, then bright cyan outline + faint fill on top.
-const _LOTS_STYLE = [
-  { weight: 3.5, color: '#0f172a', opacity: 0.7, fill: false },
-  { weight: 1.6, color: '#22d3ee', opacity: 1.0,
-    fill: true, fillColor: '#22d3ee', fillOpacity: 0.05 },
-];
+function _lotsStyle(feature) {
+  // Bright cyan outline with faint fill so polygons sit visibly above both
+  // OSM (light) and satellite (mixed) base maps. Weight 1.5 keeps street-
+  // level views from getting cluttered.
+  return {
+    color: '#22d3ee', weight: 1.5, opacity: 1.0,
+    fill: true, fillColor: '#22d3ee', fillOpacity: 0.07,
+  };
+}
 
-function _lotsBuildLayer(geojson) {
-  return L.vectorGrid.slicer(geojson, {
-    rendererFactory: L.canvas.tile,
-    minZoom: _LOTS_MIN_ZOOM,
-    maxZoom: 22,
-    interactive: true,
-    pane: 'overlayPane',
-    vectorTileLayerStyles: { sliced: () => _LOTS_STYLE },
-    getFeatureId(f) { return f.properties && f.properties.pfi; },
-  }).on('click', async (e) => {
-    const p = (e.layer && e.layer.properties) || {};
-    const pfi = p.pfi;
-    const popup = L.popup()
-      .setLatLng(e.latlng)
-      .setContent(`<b>▦ Lot</b><br><span style="font-size:11px;color:#94a3b8">Loading details…</span>`)
-      .openOn(_map);
+function _lotsPopup(feature, layer) {
+  const p = feature.properties || {};
+  const pfi = p.pfi;
+  layer.on('click', async () => {
+    // First show a placeholder popup, then fill it in with the on-demand
+    // detail fetched from /api/lot-detail (LOCAL: WFS lookup by PFI).
+    layer.bindPopup(`<b>▦ Lot</b><br><span style="font-size:11px;color:#94a3b8">Loading details…</span>`).openPopup();
     if (!pfi) return;
     try {
       const r = await fetch(`/api/lot-detail?pfi=${encodeURIComponent(pfi)}`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       const row = (lbl, val) => val ? `<br><span style="font-size:11px;color:#cbd5e1"><b>${lbl}:</b> ${val}</span>` : '';
-      popup.setContent(
+      layer.setPopupContent(
         `<b>▦ Lot</b>` +
         row('Lot',  d.lot_number) +
         row('Plan', d.plan_number) +
         row('SPI',  d.spi) +
         row('LGA',  d.lga_code) +
         (pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${pfi}</span>` : '') +
-        `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · DEECA OpenData</div>`
+        `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · LOCAL DB</div>`
       );
     } catch (err) {
-      popup.setContent(`<b>▦ Lot</b><br><span style="font-size:11px;color:#94a3b8">PFI ${pfi}</span><br><span style="font-size:10px;color:#fca5a5">Detail fetch failed.</span>`);
+      layer.setPopupContent(`<b>▦ Lot</b><br><span style="font-size:11px;color:#94a3b8">PFI ${pfi}</span><br><span style="font-size:10px;color:#fca5a5">Detail fetch failed.</span>`);
     }
   });
+}
+
+function _lotsKey(b, z) {
+  return `${z}|${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`;
+}
+
+async function _lotsRefresh() {
+  if (!_lots.on) return;
+  const z = _map.getZoom();
+  if (z < _LOTS_MIN_ZOOM) return;
+  const b = _map.getBounds();
+  const key = _lotsKey(b, z);
+  if (key === _lots.lastKey) return;
+  _lots.lastKey = key;
+  if (_lots.abortCtrl) _lots.abortCtrl.abort();
+  const ctrl = new AbortController();
+  _lots.abortCtrl = ctrl;
+  const btn = document.getElementById('toggle-overlay-lots');
+  if (btn) btn.classList.add('loading');
+  try {
+    const url = `/api/lots?w=${b.getWest()}&s=${b.getSouth()}&e=${b.getEast()}&n=${b.getNorth()}`;
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const fc = await r.json();
+    if (_lots.layer) { _map.removeLayer(_lots.layer); _lots.layer = null; }
+    _lots.layer = L.geoJSON(fc, {
+      renderer: L.canvas({ padding: 0.2 }),
+      style: _lotsStyle,
+      onEachFeature: _lotsPopup,
+      pane: 'overlayPane',
+    }).addTo(_map);
+    const n = fc.features ? fc.features.length : 0;
+    if (btn) btn.title = n ? `${n.toLocaleString()} lots in view` : 'No lots here.';
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      console.error('lots bbox fetch failed', e);
+      if (btn) btn.title = 'Fetch failed — is the local spatial index built?';
+    }
+  } finally {
+    if (btn) btn.classList.remove('loading');
+  }
 }
 
 function _lotsUpdateGate() {
@@ -4467,58 +4560,27 @@ function _lotsUpdateGate() {
   }
 }
 
-async function toggleLots() {
+function toggleLots() {
   _initMap();
   const btn = document.getElementById('toggle-overlay-lots');
   const z = _map.getZoom();
   if (_lots.on) {
     _lots.on = false;
+    _lots.lastKey = '';
+    if (_lots.abortCtrl) _lots.abortCtrl.abort();
     if (_lots.layer) { _map.removeLayer(_lots.layer); _lots.layer = null; }
     btn.classList.remove('active');
     updateMapLegend();
     return;
   }
   if (z < _LOTS_MIN_ZOOM) {
-    alert(`Zoom in to ${_LOTS_MIN_ZOOM}+ first (you're at ${z}).\n\n` +
-          `Rendering 2M lot polygons at low zoom would crash the browser.`);
+    alert(`Zoom in to ${_LOTS_MIN_ZOOM}+ first (you're at ${z}).`);
     return;
   }
-  const isMobile = window.matchMedia('(max-width: 600px)').matches;
-  if (isMobile && !_lots.data) {
-    const ok = confirm(
-      "▦ Lots is a ~250 MB dataset (~2M parcels).\n\n" +
-      "It works smoothly on desktop but may crash a phone browser.\n\n" +
-      "Continue anyway?"
-    );
-    if (!ok) return;
-  }
-  if (!_lots.data) {
-    btn.classList.add('loading');
-    btn.title = 'Loading 2M lots — first load may take 30–60 s.';
-    try {
-      const r = await fetch('/static/overlays/lots_melb.geojson');
-      if (!r.ok) {
-        btn.classList.remove('loading');
-        btn.title = 'Lots file missing. Run data/build_lots_melb.py.';
-        alert('Lots GeoJSON not found at /static/overlays/lots_melb.geojson.\n' +
-              'Run:  python data/build_lots_melb.py  to download it (~10 min, ~250 MB).');
-        return;
-      }
-      _lots.data = await r.json();
-    } catch (e) {
-      btn.classList.remove('loading');
-      btn.title = 'Lots load failed (see console).';
-      console.error('lots load failed', e);
-      return;
-    }
-    btn.classList.remove('loading');
-  }
-  _lots.layer = _lotsBuildLayer(_lots.data).addTo(_map);
   _lots.on = true;
   btn.classList.add('active');
-  const n = _lots.data.features ? _lots.data.features.length : 0;
-  btn.title = `${n.toLocaleString()} lots loaded (Greater Melbourne)`;
   updateMapLegend();
+  _lotsRefresh();
 }
 
 const _transportCfg = {

@@ -889,6 +889,53 @@
       .map-search-item .icon { font-size: 12px; }
       .map-search-item .sub { font-size: 9px; }
     }
+    /* ── Measurement tool: FAB at top-left + result chip below it ───────── */
+    .map-measure-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .map-measure-fab {
+      background: rgba(20,23,32,.95);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      color: var(--text-2); font-size: 11px; font-weight: 600;
+      padding: 5px 9px; cursor: pointer;
+      box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+      user-select: none; line-height: 1.3; white-space: nowrap;
+    }
+    .map-measure-fab:hover { color: var(--text); border-color: var(--brand); }
+    .map-measure-fab.active { color: #fff; background: var(--brand); border-color: var(--brand); }
+    .map-measure-panel {
+      display: none; flex-direction: column; gap: 4px;
+      background: rgba(20,23,32,.96);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-md);
+      padding: 6px 8px; min-width: 168px;
+      color: var(--text-2); font-size: 11px;
+      box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+    }
+    .map-measure-panel.visible { display: flex; }
+    .map-measure-panel .mm-modes { display: flex; gap: 4px; }
+    .map-measure-panel .mm-mode {
+      flex: 1; text-align: center; cursor: pointer;
+      background: var(--bg-input); color: var(--text-3);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 3px 0; font-size: 10px; user-select: none;
+    }
+    .map-measure-panel .mm-mode.active { color: #fff; background: var(--brand); border-color: var(--brand); }
+    .map-measure-panel .mm-result { color: var(--text); font-weight: 600; font-size: 12px; }
+    .map-measure-panel .mm-sub { color: var(--text-4); font-size: 10px; }
+    .map-measure-panel .mm-actions { display: flex; gap: 4px; }
+    .map-measure-panel .mm-btn {
+      flex: 1; background: transparent; color: var(--text-3);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      padding: 2px 4px; font-size: 10px; cursor: pointer;
+    }
+    .map-measure-panel .mm-btn:hover { color: var(--text); border-color: var(--brand); }
+    .map-measure-tooltip {
+      background: rgba(15,17,26,.92); color: #fff;
+      padding: 2px 6px; border-radius: 4px; font-size: 11px;
+      border: 1px solid rgba(91,155,255,.5); white-space: nowrap;
+    }
+    .map-measure-tooltip::before { display: none; }
+
     .map-legend-floating .row {
       display: inline-flex; align-items: center; gap: var(--s-1);
       flex-wrap: nowrap; white-space: nowrap;
@@ -1908,6 +1955,13 @@
           <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
           <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
           <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>📐 Property (VIC)</div>
+          <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements (live)</div>
+          <div style="font-size:9px;color:#64748b;padding:2px 6px;line-height:1.3">
+            Zoom to street level (≥17) in Victoria; fetches Vicmap easements within view.
+          </div>
         </div>
       </div>
       <div id="map"></div>
@@ -3393,6 +3447,178 @@ function _initMap() {
     _priceFilter = { min: null, max: null };
     _applyPriceFilter();
   });
+
+  // ── Measurement tool (line length + polygon area) ───────────────────────
+  // Custom Leaflet control. Click "Measure" to open mode selector, click on
+  // the map to drop vertices, double-click (or Done) to finish. Distances use
+  // Leaflet's haversine distance; polygon area uses geodesic shoelace on a
+  // WGS84 sphere (good to ~0.1% at suburb scale).
+  const mmCtrl = L.control({ position: 'topleft' });
+  mmCtrl.onAdd = function() {
+    const wrap = L.DomUtil.create('div', 'leaflet-control map-measure-wrap');
+    wrap.innerHTML = `
+      <button class="map-measure-fab" id="mm-fab">📏 Measure</button>
+      <div class="map-measure-panel" id="mm-panel">
+        <div class="mm-modes">
+          <div class="mm-mode active" data-mode="line">📏 Distance</div>
+          <div class="mm-mode" data-mode="area">▱ Area</div>
+        </div>
+        <div class="mm-result" id="mm-result">Click on the map to start.</div>
+        <div class="mm-sub" id="mm-sub">Double-click to finish.</div>
+        <div class="mm-actions">
+          <button class="mm-btn" id="mm-done">Done</button>
+          <button class="mm-btn" id="mm-clear">Clear</button>
+        </div>
+      </div>`;
+    L.DomEvent.disableClickPropagation(wrap);
+    L.DomEvent.disableScrollPropagation(wrap);
+    return wrap;
+  };
+  mmCtrl.addTo(_map);
+
+  const MM = {
+    mode: 'line', active: false,
+    points: [], markers: [], path: null, polygon: null, lastTip: null,
+  };
+  const mmFab    = document.getElementById('mm-fab');
+  const mmPanel  = document.getElementById('mm-panel');
+  const mmResult = document.getElementById('mm-result');
+  const mmSub    = document.getElementById('mm-sub');
+
+  function _mmFmtLen(m) {
+    return m < 1000 ? `${m.toFixed(1)} m` : `${(m/1000).toFixed(3)} km`;
+  }
+  function _mmFmtArea(m2) {
+    if (m2 < 10000) return `${m2.toFixed(1)} m² <span class="mm-sub">(${(m2/10000).toFixed(4)} ha)</span>`;
+    if (m2 < 1_000_000) return `${(m2/10000).toFixed(3)} ha <span class="mm-sub">(${m2.toFixed(0)} m²)</span>`;
+    return `${(m2/1_000_000).toFixed(3)} km² <span class="mm-sub">(${(m2/10000).toFixed(1)} ha)</span>`;
+  }
+  function _mmPolyAreaM2(latlngs) {
+    if (latlngs.length < 3) return 0;
+    const R = 6378137, d2r = Math.PI/180;
+    let s = 0;
+    for (let i = 0; i < latlngs.length; i++) {
+      const a = latlngs[i], b = latlngs[(i+1) % latlngs.length];
+      s += (b.lng - a.lng) * d2r * (2 + Math.sin(a.lat * d2r) + Math.sin(b.lat * d2r));
+    }
+    return Math.abs(s * R * R / 2);
+  }
+  function _mmTotalLenM(latlngs) {
+    let s = 0;
+    for (let i = 1; i < latlngs.length; i++) s += latlngs[i-1].distanceTo(latlngs[i]);
+    return s;
+  }
+  function _mmRecompute(includeMouse) {
+    const pts = MM.points.slice();
+    if (includeMouse && MM.lastTip) pts.push(MM.lastTip);
+    if (MM.mode === 'line') {
+      if (pts.length < 2) { mmResult.textContent = 'Click again to extend the line.'; return; }
+      mmResult.innerHTML = `Length: <b>${_mmFmtLen(_mmTotalLenM(pts))}</b>`;
+      mmSub.textContent = `${pts.length} points · double-click to finish`;
+    } else {
+      if (pts.length < 3) { mmResult.textContent = 'Click 3+ points to form a polygon.'; return; }
+      const perim = _mmTotalLenM(pts.concat([pts[0]]));
+      mmResult.innerHTML = `Area: <b>${_mmFmtArea(_mmPolyAreaM2(pts))}</b><br>` +
+                           `<span class="mm-sub">Perimeter ${_mmFmtLen(perim)}</span>`;
+      mmSub.textContent = `${pts.length} vertices · double-click to close`;
+    }
+  }
+  function _mmRedraw(includeMouseTrail) {
+    const pts = MM.points.slice();
+    if (includeMouseTrail && MM.lastTip) pts.push(MM.lastTip);
+    if (MM.mode === 'line') {
+      if (MM.polygon) { _map.removeLayer(MM.polygon); MM.polygon = null; }
+      if (!MM.path) {
+        MM.path = L.polyline(pts, { color: '#fbbf24', weight: 3, opacity: 0.95 }).addTo(_map);
+      } else {
+        MM.path.setLatLngs(pts);
+      }
+    } else {
+      if (MM.path) { _map.removeLayer(MM.path); MM.path = null; }
+      if (!MM.polygon) {
+        MM.polygon = L.polygon(pts, {
+          color: '#fbbf24', weight: 3, opacity: 0.95,
+          fillColor: '#fbbf24', fillOpacity: 0.18,
+        }).addTo(_map);
+      } else {
+        MM.polygon.setLatLngs(pts);
+      }
+    }
+  }
+  function _mmClear() {
+    MM.points = [];
+    MM.lastTip = null;
+    MM.markers.forEach(m => _map.removeLayer(m));
+    MM.markers = [];
+    if (MM.path)    { _map.removeLayer(MM.path);    MM.path = null; }
+    if (MM.polygon) { _map.removeLayer(MM.polygon); MM.polygon = null; }
+    mmResult.textContent = 'Click on the map to start.';
+    mmSub.textContent = 'Double-click to finish.';
+  }
+  function _mmStart() {
+    MM.active = true;
+    mmFab.classList.add('active');
+    mmPanel.classList.add('visible');
+    _map.getContainer().style.cursor = 'crosshair';
+    _map.on('click', _mmOnClick);
+    _map.on('mousemove', _mmOnMove);
+    _map.on('dblclick', _mmOnDbl);
+    _map.doubleClickZoom.disable();
+  }
+  function _mmStop() {
+    MM.active = false;
+    mmFab.classList.remove('active');
+    mmPanel.classList.remove('visible');
+    _map.getContainer().style.cursor = '';
+    _map.off('click', _mmOnClick);
+    _map.off('mousemove', _mmOnMove);
+    _map.off('dblclick', _mmOnDbl);
+    _map.doubleClickZoom.enable();
+    _mmClear();
+  }
+  function _mmOnClick(e) {
+    // Debounce so a double-click (which Leaflet also emits as two clicks)
+    // doesn't drop two stray vertices before the dblclick handler fires.
+    clearTimeout(MM._clickTimer);
+    MM._clickTimer = setTimeout(() => {
+      MM.points.push(e.latlng);
+      const dot = L.circleMarker(e.latlng, {
+        radius: 4, color: '#fbbf24', weight: 2, fillColor: '#1a1f2e', fillOpacity: 1,
+      }).addTo(_map);
+      MM.markers.push(dot);
+      _mmRedraw(false);
+      _mmRecompute(false);
+    }, 230);
+  }
+  function _mmOnMove(e) {
+    if (!MM.points.length) return;
+    MM.lastTip = e.latlng;
+    _mmRedraw(true);
+    _mmRecompute(true);
+  }
+  function _mmOnDbl(e) {
+    clearTimeout(MM._clickTimer);
+    L.DomEvent.stopPropagation(e);
+    L.DomEvent.preventDefault(e);
+    MM.lastTip = null;
+    _mmRedraw(false);
+    _mmRecompute(false);
+  }
+  mmFab.onclick = () => { if (MM.active) _mmStop(); else _mmStart(); };
+  mmPanel.querySelectorAll('.mm-mode').forEach(el => {
+    el.onclick = () => {
+      mmPanel.querySelectorAll('.mm-mode').forEach(x => x.classList.remove('active'));
+      el.classList.add('active');
+      MM.mode = el.dataset.mode;
+      _mmClear();
+    };
+  });
+  document.getElementById('mm-done').onclick = () => {
+    MM.lastTip = null;
+    _mmRedraw(false);
+    _mmRecompute(false);
+  };
+  document.getElementById('mm-clear').onclick = _mmClear;
 }
 
 function updateMapLegend() {
@@ -3417,6 +3643,10 @@ function updateMapLegend() {
   if (_overlayLayer && _overlayLayer.flood)    rows.push(`<div class="row"><span class="lbl">Flood</span><span class="swatch" style="background:#06b6d4"></span></div>`);
   if (_overlayLayer && _overlayLayer.heritage) rows.push(`<div class="row"><span class="lbl">Heritage</span><span class="swatch" style="background:#a16207"></span></div>`);
   if (_overlayLayer && _overlayLayer.bushfire) rows.push(`<div class="row"><span class="lbl">Bushfire</span><span class="swatch" style="background:#ea580c"></span></div>`);
+  if (_easements && _easements.on) {
+    const line = (color, dashed) => `<span style="display:inline-block;width:18px;height:0;border-top:3px ${dashed?'dashed':'solid'} ${color};vertical-align:middle;margin:0 2px"></span>`;
+    rows.push(`<div class="row"><span class="lbl">Easements</span>${line('#22d3ee',false)}active ${line('#94a3b8',true)}retired</div>`);
+  }
   if (_overlayLayer && _overlayLayer.crime)    rows.push(`<div class="row"><span class="lbl">Crime/100k</span>${swatches(CRIME_BAND)} safest→highest</div>`);
   if (_overlayLayer && _overlayLayer.icsea)    rows.push(`<div class="row"><span class="lbl">ICSEA avg</span>${swatches(SCH_BAND.slice(0,6).reverse())} low→high (Melb %ile, 1000=AU avg)</div>`);
   if (_overlayLayer && _overlayLayer.infra) {
@@ -4007,6 +4237,131 @@ async function toggleOverlay(name) {
     }).addTo(_map);
   }
   btn.classList.add('active');
+}
+
+// ─── Easements (Vicmap Property — live WFS fetch via /api/easements) ─────────
+// Statewide Vicmap easements are far too large to ship as a static geojson
+// (hundreds of thousands of features). Instead we lazy-fetch within the current
+// viewport on map settle, only when zoomed in close enough to be useful (~17+,
+// street level). Server proxies the request to DEECA OpenData WFS.
+const _easements = {
+  on: false,        // toggle state
+  layer: null,      // current L.geoJSON
+  loading: false,
+  lastKey: '',      // last bbox+zoom request key, to skip duplicates
+  abortCtrl: null,
+};
+
+function _easementsKey(b, z) {
+  return `${z}|${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`;
+}
+
+function _easementsBindMoveHandler(on) {
+  if (on) _map.on('moveend', _easementsRefresh);
+  else    _map.off('moveend', _easementsRefresh);
+}
+
+function _easementsClearLayer() {
+  if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
+}
+
+async function _easementsRefresh() {
+  if (!_easements.on) return;
+  const z = _map.getZoom();
+  const btn = document.getElementById('toggle-overlay-easements');
+  if (z < 17) {
+    _easementsClearLayer();
+    if (btn) btn.title = `Zoom in to street level (currently ${z}, need ≥17)`;
+    mmHintEasement('Zoom in to street level (≥17) — easements only render at high zoom.');
+    return;
+  }
+  const b = _map.getBounds();
+  // Skip if outside Victoria roughly
+  if (b.getNorth() < -39.5 || b.getSouth() > -33.5 || b.getEast() < 140.0 || b.getWest() > 150.5) {
+    _easementsClearLayer();
+    mmHintEasement('Easements available in Victoria only.');
+    return;
+  }
+  const key = _easementsKey(b, z);
+  if (key === _easements.lastKey && _easements.layer) return;
+  _easements.lastKey = key;
+
+  if (_easements.abortCtrl) _easements.abortCtrl.abort();
+  const ctrl = new AbortController();
+  _easements.abortCtrl = ctrl;
+  _easements.loading = true;
+  if (btn) btn.classList.add('loading');
+  mmHintEasement('Fetching easements…');
+
+  try {
+    const url = `/api/easements?w=${b.getWest()}&s=${b.getSouth()}&e=${b.getEast()}&n=${b.getNorth()}`;
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const gj = await r.json();
+    _easementsClearLayer();
+    // Vicmap easements are LineString features (the line on the cadastral
+    // boundary). Active = solid magenta, anything else (retired/proposed) =
+    // dashed grey so users can ignore them at a glance.
+    _easements.layer = L.geoJSON(gj, {
+      style(feature) {
+        const status = (feature.properties || {}).status || '';
+        const active = status === 'A' || status === '' || status === 'APPROVED';
+        return active
+          ? { color: '#22d3ee', weight: 3, opacity: 0.95 }
+          : { color: '#94a3b8', weight: 2, opacity: 0.7, dashArray: '3,3' };
+      },
+      onEachFeature(feature, layer) {
+        const p = feature.properties || {};
+        const statusLbl = {
+          'A': 'Active', 'R': 'Retired',
+          'APPROVED': 'Approved (planning scheme)',
+          'PROPOSED': 'Proposed (planning scheme)',
+        }[p.status] || p.status || 'Unknown';
+        const pfi = p.pfi || p.PFI || '';
+        layer.bindPopup(
+          `<b>📐 Easement</b>` +
+          `<br><span style="font-size:11px;color:#cbd5e1">${statusLbl}</span>` +
+          (pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${pfi}</span>` : '') +
+          `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · DEECA OpenData</div>`
+        );
+      },
+    }).addTo(_map);
+    const n = gj.features ? gj.features.length : 0;
+    mmHintEasement(n ? `${n} easement${n === 1 ? '' : 's'} in view` : 'No easements in this view.');
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      console.error('easements fetch failed', e);
+      mmHintEasement('Easements fetch failed (see console).');
+    }
+  } finally {
+    _easements.loading = false;
+    if (btn) btn.classList.remove('loading');
+  }
+}
+
+// Tiny one-line status piggy-backed on the easement toggle's title tooltip and
+// (when the panel is visible) into the layer-panel sub-text element.
+function mmHintEasement(msg) {
+  const btn = document.getElementById('toggle-overlay-easements');
+  if (btn) btn.title = msg;
+}
+
+function toggleEasements() {
+  _initMap();
+  const btn = document.getElementById('toggle-overlay-easements');
+  if (_easements.on) {
+    _easements.on = false;
+    _easementsBindMoveHandler(false);
+    if (_easements.abortCtrl) _easements.abortCtrl.abort();
+    _easementsClearLayer();
+    _easements.lastKey = '';
+    btn.classList.remove('active');
+    return;
+  }
+  _easements.on = true;
+  btn.classList.add('active');
+  _easementsBindMoveHandler(true);
+  _easementsRefresh();
 }
 
 const _transportCfg = {

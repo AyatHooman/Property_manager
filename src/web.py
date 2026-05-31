@@ -118,9 +118,14 @@ def _check_auth():
         or request.cookies.get("pm_token")
     )
     if supplied == AUTH_TOKEN:
-        # Refresh cookie so the user doesn't need ?token=… on every link
+        # Refresh cookie so the user doesn't need ?token=… on every link.
+        # Preserve the rest of the query string on the redirect, otherwise any
+        # API call like /api/easements?token=…&w=…&s=… loses its real params.
         if request.cookies.get("pm_token") != AUTH_TOKEN:
-            resp = app.make_response(("", 302, {"Location": request.path}))
+            other = {k: v for k, v in request.args.items() if k != "token"}
+            from urllib.parse import urlencode
+            target = request.path + (("?" + urlencode(other)) if other else "")
+            resp = app.make_response(("", 302, {"Location": target}))
             resp.set_cookie("pm_token", AUTH_TOKEN, max_age=60 * 60 * 24 * 30,
                             httponly=True, samesite="Lax")
             return resp
@@ -217,6 +222,91 @@ def api_suggest():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# ── API: Vicmap Property easements — proxy to DEECA OpenData WFS ──────────────
+#
+# Statewide easements (Victoria) are way too big to ship as a static geojson —
+# we pass through the current map viewport bbox to the public WFS endpoint and
+# stream the result back to the browser. Server-side so the browser never has
+# to worry about CORS. The WFS layer is published as part of "Vicmap Property"
+# at https://opendata.maps.vic.gov.au/.
+#
+# We try a small list of likely layer names — the GeoServer publishes the
+# easement dataset under one of these; whichever one returns 200 first wins
+# and is cached in memory for the rest of the process lifetime.
+_EASEMENT_WFS = "https://opendata.maps.vic.gov.au/geoserver/wfs"
+_EASEMENT_LAYER_CANDIDATES = [
+    "open-data-platform:easement",                  # Vicmap Property — cadastral easements (LineString)
+    "open-data-platform:v_s_easement_approved",     # planning-scheme easements (approved)
+    "open-data-platform:v_s_easement_proposed",     # planning-scheme easements (proposed)
+]
+_EASEMENT_LAYER_CACHED = None  # set on first successful probe
+
+
+def _easements_pick_layer(timeout: int = 10):
+    """Return the working WFS layer name, probing once per process."""
+    global _EASEMENT_LAYER_CACHED
+    if _EASEMENT_LAYER_CACHED:
+        return _EASEMENT_LAYER_CACHED
+    import httpx
+    with httpx.Client(timeout=timeout) as client:
+        for layer in _EASEMENT_LAYER_CANDIDATES:
+            try:
+                r = client.get(_EASEMENT_WFS, params={
+                    "service": "WFS", "version": "2.0.0", "request": "DescribeFeatureType",
+                    "typeName": layer,
+                })
+                if r.status_code == 200 and ("<xsd:schema" in r.text or "<schema" in r.text):
+                    _EASEMENT_LAYER_CACHED = layer
+                    return layer
+            except Exception:
+                continue
+    return None
+
+
+@app.route("/api/easements")
+def api_easements():
+    """Fetch Vicmap easements that intersect the given lat/lng bbox.
+
+    Query params: w, s, e, n (WGS84). Returns a GeoJSON FeatureCollection.
+    The endpoint is intentionally aggressive about bbox size — anything larger
+    than ~0.05 degrees square (≈5km) is rejected to keep payloads sane, since
+    the browser is already gated on zoom ≥ 17.
+    """
+    try:
+        w = float(request.args.get("w"))
+        s = float(request.args.get("s"))
+        e = float(request.args.get("e"))
+        n = float(request.args.get("n"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "w,s,e,n (WGS84) required"}), 400
+    if not (w < e and s < n):
+        return jsonify({"error": "invalid bbox"}), 400
+    if (e - w) > 0.06 or (n - s) > 0.06:
+        return jsonify({"type": "FeatureCollection", "features": [],
+                        "warning": "bbox too large — zoom in further"}), 200
+
+    layer = _easements_pick_layer()
+    if not layer:
+        return jsonify({"error": "No working Vicmap easement layer found; "
+                                  "update _EASEMENT_LAYER_CANDIDATES in src/web.py"}), 502
+
+    import httpx
+    params = {
+        "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+        "typeName": layer, "outputFormat": "application/json",
+        "srsName": "EPSG:4326", "count": "2000",
+        "CQL_FILTER": f"BBOX(geom,{w},{s},{e},{n},'EPSG:4326')",
+    }
+    try:
+        with httpx.Client(timeout=20) as client:
+            r = client.get(_EASEMENT_WFS, params=params)
+            if r.status_code != 200:
+                return jsonify({"error": f"upstream {r.status_code}"}), 502
+            return Response(r.content, mimetype="application/json")
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 502
 
 
 # ── API: fetch reference-property specs from a Domain URL ─────────────

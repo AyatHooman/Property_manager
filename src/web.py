@@ -167,14 +167,14 @@ def index():
     return resp
 
 
-# Serve the huge Vicmap easements GeoJSON pre-gzipped (~22 MB on the wire vs
-# 201 MB raw). Browser decodes transparently because we send Content-Encoding:
-# gzip. Flask's default static route would just send the raw file.
-@app.route("/static/overlays/easements_vic.geojson")
-def static_easements():
+# Serve the huge Vicmap easements / lots GeoJSONs pre-gzipped. Browser decodes
+# transparently via Content-Encoding: gzip. Flask's default static route
+# would just send the raw .geojson, missing the ~10× smaller .gz right next
+# to it. The same helper does easements + lots.
+def _serve_gzipped_geojson(name: str, build_script: str):
     base = os.path.join(os.path.dirname(__file__), "..", "static", "overlays")
-    gz   = os.path.join(base, "easements_vic.geojson.gz")
-    raw  = os.path.join(base, "easements_vic.geojson")
+    gz   = os.path.join(base, f"{name}.geojson.gz")
+    raw  = os.path.join(base, f"{name}.geojson")
     if os.path.exists(gz):
         with open(gz, "rb") as f:
             data = f.read()
@@ -185,7 +185,57 @@ def static_easements():
     if os.path.exists(raw):
         return Response(open(raw, "rb").read(), mimetype="application/geo+json",
                         headers={"Cache-Control": "public, max-age=86400"})
-    return jsonify({"error": "Easements file not built. Run data/build_easements_vic.py."}), 404
+    return jsonify({"error": f"File {name}.geojson not built. Run {build_script}."}), 404
+
+
+@app.route("/static/overlays/easements_vic.geojson")
+def static_easements():
+    return _serve_gzipped_geojson("easements_vic", "data/build_easements_vic.py")
+
+
+@app.route("/static/overlays/lots_melb.geojson")
+def static_lots():
+    return _serve_gzipped_geojson("lots_melb", "data/build_lots_melb.py")
+
+
+# Per-parcel rich detail (lot number, plan, LGA) fetched on click from the
+# v_parcel_mp WFS layer keyed by PFI. The bulk static file only carries the
+# PFI to keep it small; this endpoint fills in the rest on demand.
+@app.route("/api/lot-detail")
+def api_lot_detail():
+    pfi = request.args.get("pfi", "").strip()
+    if not pfi:
+        return jsonify({"error": "pfi required"}), 400
+    import httpx
+    params = {
+        "service": "WFS", "version": "2.0.0", "request": "GetFeature",
+        "typeName": "open-data-platform:v_parcel_mp",
+        "outputFormat": "application/json",
+        "srsName": "EPSG:4326",
+        "count": "1",
+        # parv_pfi is the field on v_parcel_mp that matches parcel_view.pfi
+        # (the PFI we carry in the bulk static file). parcel_pfi is a separate
+        # sub-PFI used when one lot has multiple parts.
+        "CQL_FILTER": f"parv_pfi='{pfi}'",
+    }
+    try:
+        with httpx.Client(timeout=15) as client:
+            r = client.get("https://opendata.maps.vic.gov.au/geoserver/wfs", params=params)
+            r.raise_for_status()
+            j = r.json()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 502
+    feats = j.get("features") or []
+    if not feats:
+        return jsonify({"pfi": pfi}), 200
+    p = feats[0].get("properties") or {}
+    return jsonify({
+        "pfi":          pfi,
+        "lot_number":   p.get("parcel_lot_number"),
+        "plan_number":  p.get("parcel_plan_number"),
+        "spi":          p.get("parcel_spi"),
+        "lga_code":     p.get("parcel_lga_code"),
+    })
 
 
 # ── API: address autocomplete via Nominatim (OpenStreetMap) ───────────────────

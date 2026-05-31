@@ -40,3 +40,8 @@ secrets.env
 # Build locally with `python data/build_easements_vic.py`; not committed.
 static/overlays/easements_vic.geojson
 static/overlays/easements_vic.geojson.gz
+
+# Bulk Vicmap lots / parcels (~250 MB raw, ~30 MB gzipped, ~2M polygons,
+# Greater Melbourne). Build with `python data/build_lots_melb.py`.
+static/overlays/lots_melb.geojson
+static/overlays/lots_melb.geojson.gz

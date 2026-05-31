@@ -1963,8 +1963,9 @@
         <div class="lp-group">
           <div class="lp-head"><span class="lp-caret">▾</span>📐 Property (VIC)</div>
           <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements (statewide)</div>
+          <div class="zone-toggle" id="toggle-overlay-lots"       onclick="toggleLots()">▦ Lots (Greater Melbourne)</div>
           <div style="font-size:9px;color:#64748b;padding:2px 6px;line-height:1.3">
-            All 1.3M Vicmap easements. ~150 MB on first toggle (20–60 s parse), then smooth at every zoom.
+            Easements: 1.3M Vicmap lines (~200 MB raw / 22 MB gzipped). Lots: ~2M cadastral parcels (~250 MB / 30 MB gz). Both unlock at zoom 13+; first load ~30 s.
           </div>
         </div>
       </div>
@@ -3588,10 +3589,11 @@ function _initMap() {
     _mmRedraw(true);
     _mmRecompute(true);
   }
-  // Sync easements toggle gate with current zoom (button is disabled below
-  // _EASE_MIN_ZOOM since rendering 1.3M lines globally would crash).
-  _easementsUpdateGate();
-  _map.on('zoomend', _easementsUpdateGate);
+  // Sync easements + lots toggle gates with current zoom (both buttons are
+  // disabled below their MIN_ZOOM since rendering 1-2M features globally
+  // would crash). Layer auto-hides if user zooms out past the threshold.
+  _easementsUpdateGate(); _lotsUpdateGate();
+  _map.on('zoomend', () => { _easementsUpdateGate(); _lotsUpdateGate(); });
 
   mmFab.onclick = () => { if (MM.active) _mmStop(); else _mmStart(); };
   mmRow.querySelectorAll('.mm-icon[data-mode]').forEach(el => {
@@ -3643,8 +3645,12 @@ function updateMapLegend() {
   if (_overlayLayer && _overlayLayer.heritage) rows.push(`<div class="row"><span class="lbl">Heritage</span><span class="swatch" style="background:#a16207"></span></div>`);
   if (_overlayLayer && _overlayLayer.bushfire) rows.push(`<div class="row"><span class="lbl">Bushfire</span><span class="swatch" style="background:#ea580c"></span></div>`);
   if (_easements && _easements.on) {
-    const line = (color, dashed) => `<span style="display:inline-block;width:18px;height:0;border-top:3px ${dashed?'dashed':'solid'} ${color};vertical-align:middle;margin:0 2px"></span>`;
-    rows.push(`<div class="row"><span class="lbl">Easements</span>${line('#22d3ee',false)}active ${line('#94a3b8',true)}retired</div>`);
+    const line = (color, dashed) => `<span style="display:inline-block;width:18px;height:0;border-top:3px ${dashed?'dashed':'solid'} ${color};vertical-align:middle;margin:0 2px;box-shadow:0 0 0 1px #0f172a"></span>`;
+    rows.push(`<div class="row"><span class="lbl">Easements</span>${line('#fbbf24',false)}active ${line('#e2e8f0',true)}retired</div>`);
+  }
+  if (_lots && _lots.on) {
+    const sw = `<span style="display:inline-block;width:14px;height:10px;background:rgba(34,211,238,.10);border:1.5px solid #22d3ee;vertical-align:middle;margin:0 2px"></span>`;
+    rows.push(`<div class="row"><span class="lbl">Lots</span>${sw}cadastral parcel outline</div>`);
   }
   if (_overlayLayer && _overlayLayer.crime)    rows.push(`<div class="row"><span class="lbl">Crime/100k</span>${swatches(CRIME_BAND)} safest→highest</div>`);
   if (_overlayLayer && _overlayLayer.icsea)    rows.push(`<div class="row"><span class="lbl">ICSEA avg</span>${swatches(SCH_BAND.slice(0,6).reverse())} low→high (Melb %ile, 1000=AU avg)</div>`);
@@ -4256,8 +4262,18 @@ function mmHintEasement(msg) {
   if (btn) btn.title = msg;
 }
 
-const _EASE_STYLE_ACTIVE  = { weight: 2.5, color: '#22d3ee', opacity: 0.95 };
-const _EASE_STYLE_RETIRED = { weight: 1.5, color: '#94a3b8', opacity: 0.6, dashArray: [3, 3] };
+// Multi-pass styles — Leaflet.VectorGrid draws each style entry as a
+// separate stroke on the same feature. We use a dark halo first, then a
+// bright line on top so the lines stay visible on both light (OSM) and
+// dark (satellite) base maps.
+const _EASE_STYLE_ACTIVE = [
+  { weight: 5,   color: '#0f172a', opacity: 0.85 },              // dark halo
+  { weight: 2.5, color: '#fbbf24', opacity: 1.0  },              // bright yellow stroke
+];
+const _EASE_STYLE_RETIRED = [
+  { weight: 4,   color: '#0f172a', opacity: 0.65 },
+  { weight: 1.5, color: '#e2e8f0', opacity: 0.95, dashArray: [3, 3] },
+];
 
 // Minimum zoom for showing easements. With 1.3M LineStrings, rendering one
 // global canvas tile at low zoom would freeze the browser; we gate both the
@@ -4376,6 +4392,132 @@ async function toggleEasements() {
   btn.classList.add('active');
   const n = _easements.data.features ? _easements.data.features.length : 0;
   mmHintEasement(`${n.toLocaleString()} easements loaded statewide`);
+  updateMapLegend();
+}
+
+// ─── Lots / parcels (Vicmap Property — Greater Melbourne, vector-tiled) ─────
+// Same architecture as easements: one big pre-built GeoJSON served gzipped
+// by Flask, sliced into Canvas vector tiles in-browser via geojson-vt.
+// Polygons, not lines. Multi-pass style so the outline is visible against
+// both OSM (light) and satellite (mixed) base maps. On-click fetches the
+// lot/plan/LGA details from /api/lot-detail.
+const _LOTS_MIN_ZOOM = 13;
+const _lots = { on: false, layer: null, data: null };
+
+// Two-pass: dark halo first, then bright cyan outline + faint fill on top.
+const _LOTS_STYLE = [
+  { weight: 3.5, color: '#0f172a', opacity: 0.7, fill: false },
+  { weight: 1.6, color: '#22d3ee', opacity: 1.0,
+    fill: true, fillColor: '#22d3ee', fillOpacity: 0.05 },
+];
+
+function _lotsBuildLayer(geojson) {
+  return L.vectorGrid.slicer(geojson, {
+    rendererFactory: L.canvas.tile,
+    minZoom: _LOTS_MIN_ZOOM,
+    maxZoom: 22,
+    interactive: true,
+    pane: 'overlayPane',
+    vectorTileLayerStyles: { sliced: () => _LOTS_STYLE },
+    getFeatureId(f) { return f.properties && f.properties.pfi; },
+  }).on('click', async (e) => {
+    const p = (e.layer && e.layer.properties) || {};
+    const pfi = p.pfi;
+    const popup = L.popup()
+      .setLatLng(e.latlng)
+      .setContent(`<b>▦ Lot</b><br><span style="font-size:11px;color:#94a3b8">Loading details…</span>`)
+      .openOn(_map);
+    if (!pfi) return;
+    try {
+      const r = await fetch(`/api/lot-detail?pfi=${encodeURIComponent(pfi)}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      const row = (lbl, val) => val ? `<br><span style="font-size:11px;color:#cbd5e1"><b>${lbl}:</b> ${val}</span>` : '';
+      popup.setContent(
+        `<b>▦ Lot</b>` +
+        row('Lot',  d.lot_number) +
+        row('Plan', d.plan_number) +
+        row('SPI',  d.spi) +
+        row('LGA',  d.lga_code) +
+        (pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${pfi}</span>` : '') +
+        `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · DEECA OpenData</div>`
+      );
+    } catch (err) {
+      popup.setContent(`<b>▦ Lot</b><br><span style="font-size:11px;color:#94a3b8">PFI ${pfi}</span><br><span style="font-size:10px;color:#fca5a5">Detail fetch failed.</span>`);
+    }
+  });
+}
+
+function _lotsUpdateGate() {
+  const btn = document.getElementById('toggle-overlay-lots');
+  if (!btn || !_map) return;
+  const z = _map.getZoom();
+  if (z < _LOTS_MIN_ZOOM) {
+    btn.classList.add('disabled');
+    btn.title = `Zoom in to ${_LOTS_MIN_ZOOM}+ to enable (you're at ${z})`;
+    if (_lots.on) {
+      if (_lots.layer) { _map.removeLayer(_lots.layer); _lots.layer = null; }
+      _lots.on = false;
+      btn.classList.remove('active');
+      updateMapLegend();
+    }
+  } else {
+    btn.classList.remove('disabled');
+    btn.title = '';
+  }
+}
+
+async function toggleLots() {
+  _initMap();
+  const btn = document.getElementById('toggle-overlay-lots');
+  const z = _map.getZoom();
+  if (_lots.on) {
+    _lots.on = false;
+    if (_lots.layer) { _map.removeLayer(_lots.layer); _lots.layer = null; }
+    btn.classList.remove('active');
+    updateMapLegend();
+    return;
+  }
+  if (z < _LOTS_MIN_ZOOM) {
+    alert(`Zoom in to ${_LOTS_MIN_ZOOM}+ first (you're at ${z}).\n\n` +
+          `Rendering 2M lot polygons at low zoom would crash the browser.`);
+    return;
+  }
+  const isMobile = window.matchMedia('(max-width: 600px)').matches;
+  if (isMobile && !_lots.data) {
+    const ok = confirm(
+      "▦ Lots is a ~250 MB dataset (~2M parcels).\n\n" +
+      "It works smoothly on desktop but may crash a phone browser.\n\n" +
+      "Continue anyway?"
+    );
+    if (!ok) return;
+  }
+  if (!_lots.data) {
+    btn.classList.add('loading');
+    btn.title = 'Loading 2M lots — first load may take 30–60 s.';
+    try {
+      const r = await fetch('/static/overlays/lots_melb.geojson');
+      if (!r.ok) {
+        btn.classList.remove('loading');
+        btn.title = 'Lots file missing. Run data/build_lots_melb.py.';
+        alert('Lots GeoJSON not found at /static/overlays/lots_melb.geojson.\n' +
+              'Run:  python data/build_lots_melb.py  to download it (~10 min, ~250 MB).');
+        return;
+      }
+      _lots.data = await r.json();
+    } catch (e) {
+      btn.classList.remove('loading');
+      btn.title = 'Lots load failed (see console).';
+      console.error('lots load failed', e);
+      return;
+    }
+    btn.classList.remove('loading');
+  }
+  _lots.layer = _lotsBuildLayer(_lots.data).addTo(_map);
+  _lots.on = true;
+  btn.classList.add('active');
+  const n = _lots.data.features ? _lots.data.features.length : 0;
+  btn.title = `${n.toLocaleString()} lots loaded (Greater Melbourne)`;
   updateMapLegend();
 }
 

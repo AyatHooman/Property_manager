@@ -889,37 +889,36 @@
       .map-search-item .icon { font-size: 12px; }
       .map-search-item .sub { font-size: 9px; }
     }
-    /* ── Measurement tool: absolutely-positioned FAB on the right side of the
-       map (below the basemap switcher), with the panel popping out to the
-       LEFT of it. We use absolute positioning (not a Leaflet control) so the
-       button is always findable on both desktop and mobile. ─────────────── */
+    /* ── Measurement tool: bright orange FAB at the top-RIGHT, sized so the
+       result text is always visible. Panel stacks BELOW the FAB. Designed so
+       the result chip is plainly readable on both desktop and a phone. ──── */
     .map-measure-wrap {
       position: absolute;
-      top: 92px;          /* below the streets/satellite toggle */
+      top: 50px;          /* clear the Leaflet layers-switcher on the right */
       right: 10px;
       z-index: 600;
-      display: flex; flex-direction: row-reverse; align-items: flex-start;
-      gap: 6px; pointer-events: auto;
+      display: flex; flex-direction: column; align-items: flex-end;
+      gap: 4px; pointer-events: auto;
     }
     .map-measure-fab {
-      background: rgba(20,23,32,.95);
-      border: 1px solid var(--border-strong);
+      background: #f59e0b;   /* amber — visually distinct from grey controls */
+      border: 1px solid #b45309;
       border-radius: var(--r-md);
-      color: var(--text); font-size: 12px; font-weight: 600;
-      padding: 7px 11px; cursor: pointer;
-      box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
+      color: #1c1917; font-size: 12px; font-weight: 700;
+      padding: 8px 12px; cursor: pointer;
+      box-shadow: var(--shadow-md);
       user-select: none; line-height: 1.2; white-space: nowrap;
-      min-width: 44px; min-height: 34px; box-sizing: border-box;
+      min-width: 44px; min-height: 36px; box-sizing: border-box;
     }
-    .map-measure-fab:hover { color: #fff; border-color: var(--brand); }
-    .map-measure-fab.active { color: #fff; background: var(--brand); border-color: var(--brand); }
+    .map-measure-fab:hover { background: #fbbf24; }
+    .map-measure-fab.active { background: #1c1917; color: #fbbf24; border-color: #fbbf24; }
     .map-measure-panel {
-      display: none; flex-direction: column; gap: 5px;
+      display: none; flex-direction: column; gap: 6px;
       background: rgba(20,23,32,.96);
       border: 1px solid var(--border-strong);
       border-radius: var(--r-md);
-      padding: 7px 9px; min-width: 168px;
-      color: var(--text-2); font-size: 11px;
+      padding: 8px 10px; min-width: 200px; max-width: 260px;
+      color: var(--text-2); font-size: 12px;
       box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
     }
     .map-measure-panel.visible { display: flex; }
@@ -928,31 +927,31 @@
       flex: 1; text-align: center; cursor: pointer;
       background: var(--bg-input); color: var(--text-3);
       border: 1px solid var(--border); border-radius: var(--r-sm);
-      padding: 5px 0; font-size: 11px; user-select: none;
+      padding: 6px 0; font-size: 11px; user-select: none; font-weight: 600;
     }
-    .map-measure-panel .mm-mode.active { color: #fff; background: var(--brand); border-color: var(--brand); }
-    .map-measure-panel .mm-result { color: var(--text); font-weight: 600; font-size: 13px; }
+    .map-measure-panel .mm-mode.active { color: #1c1917; background: #fbbf24; border-color: #b45309; }
+    .map-measure-panel .mm-result {
+      color: #fbbf24; font-weight: 700; font-size: 14px;
+      background: rgba(0,0,0,.25);
+      padding: 6px 8px; border-radius: var(--r-sm);
+      border: 1px solid rgba(251,191,36,.35);
+      line-height: 1.35;
+    }
     .map-measure-panel .mm-sub { color: var(--text-4); font-size: 10px; }
     .map-measure-panel .mm-actions { display: flex; gap: 4px; }
     .map-measure-panel .mm-btn {
-      flex: 1; background: transparent; color: var(--text-3);
-      border: 1px solid var(--border); border-radius: var(--r-sm);
-      padding: 4px 6px; font-size: 11px; cursor: pointer;
+      flex: 1; background: transparent; color: var(--text-2);
+      border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+      padding: 5px 6px; font-size: 11px; font-weight: 600; cursor: pointer;
     }
-    .map-measure-panel .mm-btn:hover { color: var(--text); border-color: var(--brand); }
-    .map-measure-tooltip {
-      background: rgba(15,17,26,.92); color: #fff;
-      padding: 2px 6px; border-radius: 4px; font-size: 11px;
-      border: 1px solid rgba(91,155,255,.5); white-space: nowrap;
-    }
-    .map-measure-tooltip::before { display: none; }
+    .map-measure-panel .mm-btn:hover { color: #fbbf24; border-color: #fbbf24; }
     @media (max-width: 600px) {
-      .map-measure-wrap { top: 86px; right: 6px; gap: 4px; }
-      .map-measure-fab  { font-size: 11px; padding: 5px 8px; min-height: 30px; }
-      .map-measure-panel { min-width: 148px; padding: 5px 7px; font-size: 10px; }
-      .map-measure-panel .mm-mode { font-size: 10px; padding: 4px 0; }
-      .map-measure-panel .mm-result { font-size: 12px; }
-      .map-measure-panel .mm-btn { font-size: 10px; padding: 3px 5px; }
+      .map-measure-wrap  { top: 50px; right: 6px; gap: 3px; }
+      .map-measure-fab   { font-size: 11px; padding: 6px 9px; min-height: 32px; }
+      .map-measure-panel { min-width: 160px; max-width: 70vw; padding: 6px 8px; font-size: 11px; }
+      .map-measure-panel .mm-mode { font-size: 10px; padding: 5px 0; }
+      .map-measure-panel .mm-result { font-size: 13px; padding: 5px 7px; }
+      .map-measure-panel .mm-btn { font-size: 10px; padding: 4px 5px; }
     }
 
     .map-legend-floating .row {
@@ -3579,51 +3578,42 @@ function _initMap() {
   function _mmStart() {
     MM.active = true;
     mmFab.classList.add('active');
+    mmFab.textContent = '✕ Stop measure';
     mmPanel.classList.add('visible');
     _map.getContainer().style.cursor = 'crosshair';
     _map.on('click', _mmOnClick);
     _map.on('mousemove', _mmOnMove);
-    _map.on('dblclick', _mmOnDbl);
-    _map.doubleClickZoom.disable();
+    mmResult.textContent = MM.mode === 'line'
+      ? 'Tap on the map to drop points.'
+      : 'Tap 3+ points to form a polygon.';
+    mmSub.textContent = 'Use "Done" to finish; "Clear" to reset.';
   }
   function _mmStop() {
     MM.active = false;
     mmFab.classList.remove('active');
+    mmFab.textContent = '📏 Measure';
     mmPanel.classList.remove('visible');
     _map.getContainer().style.cursor = '';
     _map.off('click', _mmOnClick);
     _map.off('mousemove', _mmOnMove);
-    _map.off('dblclick', _mmOnDbl);
-    _map.doubleClickZoom.enable();
     _mmClear();
   }
   function _mmOnClick(e) {
-    // Debounce so a double-click (which Leaflet also emits as two clicks)
-    // doesn't drop two stray vertices before the dblclick handler fires.
-    clearTimeout(MM._clickTimer);
-    MM._clickTimer = setTimeout(() => {
-      MM.points.push(e.latlng);
-      const dot = L.circleMarker(e.latlng, {
-        radius: 4, color: '#fbbf24', weight: 2, fillColor: '#1a1f2e', fillOpacity: 1,
-      }).addTo(_map);
-      MM.markers.push(dot);
-      _mmRedraw(false);
-      _mmRecompute(false);
-    }, 230);
+    // Every map tap drops a point — no debounce, no dblclick. Use the Done
+    // button to finish. On touch devices this is the only reliable model.
+    MM.points.push(e.latlng);
+    const dot = L.circleMarker(e.latlng, {
+      radius: 5, color: '#fbbf24', weight: 2, fillColor: '#1a1f2e', fillOpacity: 1,
+    }).addTo(_map);
+    MM.markers.push(dot);
+    _mmRedraw(false);
+    _mmRecompute(false);
   }
   function _mmOnMove(e) {
     if (!MM.points.length) return;
     MM.lastTip = e.latlng;
     _mmRedraw(true);
     _mmRecompute(true);
-  }
-  function _mmOnDbl(e) {
-    clearTimeout(MM._clickTimer);
-    L.DomEvent.stopPropagation(e);
-    L.DomEvent.preventDefault(e);
-    MM.lastTip = null;
-    _mmRedraw(false);
-    _mmRecompute(false);
   }
   mmFab.onclick = () => { if (MM.active) _mmStop(); else _mmStart(); };
   mmPanel.querySelectorAll('.mm-mode').forEach(el => {
@@ -3635,11 +3625,28 @@ function _initMap() {
     };
   });
   document.getElementById('mm-done').onclick = () => {
+    // Finish: stop listening to map clicks/moves but keep the final shape
+    // and the result text in the panel so the user can read the number.
+    _map.off('click', _mmOnClick);
+    _map.off('mousemove', _mmOnMove);
     MM.lastTip = null;
     _mmRedraw(false);
     _mmRecompute(false);
+    mmSub.textContent = 'Press 📏 Measure again to start a new measurement.';
+    _map.getContainer().style.cursor = '';
   };
-  document.getElementById('mm-clear').onclick = _mmClear;
+  document.getElementById('mm-clear').onclick = () => {
+    _mmClear();
+    if (MM.active) {
+      // Re-arm listeners (in case Done had detached them) and reset the hint.
+      _map.on('click', _mmOnClick);
+      _map.on('mousemove', _mmOnMove);
+      mmResult.textContent = MM.mode === 'line'
+        ? 'Tap on the map to drop points.'
+        : 'Tap 3+ points to form a polygon.';
+      mmSub.textContent = 'Use "Done" to finish; "Clear" to reset.';
+    }
+  };
 }
 
 function updateMapLegend() {

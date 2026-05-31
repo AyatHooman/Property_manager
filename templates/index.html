@@ -889,25 +889,36 @@
       .map-search-item .icon { font-size: 12px; }
       .map-search-item .sub { font-size: 9px; }
     }
-    /* ── Measurement tool: FAB at top-left + result chip below it ───────── */
-    .map-measure-wrap { display: flex; flex-direction: column; gap: 4px; }
+    /* ── Measurement tool: absolutely-positioned FAB on the right side of the
+       map (below the basemap switcher), with the panel popping out to the
+       LEFT of it. We use absolute positioning (not a Leaflet control) so the
+       button is always findable on both desktop and mobile. ─────────────── */
+    .map-measure-wrap {
+      position: absolute;
+      top: 92px;          /* below the streets/satellite toggle */
+      right: 10px;
+      z-index: 600;
+      display: flex; flex-direction: row-reverse; align-items: flex-start;
+      gap: 6px; pointer-events: auto;
+    }
     .map-measure-fab {
       background: rgba(20,23,32,.95);
       border: 1px solid var(--border-strong);
       border-radius: var(--r-md);
-      color: var(--text-2); font-size: 11px; font-weight: 600;
-      padding: 5px 9px; cursor: pointer;
+      color: var(--text); font-size: 12px; font-weight: 600;
+      padding: 7px 11px; cursor: pointer;
       box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
-      user-select: none; line-height: 1.3; white-space: nowrap;
+      user-select: none; line-height: 1.2; white-space: nowrap;
+      min-width: 44px; min-height: 34px; box-sizing: border-box;
     }
-    .map-measure-fab:hover { color: var(--text); border-color: var(--brand); }
+    .map-measure-fab:hover { color: #fff; border-color: var(--brand); }
     .map-measure-fab.active { color: #fff; background: var(--brand); border-color: var(--brand); }
     .map-measure-panel {
-      display: none; flex-direction: column; gap: 4px;
+      display: none; flex-direction: column; gap: 5px;
       background: rgba(20,23,32,.96);
       border: 1px solid var(--border-strong);
       border-radius: var(--r-md);
-      padding: 6px 8px; min-width: 168px;
+      padding: 7px 9px; min-width: 168px;
       color: var(--text-2); font-size: 11px;
       box-shadow: var(--shadow-md); backdrop-filter: blur(6px);
     }
@@ -917,16 +928,16 @@
       flex: 1; text-align: center; cursor: pointer;
       background: var(--bg-input); color: var(--text-3);
       border: 1px solid var(--border); border-radius: var(--r-sm);
-      padding: 3px 0; font-size: 10px; user-select: none;
+      padding: 5px 0; font-size: 11px; user-select: none;
     }
     .map-measure-panel .mm-mode.active { color: #fff; background: var(--brand); border-color: var(--brand); }
-    .map-measure-panel .mm-result { color: var(--text); font-weight: 600; font-size: 12px; }
+    .map-measure-panel .mm-result { color: var(--text); font-weight: 600; font-size: 13px; }
     .map-measure-panel .mm-sub { color: var(--text-4); font-size: 10px; }
     .map-measure-panel .mm-actions { display: flex; gap: 4px; }
     .map-measure-panel .mm-btn {
       flex: 1; background: transparent; color: var(--text-3);
       border: 1px solid var(--border); border-radius: var(--r-sm);
-      padding: 2px 4px; font-size: 10px; cursor: pointer;
+      padding: 4px 6px; font-size: 11px; cursor: pointer;
     }
     .map-measure-panel .mm-btn:hover { color: var(--text); border-color: var(--brand); }
     .map-measure-tooltip {
@@ -935,6 +946,14 @@
       border: 1px solid rgba(91,155,255,.5); white-space: nowrap;
     }
     .map-measure-tooltip::before { display: none; }
+    @media (max-width: 600px) {
+      .map-measure-wrap { top: 86px; right: 6px; gap: 4px; }
+      .map-measure-fab  { font-size: 11px; padding: 5px 8px; min-height: 30px; }
+      .map-measure-panel { min-width: 148px; padding: 5px 7px; font-size: 10px; }
+      .map-measure-panel .mm-mode { font-size: 10px; padding: 4px 0; }
+      .map-measure-panel .mm-result { font-size: 12px; }
+      .map-measure-panel .mm-btn { font-size: 10px; padding: 3px 5px; }
+    }
 
     .map-legend-floating .row {
       display: inline-flex; align-items: center; gap: var(--s-1);
@@ -1958,9 +1977,9 @@
         </div>
         <div class="lp-group">
           <div class="lp-head"><span class="lp-caret">▾</span>📐 Property (VIC)</div>
-          <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements (live)</div>
+          <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements (statewide)</div>
           <div style="font-size:9px;color:#64748b;padding:2px 6px;line-height:1.3">
-            Zoom to street level (≥17) in Victoria; fetches Vicmap easements within view.
+            All 1.3M Vicmap easements. ~150 MB on first toggle (20–60 s parse), then smooth at every zoom.
           </div>
         </div>
       </div>
@@ -2772,6 +2791,10 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet.VectorGrid: slices a big GeoJSON into vector tiles in-browser via
+     geojson-vt and renders them via Canvas. Used by the Easements layer so we
+     can show ~1.3M Vicmap easement linestrings without freezing Leaflet. -->
+<script src="https://unpkg.com/leaflet.vectorgrid@1.3.0/dist/Leaflet.VectorGrid.bundled.js"></script>
 <script>
 // ── State ──────────────────────────────────────────────────────────────────────
 let allResults = [];
@@ -3449,32 +3472,30 @@ function _initMap() {
   });
 
   // ── Measurement tool (line length + polygon area) ───────────────────────
-  // Custom Leaflet control. Click "Measure" to open mode selector, click on
-  // the map to drop vertices, double-click (or Done) to finish. Distances use
-  // Leaflet's haversine distance; polygon area uses geodesic shoelace on a
-  // WGS84 sphere (good to ~0.1% at suburb scale).
-  const mmCtrl = L.control({ position: 'topleft' });
-  mmCtrl.onAdd = function() {
-    const wrap = L.DomUtil.create('div', 'leaflet-control map-measure-wrap');
-    wrap.innerHTML = `
-      <button class="map-measure-fab" id="mm-fab">📏 Measure</button>
-      <div class="map-measure-panel" id="mm-panel">
-        <div class="mm-modes">
-          <div class="mm-mode active" data-mode="line">📏 Distance</div>
-          <div class="mm-mode" data-mode="area">▱ Area</div>
-        </div>
-        <div class="mm-result" id="mm-result">Click on the map to start.</div>
-        <div class="mm-sub" id="mm-sub">Double-click to finish.</div>
-        <div class="mm-actions">
-          <button class="mm-btn" id="mm-done">Done</button>
-          <button class="mm-btn" id="mm-clear">Clear</button>
-        </div>
-      </div>`;
-    L.DomEvent.disableClickPropagation(wrap);
-    L.DomEvent.disableScrollPropagation(wrap);
-    return wrap;
-  };
-  mmCtrl.addTo(_map);
+  // Custom floating panel anchored to the right side of the map (below the
+  // streets/satellite switcher). Click "📏 Measure" to enter measure mode,
+  // click on the map to drop vertices, double-click (or Done) to finish.
+  // Distance uses Leaflet's haversine; polygon area uses geodesic shoelace on
+  // a WGS84 sphere (~0.1%% error at suburb scale).
+  const mmWrap = document.createElement('div');
+  mmWrap.className = 'map-measure-wrap';
+  mmWrap.innerHTML = `
+    <button class="map-measure-fab" id="mm-fab" title="Measure distance or area">📏 Measure</button>
+    <div class="map-measure-panel" id="mm-panel">
+      <div class="mm-modes">
+        <div class="mm-mode active" data-mode="line">📏 Distance</div>
+        <div class="mm-mode" data-mode="area">▱ Area</div>
+      </div>
+      <div class="mm-result" id="mm-result">Click on the map to start.</div>
+      <div class="mm-sub" id="mm-sub">Double-click to finish.</div>
+      <div class="mm-actions">
+        <button class="mm-btn" id="mm-done">Done</button>
+        <button class="mm-btn" id="mm-clear">Clear</button>
+      </div>
+    </div>`;
+  L.DomEvent.disableClickPropagation(mmWrap);
+  L.DomEvent.disableScrollPropagation(mmWrap);
+  _map.getContainer().appendChild(mmWrap);
 
   const MM = {
     mode: 'line', active: false,
@@ -4239,129 +4260,106 @@ async function toggleOverlay(name) {
   btn.classList.add('active');
 }
 
-// ─── Easements (Vicmap Property — live WFS fetch via /api/easements) ─────────
-// Statewide Vicmap easements are far too large to ship as a static geojson
-// (hundreds of thousands of features). Instead we lazy-fetch within the current
-// viewport on map settle, only when zoomed in close enough to be useful (~17+,
-// street level). Server proxies the request to DEECA OpenData WFS.
+// ─── Easements (Vicmap Property — entire Victoria, vector-tiled in-browser) ──
+// We ship one big GeoJSON (~1.3M LineStrings, ~150MB raw) and let
+// Leaflet.VectorGrid slice it into Canvas-rendered vector tiles client-side
+// via geojson-vt. The browser parses the file once on first toggle, after
+// which panning/zooming is smooth at all zooms. Status: 'A'=Active (cyan
+// solid), 'R'=Retired (grey dashed). Fields kept on each feature: pfi, status.
 const _easements = {
-  on: false,        // toggle state
-  layer: null,      // current L.geoJSON
+  on: false,
+  layer: null,      // L.vectorGrid.slicer instance
   loading: false,
-  lastKey: '',      // last bbox+zoom request key, to skip duplicates
-  abortCtrl: null,
+  data: null,       // parsed FeatureCollection (cached after first fetch)
 };
 
-function _easementsKey(b, z) {
-  return `${z}|${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`;
-}
-
-function _easementsBindMoveHandler(on) {
-  if (on) _map.on('moveend', _easementsRefresh);
-  else    _map.off('moveend', _easementsRefresh);
-}
-
-function _easementsClearLayer() {
-  if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
-}
-
-async function _easementsRefresh() {
-  if (!_easements.on) return;
-  const z = _map.getZoom();
-  const btn = document.getElementById('toggle-overlay-easements');
-  if (z < 17) {
-    _easementsClearLayer();
-    if (btn) btn.title = `Zoom in to street level (currently ${z}, need ≥17)`;
-    mmHintEasement('Zoom in to street level (≥17) — easements only render at high zoom.');
-    return;
-  }
-  const b = _map.getBounds();
-  // Skip if outside Victoria roughly
-  if (b.getNorth() < -39.5 || b.getSouth() > -33.5 || b.getEast() < 140.0 || b.getWest() > 150.5) {
-    _easementsClearLayer();
-    mmHintEasement('Easements available in Victoria only.');
-    return;
-  }
-  const key = _easementsKey(b, z);
-  if (key === _easements.lastKey && _easements.layer) return;
-  _easements.lastKey = key;
-
-  if (_easements.abortCtrl) _easements.abortCtrl.abort();
-  const ctrl = new AbortController();
-  _easements.abortCtrl = ctrl;
-  _easements.loading = true;
-  if (btn) btn.classList.add('loading');
-  mmHintEasement('Fetching easements…');
-
-  try {
-    const url = `/api/easements?w=${b.getWest()}&s=${b.getSouth()}&e=${b.getEast()}&n=${b.getNorth()}`;
-    const r = await fetch(url, { signal: ctrl.signal });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const gj = await r.json();
-    _easementsClearLayer();
-    // Vicmap easements are LineString features (the line on the cadastral
-    // boundary). Active = solid magenta, anything else (retired/proposed) =
-    // dashed grey so users can ignore them at a glance.
-    _easements.layer = L.geoJSON(gj, {
-      style(feature) {
-        const status = (feature.properties || {}).status || '';
-        const active = status === 'A' || status === '' || status === 'APPROVED';
-        return active
-          ? { color: '#22d3ee', weight: 3, opacity: 0.95 }
-          : { color: '#94a3b8', weight: 2, opacity: 0.7, dashArray: '3,3' };
-      },
-      onEachFeature(feature, layer) {
-        const p = feature.properties || {};
-        const statusLbl = {
-          'A': 'Active', 'R': 'Retired',
-          'APPROVED': 'Approved (planning scheme)',
-          'PROPOSED': 'Proposed (planning scheme)',
-        }[p.status] || p.status || 'Unknown';
-        const pfi = p.pfi || p.PFI || '';
-        layer.bindPopup(
-          `<b>📐 Easement</b>` +
-          `<br><span style="font-size:11px;color:#cbd5e1">${statusLbl}</span>` +
-          (pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${pfi}</span>` : '') +
-          `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · DEECA OpenData</div>`
-        );
-      },
-    }).addTo(_map);
-    const n = gj.features ? gj.features.length : 0;
-    mmHintEasement(n ? `${n} easement${n === 1 ? '' : 's'} in view` : 'No easements in this view.');
-  } catch (e) {
-    if (e.name !== 'AbortError') {
-      console.error('easements fetch failed', e);
-      mmHintEasement('Easements fetch failed (see console).');
-    }
-  } finally {
-    _easements.loading = false;
-    if (btn) btn.classList.remove('loading');
-  }
-}
-
-// Tiny one-line status piggy-backed on the easement toggle's title tooltip and
-// (when the panel is visible) into the layer-panel sub-text element.
 function mmHintEasement(msg) {
   const btn = document.getElementById('toggle-overlay-easements');
   if (btn) btn.title = msg;
 }
 
-function toggleEasements() {
+const _EASE_STYLE_ACTIVE  = { weight: 2.5, color: '#22d3ee', opacity: 0.95 };
+const _EASE_STYLE_RETIRED = { weight: 1.5, color: '#94a3b8', opacity: 0.6, dashArray: [3, 3] };
+
+function _easementsBuildLayer(geojson) {
+  // VectorGrid.slicer needs each feature to know its own style; we wrap the
+  // raw geojson and provide vectorTileLayerStyles keyed by the geojson-vt
+  // layer name (default "sliced"). The style fn receives the feature
+  // properties and zoom; we colour by status.
+  return L.vectorGrid.slicer(geojson, {
+    rendererFactory: L.canvas.tile,
+    maxZoom: 22,
+    interactive: true,
+    vectorTileLayerStyles: {
+      sliced(props, zoom) {
+        const s = (props && props.status) || '';
+        return s === 'A' ? _EASE_STYLE_ACTIVE : _EASE_STYLE_RETIRED;
+      },
+    },
+    getFeatureId(f) { return f.properties && f.properties.pfi; },
+  }).on('click', (e) => {
+    const p = (e.layer && e.layer.properties) || {};
+    const statusLbl = { 'A': 'Active', 'R': 'Retired' }[p.status] || p.status || 'Unknown';
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(
+        `<b>📐 Easement</b>` +
+        `<br><span style="font-size:11px;color:#cbd5e1">${statusLbl}</span>` +
+        (p.pfi ? `<br><span style="font-size:10px;color:#64748b">PFI ${p.pfi}</span>` : '') +
+        `<div style="font-size:9px;color:#64748b;margin-top:3px">Vicmap Property · DEECA OpenData</div>`
+      )
+      .openOn(_map);
+  });
+}
+
+async function toggleEasements() {
   _initMap();
   const btn = document.getElementById('toggle-overlay-easements');
   if (_easements.on) {
     _easements.on = false;
-    _easementsBindMoveHandler(false);
-    if (_easements.abortCtrl) _easements.abortCtrl.abort();
-    _easementsClearLayer();
-    _easements.lastKey = '';
+    if (_easements.layer) { _map.removeLayer(_easements.layer); _easements.layer = null; }
     btn.classList.remove('active');
+    updateMapLegend();
     return;
   }
+  // Mobile guard — the 200MB GeoJSON will likely OOM-crash a phone tab. Warn
+  // the user explicitly and let them opt in if they really want to try.
+  const isMobile = window.matchMedia('(max-width: 600px)').matches;
+  if (isMobile && !_easements.data) {
+    const ok = confirm(
+      "📐 Easements is a 200 MB dataset (~1.3M lines).\n\n" +
+      "It works smoothly on desktop but may crash a phone browser.\n\n" +
+      "Continue anyway?"
+    );
+    if (!ok) return;
+  }
+  if (!_easements.data) {
+    btn.classList.add('loading');
+    mmHintEasement('Loading 1.3M easements — first load may take 20–60 s.');
+    try {
+      const r = await fetch('/static/overlays/easements_vic.geojson');
+      if (!r.ok) {
+        btn.classList.remove('loading');
+        mmHintEasement('Easements file missing. Run data/build_easements_vic.py to fetch it.');
+        alert('Easements GeoJSON not found at /static/overlays/easements_vic.geojson.\n' +
+              'Run:  python data/build_easements_vic.py  to download it (~3 min, ~200 MB).');
+        return;
+      }
+      _easements.data = await r.json();
+    } catch (e) {
+      btn.classList.remove('loading');
+      mmHintEasement('Easements load failed (see console).');
+      console.error('easements load failed', e);
+      return;
+    }
+    btn.classList.remove('loading');
+  }
+  _easements.layer = _easementsBuildLayer(_easements.data).addTo(_map);
   _easements.on = true;
   btn.classList.add('active');
-  _easementsBindMoveHandler(true);
-  _easementsRefresh();
+  const n = _easements.data.features ? _easements.data.features.length : 0;
+  mmHintEasement(`${n.toLocaleString()} easements loaded statewide`);
+  updateMapLegend();
 }
 
 const _transportCfg = {

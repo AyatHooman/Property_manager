@@ -167,6 +167,27 @@ def index():
     return resp
 
 
+# Serve the huge Vicmap easements GeoJSON pre-gzipped (~22 MB on the wire vs
+# 201 MB raw). Browser decodes transparently because we send Content-Encoding:
+# gzip. Flask's default static route would just send the raw file.
+@app.route("/static/overlays/easements_vic.geojson")
+def static_easements():
+    base = os.path.join(os.path.dirname(__file__), "..", "static", "overlays")
+    gz   = os.path.join(base, "easements_vic.geojson.gz")
+    raw  = os.path.join(base, "easements_vic.geojson")
+    if os.path.exists(gz):
+        with open(gz, "rb") as f:
+            data = f.read()
+        resp = Response(data, mimetype="application/geo+json")
+        resp.headers["Content-Encoding"] = "gzip"
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        return resp
+    if os.path.exists(raw):
+        return Response(open(raw, "rb").read(), mimetype="application/geo+json",
+                        headers={"Cache-Control": "public, max-age=86400"})
+    return jsonify({"error": "Easements file not built. Run data/build_easements_vic.py."}), 404
+
+
 # ── API: address autocomplete via Nominatim (OpenStreetMap) ───────────────────
 
 @app.route("/api/suggest")

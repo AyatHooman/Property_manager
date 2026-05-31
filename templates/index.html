@@ -3310,21 +3310,25 @@ let _searchDebounce = null;
 
 function _initMap() {
   if (_map) return;
+  // maxNativeZoom caps actual tile requests at the server's real limit
+  // (OSM = 19, Esri imagery = 19) but maxZoom lets Leaflet keep upscaling
+  // the last cached tile past that — gets you closer at the cost of
+  // pixellation. Useful for fine-grained lot/easement inspection.
   const streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 19
+    maxNativeZoom: 19, maxZoom: 22,
   });
   const satellite = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Tiles © Esri', maxZoom: 19 }
+    { attribution: 'Tiles © Esri', maxNativeZoom: 19, maxZoom: 22 }
   );
   const labels = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-    { attribution: '', maxZoom: 19, opacity: 0.9 }
+    { attribution: '', maxNativeZoom: 19, maxZoom: 22, opacity: 0.9 }
   );
   const satWithLabels = L.layerGroup([satellite, labels]);
   const cf = getCityFocus();
-  _map = L.map('map', { layers: [streets] }).setView(cf.center, cf.zoom);
+  _map = L.map('map', { layers: [streets], maxZoom: 22 }).setView(cf.center, cf.zoom);
   L.control.layers(
     { '🗺️ Streets': streets, '🛰️ Satellite': satWithLabels },
     {},

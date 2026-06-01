@@ -459,16 +459,17 @@ def compute_factors(lat, lng, use_cache=True):
             dist, _ = res
             if dist < 500:
                 risks.append({"label": "Near rail line (train noise)", "detail": f"~{dist:.0f} m to track"})
-        # Tram / bus routes run on the street — being on/near the route = the
-        # vehicle passing your frontage (noise, every 10-30 min). Bus routes are
-        # dense in the suburbs so this flags a fair share of properties.
-        for nm, base, near_m, lab in (("trams", "trams", 50, "tram route"),
-                                      ("buses", "buses", 80, "bus route")):
+        # Tram / bus routes: only a flag when the property is literally ON the
+        # route street (the bus/tram passes the frontage). A route a block away
+        # on another street is not a concern; and where the route runs on a
+        # major road, the road-proximity factor above already covers it.
+        for nm, base, near_m, lab in (("trams", "trams", 30, "tram route"),
+                                      ("buses", "buses", 25, "bus route")):
             res = _nearest_m(nm, base, P)
             if res:
                 dist, _ = res
                 if dist < near_m:
-                    risks.append({"label": f"On/near a {lab}", "detail": f"~{dist:.0f} m (traffic/noise)"})
+                    risks.append({"label": f"On a {lab}", "detail": f"~{dist:.0f} m (traffic/noise)"})
 
         # 5. Power lines
         res = _nearest_m("powerlines", "osm_powerlines", P)

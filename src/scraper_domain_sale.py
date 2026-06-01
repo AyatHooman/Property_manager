@@ -175,6 +175,9 @@ def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
             d["image_urls"] = json.loads(d.get("image_urls") or "[]")
         except Exception:
             d["image_urls"] = []
+        # "new" = first appeared in its most recent scrape (first_seen==last_seen),
+        # i.e. it showed up in the latest refresh and wasn't seen before.
+        d["is_new"] = 1 if (d.get("first_seen") and d.get("first_seen") == d.get("last_seen")) else 0
         out.append(d)
     return out
 

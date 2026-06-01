@@ -1053,6 +1053,7 @@
     }
     .map-fs-toolbar button:hover { color: #34d399; border-color: #34d399; }
     .map-fs-toolbar button.active { color: #fbbf24; border-color: #fbbf24; }
+    .map-fs-toolbar button#fs-tb-new.active { color: #22d3ee; border-color: #22d3ee; }
     .map-fs-toolbar button.loading {
       color: #fbbf24; animation: fsSpin 1.2s linear infinite;
     }
@@ -3764,6 +3765,7 @@ function _initMap() {
   fsTb.className = 'map-fs-toolbar';
   fsTb.innerHTML = `
     <button id="fs-tb-refresh" title="Re-scrape Domain for fresh listings">🔄</button>
+    <button id="fs-tb-new"     title="Show new-this-refresh only">🆕</button>
     <button id="fs-tb-fav"     title="Show favourites only">★</button>
     <button id="fs-tb-edit"    title="Change the Domain filter URL">✏️</button>
     <button id="fs-tb-off"     title="Hide For Sale layer">✕</button>
@@ -3783,6 +3785,14 @@ function _initMap() {
     const n = _forSaleFavOnly && _forSale.lastFc
       ? (_forSale.lastFc.features || []).filter(f => f.properties && f.properties.favourite).length : 0;
     if (_forSaleFavOnly) _forSaleStatus(`${n} favourite${n===1?'':'s'}`);
+  };
+  document.getElementById('fs-tb-new').onclick = (e) => {
+    _forSaleNewOnly = !_forSaleNewOnly;
+    e.currentTarget.classList.toggle('active', _forSaleNewOnly);
+    if (_forSale.lastFc) _forSaleRender(_forSale.lastFc);
+    const n = _forSale.lastFc
+      ? (_forSale.lastFc.features || []).filter(f => f.properties && f.properties.is_new).length : 0;
+    _forSaleStatus(`${n} new this refresh`);
   };
 
   // Sync easements + lots toggle gates with current zoom + refresh their
@@ -4872,6 +4882,7 @@ function _forSaleMarkerColors(rc) {
   return { fill: '#34d399', ring: '#064e3b' };                   // clean
 }
 let _forSaleFavOnly = false;   // "show favourites only" toggle
+let _forSaleNewOnly = false;   // "show new-this-refresh only" toggle
 
 // Toggle a listing's favourite flag server-side, then update the cached
 // feature + button + re-render so the gold ring appears/disappears.
@@ -4897,29 +4908,36 @@ function _forSaleRender(fc) {
   if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
   let feats = (fc.features || []);
   if (_forSaleFavOnly) feats = feats.filter(f => (f.properties || {}).favourite);
-  _forSale.layer = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
-    pointToLayer: (f, latlng) => {
-      const p = f.properties || {};
-      const c = _forSaleMarkerColors(p.risk_count);
-      const fav = !!p.favourite;
-      return L.circleMarker(latlng, {
-        radius: fav ? 8 : 6,
-        fillColor: c.fill,
-        color: fav ? '#fbbf24' : c.ring,   // gold ring marks a favourite
-        weight: fav ? 3 : 2, opacity: 1, fillOpacity: 0.95,
-      });
-    },
-    onEachFeature: _forSaleBindPopup,
-    pane: 'markerPane',
-  }).addTo(_map);
-  if (fc.features && fc.features.length) {
-    // Fit map to results only the FIRST time (so subsequent refreshes don't
-    // hijack the user's pan/zoom).
-    if (!_forSale._fitDone) {
-      try { _map.fitBounds(_forSale.layer.getBounds(), { padding: [40, 40] }); }
-      catch (_) {}
-      _forSale._fitDone = true;
+  if (_forSaleNewOnly) feats = feats.filter(f => (f.properties || {}).is_new);
+
+  // Build a featureGroup so we can also drop a highlight ring around NEW
+  // listings (a cyan empty circle, distinct from the gold favourite ring).
+  const grp = L.featureGroup();
+  feats.forEach(f => {
+    const p = f.properties || {};
+    const ll = L.latLng(f.geometry.coordinates[1], f.geometry.coordinates[0]);
+    const fav = !!p.favourite;
+    if (p.is_new) {
+      // Cyan halo ring behind the marker — easy to spot new arrivals.
+      L.circleMarker(ll, {
+        radius: fav ? 13 : 11, fillOpacity: 0,
+        color: '#22d3ee', weight: 3, opacity: 0.95,
+      }).addTo(grp);
     }
+    const c = _forSaleMarkerColors(p.risk_count);
+    const m = L.circleMarker(ll, {
+      radius: fav ? 8 : 6,
+      fillColor: c.fill,
+      color: fav ? '#fbbf24' : c.ring,   // gold ring marks a favourite
+      weight: fav ? 3 : 2, opacity: 1, fillOpacity: 0.95,
+    });
+    _forSaleBindPopup(f, m);
+    m.addTo(grp);
+  });
+  _forSale.layer = grp.addTo(_map);
+  if (feats.length && !_forSale._fitDone) {
+    try { _map.fitBounds(grp.getBounds(), { padding: [40, 40] }); } catch (_) {}
+    _forSale._fitDone = true;
   }
 }
 

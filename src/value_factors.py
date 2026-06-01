@@ -164,38 +164,173 @@ def _inside(name, basename, P):
     return None
 
 
-_ease_idx = None        # cached rtree handle (opening it per call costs ~1.5 s)
-_ease_idx_tried = False
+_rt_handles = {}        # "easements"/"lots" -> cached rtree.Index (degree space)
+_rt_tried = set()
 
 
-def _easement_idx():
-    global _ease_idx, _ease_idx_tried
-    if _ease_idx_tried:
-        return _ease_idx
-    _ease_idx_tried = True
-    base = os.path.join(_BASE, "data", "easements")
+def _rt_idx(name):
+    if name in _rt_tried:
+        return _rt_handles.get(name)
+    _rt_tried.add(name)
+    base = os.path.join(_BASE, "data", name)
     if not (os.path.exists(base + ".idx") and os.path.exists(base + ".dat")):
         return None
     try:
         import rtree
         p = rtree.index.Property(); p.dimension = 2
         p.dat_extension = "dat"; p.idx_extension = "idx"
-        _ease_idx = rtree.index.Index(base, properties=p)
+        _rt_handles[name] = rtree.index.Index(base, properties=p)
     except Exception:
-        _ease_idx = None
-    return _ease_idx
+        _rt_handles[name] = None
+    return _rt_handles.get(name)
 
 
-def _easement_complexity(lat, lng):
-    """Count easements within ~20 m of the point using the cached R-tree."""
-    idx = _easement_idx()
-    if idx is None:
-        return None
-    d = 0.0002  # ~20 m
+def _spatial_geoms(table, ids):
+    """Load geometry dicts for the given ids from spatial.db (read-only)."""
+    if not ids or not os.path.exists(_SPATIAL_DB):
+        return []
+    out = []
     try:
-        return idx.count((lng - d, lat - d, lng + d, lat + d))
+        uri = f"file:{os.path.abspath(_SPATIAL_DB)}?mode=ro"
+        con = sqlite3.connect(uri, uri=True, timeout=10)
+        cur = con.cursor()
+        for cs in range(0, len(ids), 900):
+            chunk = ids[cs:cs + 900]
+            ph = ",".join("?" * len(chunk))
+            for (geom,) in cur.execute(f"SELECT geom FROM {table} WHERE id IN ({ph})", chunk):
+                try:
+                    out.append(json.loads(geom))
+                except Exception:
+                    pass
+        con.close()
     except Exception:
-        return None
+        return out
+    return out
+
+
+def _shape_local_m(geomdict, lat0, lng0):
+    """Build a shapely geom in LOCAL METRES relative to (lat0,lng0) — so
+    lengths/areas/angles are true metres for the easement-vs-lot analysis."""
+    from shapely.geometry import shape
+    K = _DEG_M
+    def tf(c):
+        if c and isinstance(c[0], (int, float)):
+            return [(c[0] - lng0) * K * _KX, (c[1] - lat0) * K]
+        return [tf(x) for x in c]
+    g2 = dict(geomdict)
+    g2["coordinates"] = tf(geomdict["coordinates"])
+    return shape(g2)
+
+
+def _easement_analysis(lat, lng):
+    """Classify easement risk for the lot containing (lat,lng).
+
+    Returns dict: {present, n_segments, lot_found, sides, long_side, crosses}
+    where `sides` = how many lot boundaries carry an easement and `long_side`
+    = an easement runs along the lot's long boundary (both are the cases that
+    most reduce usable/buildable area)."""
+    from shapely.geometry import Point, LineString
+    res = {"present": False, "n_segments": 0, "lot_found": False,
+           "sides": 0, "long_side": False, "crosses": False}
+    eidx = _rt_idx("easements")
+    if eidx is None:
+        return res
+    d = 0.00018  # ~18 m bbox for the simple count fallback
+    try:
+        near_ids = list(eidx.intersection((lng - d, lat - d, lng + d, lat + d)))
+    except Exception:
+        near_ids = []
+    res["n_segments"] = len(near_ids)
+    res["present"] = len(near_ids) > 0
+
+    # Find the lot polygon containing the point.
+    lidx = _rt_idx("lots")
+    if lidx is None:
+        return res
+    try:
+        lot_cands = list(lidx.intersection((lng, lat, lng, lat)))
+    except Exception:
+        lot_cands = []
+    lot_geom = None
+    P0 = Point(lng, lat)
+    from shapely.geometry import shape as _shape
+    for gd in _spatial_geoms("lots", lot_cands):
+        try:
+            g = _shape(gd)
+            if g.contains(P0):
+                lot_geom = gd
+                break
+        except Exception:
+            continue
+    if lot_geom is None:
+        return res
+    res["lot_found"] = True
+
+    lot_m = _shape_local_m(lot_geom, lat, lng)
+    if lot_m.is_empty:
+        return res
+    # Easements intersecting the lot's bbox (a touch wider).
+    minx, miny, maxx, maxy = None, None, None, None
+    try:
+        b = lot_m.bounds  # metres
+    except Exception:
+        return res
+    # widen the easement search to the lot bbox in degrees
+    lb = _shape(lot_geom).bounds
+    pad = 0.00005
+    try:
+        e_ids = list(eidx.intersection((lb[0]-pad, lb[1]-pad, lb[2]+pad, lb[3]+pad)))
+    except Exception:
+        e_ids = []
+    ease_m = []
+    for gd in _spatial_geoms("easements", e_ids):
+        try:
+            em = _shape_local_m(gd, lat, lng)
+            if not em.is_empty:
+                ease_m.append(em)
+        except Exception:
+            continue
+    if not ease_m:
+        return res
+
+    # Lot oriented bounding box → 4 edges; classify long vs short dimension.
+    try:
+        mrr = lot_m.minimum_rotated_rectangle
+        coords = list(mrr.exterior.coords)[:4]
+    except Exception:
+        return res
+    if len(coords) < 4:
+        return res
+    edges = [LineString([coords[i], coords[(i + 1) % 4]]) for i in range(4)]
+    lengths = [e.length for e in edges]
+    long_dim = max(lengths)
+    long_edges = {i for i, L in enumerate(lengths) if L >= long_dim - 0.5}
+
+    lot_buf = lot_m.buffer(2.0)
+    crosses = False
+    sides_hit = set()
+    for em in ease_m:
+        # Does it run along a boundary, or cross the interior?
+        for i, e in enumerate(edges):
+            try:
+                ov = em.intersection(e.buffer(4.0)).length
+            except Exception:
+                ov = 0
+            if ov > max(3.0, 0.25 * lengths[i]):
+                sides_hit.add(i)
+        # interior crossing: a long piece inside the lot but not near any edge
+        try:
+            inside = em.intersection(lot_buf)
+            near_edge = any(em.distance(e) < 4.0 for e in edges)
+            if inside.length > 6.0 and not near_edge:
+                crosses = True
+        except Exception:
+            pass
+
+    res["sides"] = len(sides_hit)
+    res["long_side"] = any(i in long_edges for i in sides_hit)
+    res["crosses"] = crosses
+    return res
 
 
 # ── main ─────────────────────────────────────────────────────────────────────
@@ -212,7 +347,8 @@ def warm_up():
                          ("zones", "zones"), ("trains", "trains"),
                          ("trams", "trams"), ("buses", "buses")):
             _load(nm, base)
-        _easement_idx()   # open + cache the easement R-tree handle too
+        _rt_idx("easements")   # open + cache the easement + lot R-tree handles
+        _rt_idx("lots")
 
 
 def _factors_db():
@@ -337,13 +473,26 @@ def compute_factors(lat, lng, use_cache=True):
             if dist < 3000:
                 risks.append({"label": "Near airport (aircraft noise)", "detail": f"{pr.get('name') or 'airport'} · ~{dist/1000:.1f} km"})
 
-        # 11. Easement complexity
-        ne = _easement_complexity(lat, lng)
-        if ne is not None and ne > 0:
-            if ne >= 3:
-                risks.append({"label": "Complex easements on/near title", "detail": f"{ne} easement segments within ~20 m"})
+        # 11. Easement analysis — risky when on 2+ boundaries or the long side
+        #     (those eat the most usable / buildable area).
+        ea = _easement_analysis(lat, lng)
+        if ea.get("present"):
+            if ea.get("sides", 0) >= 2:
+                risks.append({"label": "Easements on multiple boundaries",
+                              "detail": f"{ea['sides']} sides of the lot" +
+                                        (" (incl. the long side)" if ea.get("long_side") else "")})
+            elif ea.get("long_side"):
+                risks.append({"label": "Easement along the long boundary",
+                              "detail": "runs down the long side of the lot"})
+            elif ea.get("crosses"):
+                risks.append({"label": "Easement crosses the lot interior",
+                              "detail": "may block building over part of the land"})
+            elif ea.get("sides", 0) == 1:
+                info.append({"label": "Easement on one boundary",
+                             "detail": "typically low impact (services on a side)"})
             else:
-                info.append({"label": "Easement on/near title", "detail": f"{ne} segment(s) within ~20 m"})
+                info.append({"label": "Easement on/near title",
+                             "detail": f"{ea.get('n_segments', 0)} segment(s) nearby"})
 
     result = {
         "lat": lat, "lng": lng,

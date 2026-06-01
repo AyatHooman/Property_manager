@@ -46,16 +46,46 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
             agency      TEXT,
             url         TEXT,
             image_urls  TEXT,           -- JSON array
+            risk_count  INTEGER,         -- value-risk count (NULL = not computed yet)
             first_seen  TEXT,
             last_seen   TEXT,
             removed     INTEGER NOT NULL DEFAULT 0
         )
     """)
+    # Migrate older DBs that predate the risk_count column.
+    cols = {r[1] for r in con.execute("PRAGMA table_info(listings)")}
+    if "risk_count" not in cols:
+        con.execute("ALTER TABLE listings ADD COLUMN risk_count INTEGER")
     # Spatial filter goes through these
     con.execute("CREATE INDEX IF NOT EXISTS listings_geo  ON listings(lat, lng)")
     con.execute("CREATE INDEX IF NOT EXISTS listings_seen ON listings(last_seen)")
     con.commit()
     return con
+
+
+def fill_risk_counts(con: sqlite3.Connection, limit: int = 10000) -> int:
+    """Compute + persist risk_count for listings that don't have one yet,
+    using the value-factor engine (cached per coordinate, so cheap after the
+    first pass). Returns how many were filled."""
+    try:
+        from src import value_factors
+    except Exception:
+        return 0
+    rows = con.execute(
+        "SELECT listing_id, lat, lng FROM listings "
+        "WHERE removed=0 AND lat IS NOT NULL AND risk_count IS NULL LIMIT ?",
+        (limit,)).fetchall()
+    n = 0
+    for lid, lat, lng in rows:
+        try:
+            rc = value_factors.compute_factors(lat, lng).get("risk_count", 0)
+        except Exception:
+            continue
+        con.execute("UPDATE listings SET risk_count=? WHERE listing_id=?", (rc, lid))
+        n += 1
+    if n:
+        con.commit()
+    return n
 
 
 def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tuple[int, int]:
@@ -111,7 +141,7 @@ def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
                price_text, price_low, price_high,
                beds, baths, carspaces, land_m2,
                prop_type, sale_type, agency, url, image_urls,
-               first_seen, last_seen
+               risk_count, first_seen, last_seen
         FROM listings WHERE removed=0 AND lat IS NOT NULL AND lng IS NOT NULL
     """)
     cols = [d[0] for d in cur.description]

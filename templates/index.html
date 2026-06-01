@@ -4825,7 +4825,8 @@ const FOR_SALE_DEFAULT_URL = (
   "blackburn-vic-3130,blackburn-south-vic-3130,blackburn-north-vic-3130," +
   "vermont-vic-3133,vermont-south-vic-3133,forest-hill-vic-3131," +
   "nunawading-vic-3131,box-hill-vic-3128,box-hill-south-vic-3128," +
-  "box-hill-north-vic-3129,burwood-east-vic-3151" +
+  "box-hill-north-vic-3129,burwood-east-vic-3151," +
+  "ashwood-vic-3147,notting-hill-vic-3168,chadstone-vic-3148" +
   "&ptype=house&bedrooms=3-any&bathrooms=1-any&price=0-1300000" +
   "&excludeunderoffer=1&carspaces=1-any&landsize=500-any&landsizeunit=m2"
 );
@@ -4845,13 +4846,23 @@ function editForSaleUrl() {
   }
 }
 
+// Marker colour by value-risk: red = has risks, green = no risks, grey =
+// risk_count not computed yet (will colour after the server fills it in).
+function _forSaleMarkerColors(rc) {
+  if (rc == null)  return { fill: '#94a3b8', ring: '#334155' };  // unknown
+  if (rc > 0)      return { fill: '#ef4444', ring: '#7f1d1d' };  // risky
+  return { fill: '#34d399', ring: '#064e3b' };                   // clean
+}
 function _forSaleRender(fc) {
   if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
   _forSale.layer = L.geoJSON(fc, {
-    pointToLayer: (f, latlng) => L.circleMarker(latlng, {
-      radius: 6, fillColor: '#34d399', color: '#064e3b',
-      weight: 2, opacity: 1, fillOpacity: 0.95,
-    }),
+    pointToLayer: (f, latlng) => {
+      const c = _forSaleMarkerColors((f.properties || {}).risk_count);
+      return L.circleMarker(latlng, {
+        radius: 6, fillColor: c.fill, color: c.ring,
+        weight: 2, opacity: 1, fillOpacity: 0.95,
+      });
+    },
     onEachFeature: _forSaleBindPopup,
     pane: 'markerPane',
   }).addTo(_map);
@@ -4976,12 +4987,19 @@ function _forSaleClearOtherLayers() {
   });
 }
 
-async function _forSaleLoadCached() {
+async function _forSaleLoadCached(round = 0) {
   try {
     const r = await fetch('/api/for-sale');
     if (!r.ok) return;
     const fc = await r.json();
+    if (!_forSale.on) return;            // user turned it off mid-load
     _forSaleRender(fc);
+    // The server fills risk_count 60 at a time; if any markers are still
+    // grey (uncomputed), poll again to colour them — up to ~8 rounds.
+    const greys = (fc.features || []).filter(f => f.properties && f.properties.risk_count == null).length;
+    if (greys > 0 && round < 8) {
+      setTimeout(() => _forSaleLoadCached(round + 1), 1500);
+    }
   } catch (e) { console.error('cached for-sale load failed', e); }
 }
 

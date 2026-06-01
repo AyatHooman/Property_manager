@@ -697,10 +697,17 @@ def _forsale_to_geojson(items):
 
 @app.route("/api/for-sale", methods=["GET"])
 def api_for_sale_load():
-    """Return the currently-saved For Sale listings as a GeoJSON FC."""
+    """Return the currently-saved For Sale listings as a GeoJSON FC.
+    Each load fills risk_count for up to 60 not-yet-computed listings (cheap —
+    factors are cached per coordinate) so markers progressively colour without
+    blocking the response for long."""
     from src import scraper_domain_sale as sds
     con = sds.init_db(_FORSALE_DB)
     try:
+        try:
+            sds.fill_risk_counts(con, limit=60)
+        except Exception:
+            pass
         items = sds.load_listings(con)
     finally:
         con.close()
@@ -726,6 +733,12 @@ def api_for_sale_refresh():
     con = sds.init_db(_FORSALE_DB)
     try:
         ins, upd = sds.save_listings(con, listings)
+        # Compute value-risk counts for every listing (cached per coordinate;
+        # the scrape already took 30-90 s so this one-time pass is unnoticed).
+        try:
+            sds.fill_risk_counts(con)
+        except Exception:
+            pass
         items = sds.load_listings(con)
     finally:
         con.close()

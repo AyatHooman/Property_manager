@@ -3,6 +3,7 @@ Flask web interface for Property Manager.
 Run with: python -m src.web
 """
 import os
+import re
 import json
 import time
 import hashlib
@@ -206,6 +207,32 @@ def static_vicplan_overlay(scheme):
         return jsonify({"error": "bad scheme"}), 400
     return _serve_gzipped_geojson(f"vic_{scheme.lower()}",
                                   "data/build_vicplan_overlays_melb.py")
+
+
+# Generic overlay-file route. Serves ANY static/overlays/<name>.geojson,
+# transparently preferring the pre-gzipped sibling (.geojson.gz) when present.
+# This covers the DEECA value layers (zones/roads/rivers/waterbody/airports),
+# the OSM feature layers (osm_*), AND the legacy plain files (flood, heritage,
+# crime_postcode, …) that used to be served by Flask's default static handler.
+@app.route("/static/overlays/<name>.geojson")
+def static_overlay_file(name):
+    # Filename guard — only simple names, no path traversal.
+    if not re.fullmatch(r"[A-Za-z0-9_\-]+", name or ""):
+        return jsonify({"error": "bad name"}), 400
+    base = os.path.join(os.path.dirname(__file__), "..", "static", "overlays")
+    gz  = os.path.join(base, f"{name}.geojson.gz")
+    raw = os.path.join(base, f"{name}.geojson")
+    if os.path.exists(gz):
+        with open(gz, "rb") as f:
+            data = f.read()
+        resp = Response(data, mimetype="application/geo+json")
+        resp.headers["Content-Encoding"] = "gzip"
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        return resp
+    if os.path.exists(raw):
+        return Response(open(raw, "rb").read(), mimetype="application/geo+json",
+                        headers={"Cache-Control": "public, max-age=86400"})
+    return jsonify({"error": f"{name}.geojson not found"}), 404
 
 
 # Per-parcel rich detail (lot number, plan, LGA) fetched on click from the

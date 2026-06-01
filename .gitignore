@@ -53,5 +53,11 @@ static/overlays/vic_emo.geojson
 static/overlays/vic_eso.geojson
 static/overlays/vic_sbo.geojson
 
+# Big DEECA value-context raw GeoJSONs (>15 MB). Committed as .gz only;
+# rebuild raw with data/build_deeca_layers_melb.py.
+static/overlays/zones.geojson
+static/overlays/rivers.geojson
+static/overlays/waterbody.geojson
+
 # Domain "for sale" scrape cache — rebuild via the in-app 🔄 Re-scrape button.
 data/for_sale.db

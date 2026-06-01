@@ -2041,36 +2041,51 @@
           <div class="zone-toggle" id="toggle-overlay-icsea"      onclick="toggleOverlay('icsea')">🎓 ICSEA (postcode)</div>
         </div>
         <div class="lp-group">
-          <div class="lp-head"><span class="lp-caret">▾</span>🚉 Transport &amp; Infra</div>
-          <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Transport</div>
+          <div class="lp-head"><span class="lp-caret">▾</span>🚆 Transport &amp; Roads</div>
+          <div class="zone-toggle" id="toggle-transport"          onclick="toggleTransport()">🚉 Public transport</div>
+          <div class="zone-toggle" id="toggle-vec-roads"          onclick="toggleVec('roads')"   title="Freeways, highways &amp; arterials — being close hurts value">🛣️ Major roads</div>
           <div class="zone-toggle" id="toggle-overlay-infra"      onclick="toggleOverlay('infra')">🚧 Future infra</div>
         </div>
         <div class="lp-group">
-          <div class="lp-head"><span class="lp-caret">▾</span>⚠️ Risk &amp; Safety</div>
-          <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood</div>
-          <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')">🏛️ Heritage</div>
-          <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire</div>
+          <div class="lp-head"><span class="lp-caret">▾</span>🏥 Amenities &amp; Services</div>
+          <div class="zone-toggle" id="toggle-vec-amenities"      onclick="toggleVec('amenities')" title="Hospitals, shopping centres, universities, libraries — nearby boosts value">🏥 Hospitals / shops / public</div>
+          <div class="zone-toggle" id="toggle-vec-parks"          onclick="toggleVec('parks')"     title="Parks, gardens, reserves — nearby boosts value">🌳 Parks &amp; open space</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>🌊 Environment &amp; Water</div>
+          <div class="zone-toggle" id="toggle-vec-rivers"         onclick="toggleVec('rivers')"    title="Rivers &amp; creeks">🏞️ Rivers &amp; creeks</div>
+          <div class="zone-toggle" id="toggle-vec-waterbody"      onclick="toggleVec('waterbody')" title="Lakes, reservoirs, wide rivers">💧 Water bodies</div>
+          <div class="zone-toggle" id="toggle-overlay-vpo"   onclick="toggleOverlay('vpo')"  title="Tree-removal restrictions">🌳 Vegetation Protection (VPO)</div>
+          <div class="zone-toggle" id="toggle-overlay-slo"   onclick="toggleOverlay('slo')"  title="Landscape character protection">🏞️ Significant Landscape (SLO)</div>
+          <div class="zone-toggle" id="toggle-overlay-eso"   onclick="toggleOverlay('eso')"  title="Environmental significance — works controls">🍃 Environmental Significance (ESO)</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>⚠️ Hazards &amp; Nuisances</div>
+          <div class="zone-toggle" id="toggle-overlay-flood"      onclick="toggleOverlay('flood')">🌊 Flood (LSIO)</div>
+          <div class="zone-toggle" id="toggle-overlay-fo"    onclick="toggleOverlay('fo')"   title="Floodway — high-velocity flood risk">🌊 Floodway (FO)</div>
+          <div class="zone-toggle" id="toggle-overlay-bushfire"   onclick="toggleOverlay('bushfire')">🔥 Bushfire (BMO)</div>
+          <div class="zone-toggle" id="toggle-overlay-emo"   onclick="toggleOverlay('emo')"  title="Erosion / landslip risk — engineering cost">⛰️ Erosion (EMO)</div>
+          <div class="zone-toggle" id="toggle-overlay-smo"   onclick="toggleOverlay('smo')"  title="Salinity management — site usability">🧂 Salinity (SMO)</div>
+          <div class="zone-toggle" id="toggle-overlay-sbo"   onclick="toggleOverlay('sbo')"  title="Overland-flow / drainage authority controls">💧 Drainage / overland flow (SBO)</div>
           <div class="zone-toggle" id="toggle-overlay-crime"      onclick="toggleOverlay('crime')">🚨 Crime</div>
+          <div class="zone-toggle" id="toggle-vec-powerlines"     onclick="toggleVec('powerlines')" title="High-voltage power lines — being close hurts value">⚡ Power lines</div>
+          <div class="zone-toggle" id="toggle-vec-nuisance"       onclick="toggleVec('nuisance')"   title="Industrial, sewage, landfill, cemetery, quarry, prison">🏭 Industrial / nuisance</div>
+          <div class="zone-toggle" id="toggle-vec-airports"       onclick="toggleVec('airports')"   title="Airport footprints — aircraft-noise proximity">✈️ Airports</div>
+        </div>
+        <div class="lp-group">
+          <div class="lp-head"><span class="lp-caret">▾</span>📋 Planning controls (VicPlan)</div>
+          <div class="zone-toggle" id="toggle-vec-zones"     onclick="toggleVec('zones')"    title="Planning zones — GRZ/NRZ/RGZ/IN1Z… controls density &amp; subdivision">🏘️ Zones (GRZ/NRZ/…)</div>
+          <div class="zone-toggle" id="toggle-overlay-heritage"   onclick="toggleOverlay('heritage')" title="Heritage Overlay — restricts demolition / renovation">🏛️ Heritage (HO)</div>
+          <div class="zone-toggle" id="toggle-overlay-pao"   onclick="toggleOverlay('pao')"  title="Government reserve — road / rail / public acquisition">🚧 Public Acquisition (PAO)</div>
+          <div class="zone-toggle" id="toggle-overlay-ddo"   onclick="toggleOverlay('ddo')"  title="Height + form + setback controls">📐 Design &amp; Development (DDO)</div>
+          <div class="zone-toggle" id="toggle-overlay-dpo"   onclick="toggleOverlay('dpo')"  title="Approved development plan required before permits">📋 Development Plan (DPO)</div>
+          <div class="zone-toggle" id="toggle-overlay-dcpo"  onclick="toggleOverlay('dcpo')" title="Infrastructure contribution payments required">💰 Dev Contributions (DCPO)</div>
+          <div class="zone-toggle" id="toggle-overlay-eao"   onclick="toggleOverlay('eao')"  title="Contamination — env audit required before sensitive use">☢️ Environmental Audit (EAO)</div>
         </div>
         <div class="lp-group">
           <div class="lp-head"><span class="lp-caret">▾</span>📐 Property (VIC)</div>
           <div class="zone-toggle" id="toggle-overlay-easements"  onclick="toggleEasements()">📐 Easements</div>
           <div class="zone-toggle" id="toggle-overlay-lots"       onclick="toggleLots()">▦ Lots</div>
-        </div>
-        <div class="lp-group">
-          <div class="lp-head"><span class="lp-caret">▾</span>📋 Planning overlays (VicPlan)</div>
-          <div class="zone-toggle" id="toggle-overlay-pao"   onclick="toggleOverlay('pao')"  title="Government reserve — road / rail / public acquisition">🚧 Public Acquisition (PAO)</div>
-          <div class="zone-toggle" id="toggle-overlay-ddo"   onclick="toggleOverlay('ddo')"  title="Height + form + setback controls">📐 Design & Development (DDO)</div>
-          <div class="zone-toggle" id="toggle-overlay-dpo"   onclick="toggleOverlay('dpo')"  title="Approved development plan required before permits">📋 Development Plan (DPO)</div>
-          <div class="zone-toggle" id="toggle-overlay-dcpo"  onclick="toggleOverlay('dcpo')" title="Infrastructure contribution payments required">💰 Dev Contributions (DCPO)</div>
-          <div class="zone-toggle" id="toggle-overlay-eao"   onclick="toggleOverlay('eao')"  title="Contamination — env audit required before sensitive use">☢️ Environmental Audit (EAO)</div>
-          <div class="zone-toggle" id="toggle-overlay-vpo"   onclick="toggleOverlay('vpo')"  title="Tree-removal restrictions">🌳 Vegetation Protection (VPO)</div>
-          <div class="zone-toggle" id="toggle-overlay-slo"   onclick="toggleOverlay('slo')"  title="Landscape character protection">🏞️ Significant Landscape (SLO)</div>
-          <div class="zone-toggle" id="toggle-overlay-eso"   onclick="toggleOverlay('eso')"  title="Environmental significance — works controls">🍃 Environmental Significance (ESO)</div>
-          <div class="zone-toggle" id="toggle-overlay-sbo"   onclick="toggleOverlay('sbo')"  title="Overland-flow / drainage authority controls">💧 Special Building (SBO)</div>
-          <div class="zone-toggle" id="toggle-overlay-emo"   onclick="toggleOverlay('emo')"  title="Erosion / landslip risk — engineering cost">⛰️ Erosion Management (EMO)</div>
-          <div class="zone-toggle" id="toggle-overlay-smo"   onclick="toggleOverlay('smo')"  title="Salinity management — site usability">🧂 Salinity Management (SMO)</div>
-          <div class="zone-toggle" id="toggle-overlay-fo"    onclick="toggleOverlay('fo')"   title="Floodway — high-velocity flood risk">🌊 Floodway (FO)</div>
         </div>
       </div>
       <div id="map"></div>
@@ -3868,6 +3883,19 @@ function updateMapLegend() {
     const sw = `<span style="display:inline-block;width:14px;height:10px;background:rgba(34,211,238,.10);border:1.5px solid #22d3ee;vertical-align:middle;margin:0 2px"></span>`;
     rows.push(`<div class="row"><span class="lbl">Lots</span>${sw}cadastral parcel outline</div>`);
   }
+  // Value-context vector layers
+  const vline = (c, w) => `<span style="display:inline-block;width:18px;height:0;border-top:${w}px solid ${c};vertical-align:middle;margin:0 2px"></span>`;
+  const vdot  = (c) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};border:1px solid #0f172a;vertical-align:middle;margin:0 2px"></span>`;
+  const vsw   = (c) => `<span class="swatch" style="background:${c}"></span>`;
+  if (_vecLayer && _vecLayer.zones) rows.push(`<div class="row"><span class="lbl">Zones</span>${vsw('#fbbf24')}Res ${vsw('#3b82f6')}Com ${vsw('#a855f7')}Ind ${vsw('#84cc16')}Rural ${vsw('#94a3b8')}Public</div>`);
+  if (_vecLayer && _vecLayer.roads) rows.push(`<div class="row"><span class="lbl">Roads</span>${vline('#ef4444',4)}freeway ${vline('#f97316',3)}highway ${vline('#eab308',2)}arterial</div>`);
+  if (_vecLayer && _vecLayer.rivers) rows.push(`<div class="row"><span class="lbl">Rivers</span>${vline('#0ea5e9',2)}creek / river</div>`);
+  if (_vecLayer && _vecLayer.waterbody) rows.push(`<div class="row"><span class="lbl">Water</span>${vsw('#0ea5e9')}lake / reservoir</div>`);
+  if (_vecLayer && _vecLayer.airports) rows.push(`<div class="row"><span class="lbl">Airports</span>${vsw('#64748b')}footprint (noise)</div>`);
+  if (_vecLayer && _vecLayer.powerlines) rows.push(`<div class="row"><span class="lbl">Power</span>${vline('#ef4444',2)}transmission ${vline('#f87171',1)}minor</div>`);
+  if (_vecLayer && _vecLayer.amenities) rows.push(`<div class="row"><span class="lbl">Amenities</span>${vdot('#dc2626')}hosp ${vdot('#8b5cf6')}shop ${vdot('#7c3aed')}uni ${vdot('#2563eb')}lib</div>`);
+  if (_vecLayer && _vecLayer.parks) rows.push(`<div class="row"><span class="lbl">Parks</span>${vdot('#22c55e')}park / reserve</div>`);
+  if (_vecLayer && _vecLayer.nuisance) rows.push(`<div class="row"><span class="lbl">Nuisance</span>${vdot('#78716c')}industrial ${vdot('#854d0e')}landfill ${vdot('#6b7280')}cemetery</div>`);
   if (_overlayLayer && _overlayLayer.crime)    rows.push(`<div class="row"><span class="lbl">Crime/100k</span>${swatches(CRIME_BAND)} safest→highest</div>`);
   if (_overlayLayer && _overlayLayer.icsea)    rows.push(`<div class="row"><span class="lbl">ICSEA avg</span>${swatches(SCH_BAND.slice(0,6).reverse())} low→high (Melb %ile, 1000=AU avg)</div>`);
   if (_overlayLayer && _overlayLayer.infra) {
@@ -4946,6 +4974,157 @@ function toggleLots() {
   btn.classList.add('active');
   updateMapLegend();
   _lotsRefresh();
+}
+
+// ─── Value-context vector layers (roads, rivers, amenities, parks, zones …) ──
+// One generic toggle for the static GeoJSON layers added for property-value
+// context. Each is fetched once (gzip-served), cached, and rendered with a
+// per-kind style + popup. Toggle again to remove.
+const _ZONE_FAMILY = [
+  // [regex on zone_code prefix, colour, family label]
+  [/^(GRZ|NRZ|RGZ|LDRZ|TZ|MUZ|RES)/, '#fbbf24', 'Residential'],
+  [/^C\d?Z|^ACZ/,                      '#3b82f6', 'Commercial'],
+  [/^IN\d?Z/,                          '#a855f7', 'Industrial'],
+  [/^(FZ|RLZ|RCZ|RAZ|GWAZ|RUZ|RDZ)/,  '#84cc16', 'Rural'],
+  [/^(PPRZ|PCRZ|PUZ|UFZ|CCZ|CDZ|SUZ|TRZ|PdZ|RDZ1)/, '#94a3b8', 'Public/Special'],
+];
+function _zoneColor(code) {
+  const c = (code || '').toUpperCase();
+  for (const [re, col] of _ZONE_FAMILY) if (re.test(c)) return col;
+  return '#64748b';
+}
+const _AMENITY_STYLE = {
+  hospital:   { color: '#dc2626', icon: '🏥', label: 'Hospital' },
+  shopping:   { color: '#8b5cf6', icon: '🛍️', label: 'Shopping centre' },
+  supermarket:{ color: '#a855f7', icon: '🛒', label: 'Supermarket' },
+  university: { color: '#7c3aed', icon: '🎓', label: 'University' },
+  library:    { color: '#2563eb', icon: '📚', label: 'Library' },
+  community:  { color: '#0891b2', icon: '🏛️', label: 'Community centre' },
+  worship:    { color: '#64748b', icon: '⛪', label: 'Place of worship' },
+};
+const _NUISANCE_STYLE = {
+  industrial: { color: '#78716c', icon: '🏭', label: 'Industrial' },
+  wastewater: { color: '#65a30d', icon: '💩', label: 'Wastewater plant' },
+  landfill:   { color: '#854d0e', icon: '🗑️', label: 'Landfill' },
+  cemetery:   { color: '#6b7280', icon: '⚰️', label: 'Cemetery' },
+  prison:     { color: '#1f2937', icon: '🔒', label: 'Prison' },
+  quarry:     { color: '#a16207', icon: '⛏️', label: 'Quarry' },
+};
+
+const _vecCfg = {
+  zones:      { kind: 'zonepoly',   file: '/static/overlays/zones.geojson' },
+  roads:      { kind: 'roadline',   file: '/static/overlays/roads.geojson' },
+  rivers:     { kind: 'riverline',  file: '/static/overlays/rivers.geojson' },
+  waterbody:  { kind: 'waterpoly',  file: '/static/overlays/waterbody.geojson' },
+  airports:   { kind: 'airportpoly',file: '/static/overlays/airports.geojson' },
+  amenities:  { kind: 'amenitypts', file: '/static/overlays/osm_amenities.geojson' },
+  parks:      { kind: 'parkpts',    file: '/static/overlays/osm_parks.geojson' },
+  nuisance:   { kind: 'nuisancepts',file: '/static/overlays/osm_nuisance.geojson' },
+  powerlines: { kind: 'powerline',  file: '/static/overlays/osm_powerlines.geojson' },
+};
+const _vecData = {};
+const _vecLayer = {};
+
+function _vecBuild(name, gj) {
+  const kind = _vecCfg[name].kind;
+  const canvas = L.canvas({ padding: 0.3 });
+  if (kind === 'zonepoly') {
+    return L.geoJSON(gj, {
+      renderer: canvas,
+      style: f => { const c = _zoneColor((f.properties || {}).zone_code);
+        return { color: c, weight: 0.6, fillColor: c, fillOpacity: 0.35 }; },
+      onEachFeature: (f, l) => { const p = f.properties || {};
+        l.bindPopup(`<b>🏘️ ${p.zone_code || 'Zone'}</b>` +
+          (p.desc ? `<br><span style="font-size:11px;color:#cbd5e1">${p.desc}</span>` : '') +
+          (p.lga ? `<br><span style="font-size:10px;color:#94a3b8">${p.lga}</span>` : '')); },
+    });
+  }
+  if (kind === 'roadline') {
+    const rs = { 1: { color: '#ef4444', weight: 4 }, 2: { color: '#f97316', weight: 3 },
+                 3: { color: '#eab308', weight: 2 } };
+    const lbl = { 1: 'Freeway / motorway', 2: 'Highway / arterial', 3: 'Sub-arterial' };
+    return L.geoJSON(gj, {
+      renderer: canvas,
+      style: f => rs[(f.properties || {}).class] || { color: '#eab308', weight: 2 },
+      onEachFeature: (f, l) => { const p = f.properties || {};
+        l.bindPopup(`<b>🛣️ ${p.name || 'Road'}</b><br>` +
+          `<span style="font-size:11px;color:#cbd5e1">${lbl[p.class] || 'Major road'}</span>`); },
+    });
+  }
+  if (kind === 'riverline') {
+    return L.geoJSON(gj, { renderer: canvas,
+      style: { color: '#0ea5e9', weight: 1.4, opacity: 0.85 },
+      onEachFeature: (f, l) => { const n = (f.properties || {}).name;
+        if (n) l.bindPopup(`<b>🏞️ ${n}</b>`); } });
+  }
+  if (kind === 'waterpoly') {
+    return L.geoJSON(gj, { renderer: canvas,
+      style: { color: '#0284c7', weight: 0.8, fillColor: '#0ea5e9', fillOpacity: 0.45 },
+      onEachFeature: (f, l) => { const n = (f.properties || {}).name;
+        l.bindPopup(`<b>💧 ${n || 'Water body'}</b>`); } });
+  }
+  if (kind === 'airportpoly') {
+    return L.geoJSON(gj, { renderer: canvas,
+      style: { color: '#475569', weight: 1, fillColor: '#64748b', fillOpacity: 0.3, dashArray: '4,3' },
+      onEachFeature: (f, l) => { const n = (f.properties || {}).name;
+        l.bindPopup(`<b>✈️ ${n || 'Airport'}</b><br><span style="font-size:10px;color:#94a3b8">Aircraft-noise proximity</span>`); } });
+  }
+  if (kind === 'powerline') {
+    return L.geoJSON(gj, { renderer: canvas,
+      style: f => (f.properties || {}).cat === 'minor_line'
+        ? { color: '#f87171', weight: 1.2, opacity: 0.7, dashArray: '2,3' }
+        : { color: '#ef4444', weight: 2.2, opacity: 0.9 },
+      onEachFeature: (f, l) => { const p = f.properties || {};
+        l.bindPopup(`<b>⚡ Power line</b>` +
+          (p.voltage ? `<br><span style="font-size:11px;color:#cbd5e1">${p.voltage} V</span>` : '') +
+          (p.name ? `<br><span style="font-size:10px;color:#94a3b8">${p.name}</span>` : '')); } });
+  }
+  // point kinds: amenitypts / parkpts / nuisancepts
+  const styleMap = kind === 'amenitypts' ? _AMENITY_STYLE
+                 : kind === 'nuisancepts' ? _NUISANCE_STYLE : null;
+  return L.geoJSON(gj, {
+    renderer: canvas,
+    pointToLayer: (f, ll) => {
+      const cat = (f.properties || {}).cat;
+      const s = styleMap ? styleMap[cat] : null;
+      const color = s ? s.color : '#22c55e';   // parks default green
+      return L.circleMarker(ll, { radius: 5, fillColor: color, color: '#0f172a',
+        weight: 1, fillOpacity: 0.9 });
+    },
+    onEachFeature: (f, l) => { const p = f.properties || {};
+      const s = styleMap ? styleMap[p.cat] : { icon: '🌳', label: 'Park / open space' };
+      l.bindPopup(`<b>${(s && s.icon) || '📍'} ${p.name || (s && s.label) || p.cat || ''}</b>` +
+        (s && s.label && p.name ? `<br><span style="font-size:11px;color:#cbd5e1">${s.label}</span>` : '')); },
+  });
+}
+
+async function toggleVec(name) {
+  _initMap();
+  const btn = document.getElementById('toggle-vec-' + name);
+  if (_vecLayer[name]) {
+    _map.removeLayer(_vecLayer[name]); _vecLayer[name] = null;
+    btn.classList.remove('active');
+    updateMapLegend();
+    return;
+  }
+  if (!_vecData[name]) {
+    btn.classList.add('loading');
+    try {
+      const r = await fetch(_vecCfg[name].file);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      _vecData[name] = await r.json();
+    } catch (e) {
+      btn.classList.remove('loading');
+      btn.classList.add('error');
+      setTimeout(() => btn.classList.remove('error'), 4000);
+      console.error('vec layer load failed', name, e);
+      return;
+    }
+    btn.classList.remove('loading');
+  }
+  _vecLayer[name] = _vecBuild(name, _vecData[name]).addTo(_map);
+  btn.classList.add('active');
+  updateMapLegend();
 }
 
 const _transportCfg = {

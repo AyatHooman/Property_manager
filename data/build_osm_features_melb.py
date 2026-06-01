@@ -38,6 +38,10 @@ GROUPS = {
         ('["amenity"="library"]',           "library"),
         ('["amenity"="community_centre"]',  "community"),
         ('["amenity"="place_of_worship"]',  "worship"),
+        ('["amenity"="school"]',            "school"),
+        ('["amenity"="kindergarten"]',      "kindergarten"),
+        ('["amenity"="college"]',           "college"),
+        ('["amenity"="childcare"]',         "childcare"),
     ],
     "parks": [
         ('["leisure"="park"]',                "park"),
@@ -53,6 +57,7 @@ GROUPS = {
         ('["landuse"="cemetery"]',            "cemetery"),
         ('["amenity"="prison"]',              "prison"),
         ('["landuse"="quarry"]',              "quarry"),
+        ('["amenity"="fuel"]',                "fuel"),
     ],
     # power lines are lines, handled separately so we keep the geometry
     "powerlines": [
@@ -282,9 +287,9 @@ def main():
         try:
             if name == "powerlines":
                 feats = _download_lines(name, GROUPS[name])
-            elif name in ("parks", "nuisance"):
+            elif name == "parks":
                 feats = _download_polys(name, GROUPS[name])   # areas → Polygons
-            elif name == "amenities":
+            elif name in ("amenities", "nuisance"):
                 feats = _download_mixed(name, GROUPS[name])   # polygons + points
             else:
                 feats = _download_points(name, GROUPS[name])

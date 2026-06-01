@@ -743,6 +743,7 @@ def api_for_sale_refresh():
         return jsonify({"error": "url must be a domain.com.au filter URL"}), 400
     max_pages = int(request.args.get("max_pages", 20) or 20)
     from src import scraper_domain_sale as sds
+    scrape_start = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     try:
         listings = sds.scrape_filter_url(url, max_pages=max_pages)
     except Exception as ex:
@@ -750,6 +751,10 @@ def api_for_sale_refresh():
     con = sds.init_db(_FORSALE_DB)
     try:
         ins, upd = sds.save_listings(con, listings)
+        # Hide anything not seen in this scrape (sold / under-offer / withdrawn)
+        # — but only if the scrape looks complete, so a partial failure can't
+        # wipe the map. Favourites are kept.
+        hidden = sds.hide_stale(con, scrape_start) if len(listings) >= 30 else 0
         # Compute value-risk counts for every listing (cached per coordinate;
         # the scrape already took 30-90 s so this one-time pass is unnoticed).
         try:
@@ -764,6 +769,7 @@ def api_for_sale_refresh():
         "scraped":  len(listings),
         "inserted": ins,
         "updated":  upd,
+        "hidden":   hidden,
         "total_in_db": len(items),
     }
     return jsonify(fc)

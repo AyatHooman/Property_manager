@@ -65,6 +65,19 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
     return con
 
 
+def hide_stale(con: sqlite3.Connection, scrape_start_iso: str) -> int:
+    """Mark listings not seen in the latest scrape as removed (hidden from the
+    map). Sold / under-offer / withdrawn listings drop out of Domain's sale
+    results, so anything whose last_seen predates this scrape is no longer on
+    the market. Favourites are kept so the user doesn't lose saved ones.
+    Returns how many were hidden."""
+    cur = con.execute(
+        "UPDATE listings SET removed=1 WHERE last_seen < ? AND favourite=0 AND removed=0",
+        (scrape_start_iso,))
+    con.commit()
+    return cur.rowcount
+
+
 def set_favourite(con: sqlite3.Connection, listing_id: int, fav: bool) -> bool:
     """Mark/unmark a listing as a favourite. Returns True if a row changed."""
     cur = con.execute("UPDATE listings SET favourite=? WHERE listing_id=?",
@@ -216,12 +229,40 @@ def _safe_float(x):
     except (TypeError, ValueError): return None
 
 
+_UNAVAILABLE_RE = re.compile(r"sold|under offer|under contract|under application",
+                             re.IGNORECASE)
+
+
+def _is_unavailable(item: dict, lm: dict) -> bool:
+    """True if the listing is sold / under offer / under contract — we don't
+    want those on the 'on the market' map even though Domain's sale search
+    sometimes returns them."""
+    bits = []
+    lt = item.get("listingType") or item.get("listingModel", {}).get("listingType")
+    if lt:
+        bits.append(str(lt))
+    bits.append(str(lm.get("status") or ""))
+    tags = lm.get("tags")
+    if isinstance(tags, dict):
+        bits += [str(tags.get("tagText") or ""), str(tags.get("tagClassName") or "")]
+    elif isinstance(tags, list):
+        for t in tags:
+            if isinstance(t, dict):
+                bits += [str(t.get("tagText") or ""), str(t.get("tagClassName") or "")]
+            else:
+                bits.append(str(t))
+    # 'soldListing' listingType, 'is-under-offer' className, 'Under Offer' text…
+    return any(_UNAVAILABLE_RE.search(b) for b in bits if b)
+
+
 def _parse_listing(item: dict) -> Optional[Dict[str, Any]]:
     """Pull every useful field out of one __NEXT_DATA__ listing dict."""
     try:
         lid = item.get("id")
         if not lid: return None
         lm = item.get("listingModel") or {}
+        if _is_unavailable(item, lm):
+            return None        # skip sold / under-offer / under-contract
         addr = lm.get("address") or {}
         feats = lm.get("features") or {}
 

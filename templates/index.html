@@ -5169,6 +5169,10 @@ const _AMENITY_STYLE = {
   library:    { color: '#2563eb', icon: '📚', label: 'Library' },
   community:  { color: '#0891b2', icon: '🏛️', label: 'Community centre' },
   worship:    { color: '#64748b', icon: '⛪', label: 'Place of worship' },
+  school:      { color: '#f59e0b', icon: '🏫', label: 'School' },
+  college:     { color: '#d97706', icon: '🏫', label: 'College / secondary' },
+  kindergarten:{ color: '#fbbf24', icon: '🧸', label: 'Kinder / preschool' },
+  childcare:   { color: '#fbbf24', icon: '🧸', label: 'Childcare' },
 };
 const _NUISANCE_STYLE = {
   industrial: { color: '#78716c', icon: '🏭', label: 'Industrial' },
@@ -5177,6 +5181,7 @@ const _NUISANCE_STYLE = {
   cemetery:   { color: '#6b7280', icon: '⚰️', label: 'Cemetery' },
   prison:     { color: '#1f2937', icon: '🔒', label: 'Prison' },
   quarry:     { color: '#a16207', icon: '⛏️', label: 'Quarry' },
+  fuel:       { color: '#dc2626', icon: '⛽', label: 'Petrol station' },
 };
 
 // Heavy layers (bbox:true) are fetched per-viewport from /api/veclayer/<name>
@@ -5259,10 +5264,13 @@ function _vecBuild(name, gj) {
         l.bindPopup(`<b>🌳 ${p.name || 'Park / open space'}</b>`); } });
   }
   if (kind === 'nuisancepoly') {
+    const ncol = (cat) => (_NUISANCE_STYLE[cat] ? _NUISANCE_STYLE[cat].color : '#b45309');
     return L.geoJSON(gj, { renderer: canvas,
-      style: f => { const s = _NUISANCE_STYLE[(f.properties || {}).cat];
-        const c = s ? s.color : '#b45309';
+      style: f => { const c = ncol((f.properties || {}).cat);
         return { color: c, weight: 0.9, fillColor: c, fillOpacity: 0.30 }; },
+      pointToLayer: (f, ll) => L.circleMarker(ll, {       // fuel etc. are points
+        radius: 5, fillColor: ncol((f.properties || {}).cat), color: '#0f172a',
+        weight: 1, fillOpacity: 0.9 }),
       onEachFeature: (f, l) => { const p = f.properties || {};
         const s = _NUISANCE_STYLE[p.cat] || { icon: '🏭', label: p.cat || 'nuisance' };
         l.bindPopup(`<b>${s.icon} ${p.name || s.label}</b>` +

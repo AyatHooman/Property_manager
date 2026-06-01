@@ -151,7 +151,9 @@ def _nearest_m(name, basename, P):
 
 
 def _nearest_amenity_by_cat(P, cats=("hospital", "supermarket", "shopping",
-                                     "university", "library")):
+                                     "university", "library",
+                                     "school", "college", "kindergarten",
+                                     "childcare")):
     """Return {cat: (distance_m, name)} for the nearest amenity of each
     requested category. The amenities layer is mixed categories, so we scan
     candidates in growing buffer rings and keep the closest per category —
@@ -437,14 +439,16 @@ def compute_factors(lat, lng, use_cache=True):
             dist, pr = nr
             cls = pr.get("class"); nm = pr.get("name") or "major road"
             clslabel = {1: "freeway", 2: "highway/arterial", 3: "sub-arterial"}.get(cls, "major road")
+            # Per-class noise radius: freeway 500 m, highway 350 m,
+            # arterial 200 m (DEECA class 1 / 2 / 3 respectively).
             if dist < 40:
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 1 and dist < 800:
-                risks.append({"label": "Close to a freeway (noise carries far)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls <= 2 and dist < 400:
-                risks.append({"label": "Close to a main road (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 3 and dist < 300:
-                risks.append({"label": "Close to a sub-arterial road", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls == 1 and dist < 500:
+                risks.append({"label": "Close to a freeway (noise)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls == 2 and dist < 350:
+                risks.append({"label": "Close to a highway (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls == 3 and dist < 200:
+                risks.append({"label": "Close to an arterial road (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
             else:
                 info.append({"label": f"Nearest {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
 
@@ -455,14 +459,16 @@ def compute_factors(lat, lng, use_cache=True):
             dist, _ = res
             if dist < 500:
                 risks.append({"label": "Near rail line (train noise)", "detail": f"~{dist:.0f} m to track"})
-        # Tram / bus routes run on the street — being on the route = traffic/noise.
-        for nm, base, near_m, lab in (("trams", "trams", 30, "tram route"),
-                                      ("buses", "buses", 25, "bus route")):
+        # Tram / bus routes run on the street — being on/near the route = the
+        # vehicle passing your frontage (noise, every 10-30 min). Bus routes are
+        # dense in the suburbs so this flags a fair share of properties.
+        for nm, base, near_m, lab in (("trams", "trams", 50, "tram route"),
+                                      ("buses", "buses", 80, "bus route")):
             res = _nearest_m(nm, base, P)
             if res:
                 dist, _ = res
                 if dist < near_m:
-                    risks.append({"label": f"On/adjacent to a {lab}", "detail": f"~{dist:.0f} m (traffic/noise)"})
+                    risks.append({"label": f"On/near a {lab}", "detail": f"~{dist:.0f} m (traffic/noise)"})
 
         # 5. Power lines
         res = _nearest_m("powerlines", "osm_powerlines", P)
@@ -471,13 +477,18 @@ def compute_factors(lat, lng, use_cache=True):
             if dist < 120:
                 risks.append({"label": "Near high-voltage power line", "detail": f"~{dist:.0f} m" + (f" · {pr.get('voltage')} V" if pr.get("voltage") else "")})
 
-        # 6. Nuisance sites (industrial / landfill / cemetery / etc.)
+        # 6. Nuisance sites (industrial / landfill / cemetery / fuel / etc.)
         res = _nearest_m("nuisance", "osm_nuisance", P)
         if res:
             dist, pr = res
             cat = pr.get("cat") or "nuisance"
-            if dist < 300:
-                risks.append({"label": f"Near {cat} site", "detail": f"{pr.get('name') or cat} · ~{dist:.0f} m"})
+            NLAB = {"industrial": "industrial land", "wastewater": "wastewater plant",
+                    "landfill": "landfill", "cemetery": "cemetery", "prison": "prison",
+                    "quarry": "quarry", "fuel": "petrol station"}
+            # Fuel stations are small — only flag when genuinely close.
+            thresh = 150 if cat == "fuel" else 300
+            if dist < thresh:
+                risks.append({"label": f"Near {NLAB.get(cat, cat)}", "detail": f"{pr.get('name') or NLAB.get(cat, cat)} · ~{dist:.0f} m"})
 
         # 7. Park / reserve — distance is now to the park BOUNDARY (polygons),
         #    so "faces / adjacent" is accurate. Facing a reserve can reduce
@@ -506,6 +517,16 @@ def compute_factors(lat, lng, use_cache=True):
             risks.append({"label": "Adjacent to hospital (traffic)", "detail": f"{h[1]} · ~{h[0]:.0f} m"})
         elif h and h[0] < 2000:
             positives.append({"label": "Near hospital", "detail": f"{h[1]} · ~{h[0]:.0f} m"})
+        # Schools / preschools / colleges close by = pick-up traffic, parking
+        # congestion, noise — a value RISK when very close.
+        for cat, label, maxm in (("school",       "school",            250),
+                                 ("college",      "college/secondary", 250),
+                                 ("kindergarten", "kinder / preschool", 170),
+                                 ("childcare",    "childcare centre",   150)):
+            v = amen.get(cat)
+            if v and v[0] < maxm:
+                risks.append({"label": f"Close to a {label} (traffic/parking/noise)",
+                              "detail": f"{v[1]} · ~{v[0]:.0f} m"})
         for cat, label, maxm in (("supermarket", "supermarket", 1500),
                                  ("shopping",    "shopping centre", 2000),
                                  ("university",  "university", 2500),

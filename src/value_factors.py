@@ -404,23 +404,20 @@ def compute_factors(lat, lng, use_cache=True):
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
             elif cls == 1 and dist < 800:
                 risks.append({"label": "Close to a freeway (noise carries far)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls <= 2 and dist < 300:
+            elif cls <= 2 and dist < 400:
                 risks.append({"label": "Close to a main road (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 3 and dist < 200:
+            elif cls == 3 and dist < 300:
                 risks.append({"label": "Close to a sub-arterial road", "detail": f"{nm} · ~{dist:.0f} m"})
             else:
                 info.append({"label": f"Nearest {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
 
-        # 4. Rail line proximity = train NOISE (not a "walk to station" — we
-        #    only have the line geometry, not stations, so distance to the
-        #    line is a noise measure, not a walkability one).
+        # 4. Rail line proximity = train NOISE (one risk band; we only have the
+        #    line geometry, not stations, so distance is a noise measure).
         res = _nearest_m("trains", "trains", P)
         if res:
             dist, _ = res
-            if dist < 100:
-                risks.append({"label": "Adjacent to rail line (train noise)", "detail": f"~{dist:.0f} m to track"})
-            elif dist < 300:
-                info.append({"label": "Near rail line (some train noise)", "detail": f"~{dist:.0f} m to track"})
+            if dist < 500:
+                risks.append({"label": "Near rail line (train noise)", "detail": f"~{dist:.0f} m to track"})
         # Tram / bus routes run on the street — being on the route = traffic/noise.
         for nm, base, near_m, lab in (("trams", "trams", 30, "tram route"),
                                       ("buses", "buses", 25, "bus route")):

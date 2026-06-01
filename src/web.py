@@ -714,6 +714,23 @@ def api_for_sale_load():
     return jsonify(_forsale_to_geojson(items))
 
 
+@app.route("/api/for-sale/favourite", methods=["POST"])
+def api_for_sale_favourite():
+    """Mark/unmark a for-sale listing as a favourite (persisted in for_sale.db)."""
+    try:
+        lid = int(request.args.get("listing_id"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "listing_id required"}), 400
+    fav = request.args.get("fav", "1") not in ("0", "false", "")
+    from src import scraper_domain_sale as sds
+    con = sds.init_db(_FORSALE_DB)
+    try:
+        ok = sds.set_favourite(con, lid, fav)
+    finally:
+        con.close()
+    return jsonify({"listing_id": lid, "favourite": fav, "updated": ok})
+
+
 @app.route("/api/for-sale/refresh", methods=["POST", "GET"])
 def api_for_sale_refresh():
     """Scrape the supplied Domain filter URL, upsert results, return the new

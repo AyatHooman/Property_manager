@@ -52,15 +52,25 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
             removed     INTEGER NOT NULL DEFAULT 0
         )
     """)
-    # Migrate older DBs that predate the risk_count column.
+    # Migrate older DBs that predate newer columns.
     cols = {r[1] for r in con.execute("PRAGMA table_info(listings)")}
     if "risk_count" not in cols:
         con.execute("ALTER TABLE listings ADD COLUMN risk_count INTEGER")
+    if "favourite" not in cols:
+        con.execute("ALTER TABLE listings ADD COLUMN favourite INTEGER NOT NULL DEFAULT 0")
     # Spatial filter goes through these
     con.execute("CREATE INDEX IF NOT EXISTS listings_geo  ON listings(lat, lng)")
     con.execute("CREATE INDEX IF NOT EXISTS listings_seen ON listings(last_seen)")
     con.commit()
     return con
+
+
+def set_favourite(con: sqlite3.Connection, listing_id: int, fav: bool) -> bool:
+    """Mark/unmark a listing as a favourite. Returns True if a row changed."""
+    cur = con.execute("UPDATE listings SET favourite=? WHERE listing_id=?",
+                       (1 if fav else 0, int(listing_id)))
+    con.commit()
+    return cur.rowcount > 0
 
 
 def fill_risk_counts(con: sqlite3.Connection, limit: int = 10000) -> int:
@@ -141,7 +151,7 @@ def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
                price_text, price_low, price_high,
                beds, baths, carspaces, land_m2,
                prop_type, sale_type, agency, url, image_urls,
-               risk_count, first_seen, last_seen
+               risk_count, favourite, first_seen, last_seen
         FROM listings WHERE removed=0 AND lat IS NOT NULL AND lng IS NOT NULL
     """)
     cols = [d[0] for d in cur.description]

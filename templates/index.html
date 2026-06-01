@@ -784,6 +784,14 @@
       padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
     }
     .fs-popup a.fs-link:hover { background: #059669; }
+    .fs-popup .fs-fav {
+      display: inline-block; margin-top: 6px; margin-left: 6px;
+      background: transparent; color: #fbbf24; border: 1px solid #b45309;
+      padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700;
+      cursor: pointer; user-select: none;
+    }
+    .fs-popup .fs-fav:hover { background: rgba(251,191,36,.12); }
+    .fs-popup .fs-fav.on { background: #fbbf24; color: #1c1917; }
     /* Risk-factors button + expandable panel (shared by for-sale + sold popups) */
     .pf-btn {
       display: inline-block; margin-top: 6px; margin-right: 6px;
@@ -1044,6 +1052,7 @@
       display: flex; align-items: center; justify-content: center;
     }
     .map-fs-toolbar button:hover { color: #34d399; border-color: #34d399; }
+    .map-fs-toolbar button.active { color: #fbbf24; border-color: #fbbf24; }
     .map-fs-toolbar button.loading {
       color: #fbbf24; animation: fsSpin 1.2s linear infinite;
     }
@@ -3755,6 +3764,7 @@ function _initMap() {
   fsTb.className = 'map-fs-toolbar';
   fsTb.innerHTML = `
     <button id="fs-tb-refresh" title="Re-scrape Domain for fresh listings">🔄</button>
+    <button id="fs-tb-fav"     title="Show favourites only">★</button>
     <button id="fs-tb-edit"    title="Change the Domain filter URL">✏️</button>
     <button id="fs-tb-off"     title="Hide For Sale layer">✕</button>
     <span class="fs-tb-status" id="fs-tb-status"></span>`;
@@ -3765,6 +3775,14 @@ function _initMap() {
   document.getElementById('fs-tb-edit').onclick    = () => editForSaleUrl();
   document.getElementById('fs-tb-off').onclick     = () => {
     if (_forSale.on) toggleForSale();   // off-state cleanup is in toggleForSale
+  };
+  document.getElementById('fs-tb-fav').onclick = (e) => {
+    _forSaleFavOnly = !_forSaleFavOnly;
+    e.currentTarget.classList.toggle('active', _forSaleFavOnly);
+    if (_forSale.lastFc) _forSaleRender(_forSale.lastFc);
+    const n = _forSaleFavOnly && _forSale.lastFc
+      ? (_forSale.lastFc.features || []).filter(f => f.properties && f.properties.favourite).length : 0;
+    if (_forSaleFavOnly) _forSaleStatus(`${n} favourite${n===1?'':'s'}`);
   };
 
   // Sync easements + lots toggle gates with current zoom + refresh their
@@ -4853,14 +4871,42 @@ function _forSaleMarkerColors(rc) {
   if (rc > 0)      return { fill: '#ef4444', ring: '#7f1d1d' };  // risky
   return { fill: '#34d399', ring: '#064e3b' };                   // clean
 }
+let _forSaleFavOnly = false;   // "show favourites only" toggle
+
+// Toggle a listing's favourite flag server-side, then update the cached
+// feature + button + re-render so the gold ring appears/disappears.
+async function _forSaleToggleFav(listingId, btnEl) {
+  const feat = (_forSale.lastFc && _forSale.lastFc.features || [])
+    .find(f => f.properties && f.properties.listing_id === listingId);
+  const newFav = !(feat && feat.properties.favourite);
+  try {
+    const r = await fetch(`/api/for-sale/favourite?listing_id=${listingId}&fav=${newFav ? 1 : 0}`,
+                          { method: 'POST' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  } catch (e) { console.error('favourite toggle failed', e); return; }
+  if (feat) feat.properties.favourite = newFav ? 1 : 0;
+  if (btnEl) {
+    btnEl.classList.toggle('on', newFav);
+    btnEl.textContent = newFav ? '★ Favourited' : '☆ Favourite';
+  }
+  if (_forSale.lastFc) _forSaleRender(_forSale.lastFc);   // restyle markers
+}
+
 function _forSaleRender(fc) {
+  if (fc && fc.features) _forSale.lastFc = fc;   // cache full set for re-renders
   if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
-  _forSale.layer = L.geoJSON(fc, {
+  let feats = (fc.features || []);
+  if (_forSaleFavOnly) feats = feats.filter(f => (f.properties || {}).favourite);
+  _forSale.layer = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
     pointToLayer: (f, latlng) => {
-      const c = _forSaleMarkerColors((f.properties || {}).risk_count);
+      const p = f.properties || {};
+      const c = _forSaleMarkerColors(p.risk_count);
+      const fav = !!p.favourite;
       return L.circleMarker(latlng, {
-        radius: 6, fillColor: c.fill, color: c.ring,
-        weight: 2, opacity: 1, fillOpacity: 0.95,
+        radius: fav ? 8 : 6,
+        fillColor: c.fill,
+        color: fav ? '#fbbf24' : c.ring,   // gold ring marks a favourite
+        weight: fav ? 3 : 2, opacity: 1, fillOpacity: 0.95,
       });
     },
     onEachFeature: _forSaleBindPopup,
@@ -4954,6 +5000,7 @@ function _forSaleBindPopup(feature, layer) {
         ${p.agency ? '<br>' + p.agency : ''}
       </div>
       ${p.url ? `<a class="fs-link" href="${p.url}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
+      <span class="fs-fav ${p.favourite ? 'on' : ''}" data-fs-fav title="Save to favourites">${p.favourite ? '★ Favourited' : '☆ Favourite'}</span>
       ${_factorsButtonHtml()}
     </div>`;
   layer.bindPopup(html, { maxWidth: 300, minWidth: 220 });
@@ -4962,6 +5009,11 @@ function _forSaleBindPopup(feature, layer) {
     const root = e.popup.getElement();
     if (!root) return;
     if (ll) _wireFactors(root, ll.lat.toFixed(6), ll.lng.toFixed(6));
+    const favBtn = root.querySelector('[data-fs-fav]');
+    if (favBtn) favBtn.onclick = (ev) => {
+      ev.stopPropagation();
+      _forSaleToggleFav(p.listing_id, favBtn);
+    };
     const imgEl = root.querySelector('.fs-img');
     const idxEl = root.querySelector('.fs-img-idx');
     if (!imgEl || imgs.length < 2) return;

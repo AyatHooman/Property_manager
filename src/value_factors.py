@@ -402,26 +402,33 @@ def compute_factors(lat, lng, use_cache=True):
             clslabel = {1: "freeway", 2: "highway/arterial", 3: "sub-arterial"}.get(cls, "major road")
             if dist < 40:
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 1 and dist < 500:
-                risks.append({"label": "Close to a freeway (noise)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls <= 2 and dist < 150:
+            elif cls == 1 and dist < 800:
+                risks.append({"label": "Close to a freeway (noise carries far)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls <= 2 and dist < 300:
                 risks.append({"label": "Close to a main road (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 3 and dist < 120:
+            elif cls == 3 and dist < 200:
                 risks.append({"label": "Close to a sub-arterial road", "detail": f"{nm} · ~{dist:.0f} m"})
             else:
                 info.append({"label": f"Nearest {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
 
-        # 4. Rail / tram / bus route proximity (on-street route = noise/traffic)
-        for nm, base, near_m, lab in (("trains", "trains", 60, "rail line"),
-                                      ("trams", "trams", 25, "tram route"),
-                                      ("buses", "buses", 20, "bus route")):
+        # 4. Rail line proximity = train NOISE (not a "walk to station" — we
+        #    only have the line geometry, not stations, so distance to the
+        #    line is a noise measure, not a walkability one).
+        res = _nearest_m("trains", "trains", P)
+        if res:
+            dist, _ = res
+            if dist < 100:
+                risks.append({"label": "Adjacent to rail line (train noise)", "detail": f"~{dist:.0f} m to track"})
+            elif dist < 300:
+                info.append({"label": "Near rail line (some train noise)", "detail": f"~{dist:.0f} m to track"})
+        # Tram / bus routes run on the street — being on the route = traffic/noise.
+        for nm, base, near_m, lab in (("trams", "trams", 30, "tram route"),
+                                      ("buses", "buses", 25, "bus route")):
             res = _nearest_m(nm, base, P)
             if res:
                 dist, _ = res
                 if dist < near_m:
                     risks.append({"label": f"On/adjacent to a {lab}", "detail": f"~{dist:.0f} m (traffic/noise)"})
-                elif nm == "trains" and dist < 1200:
-                    positives.append({"label": "Walk to train line", "detail": f"~{dist:.0f} m"})
 
         # 5. Power lines
         res = _nearest_m("powerlines", "osm_powerlines", P)

@@ -625,10 +625,23 @@
     @media (max-width: 640px) { #map { height: 60vh; min-height: 380px; } }
     .ref-map-marker { background: none; border: none; }
 
+    /* Dark-theme the Leaflet popups (default is white → our light text was
+       unreadable). Applies to every map popup: sold, for-sale, factors,
+       overlays. */
+    .leaflet-popup-content-wrapper {
+      background: #131722; color: #e5e9f0;
+      border: 1px solid var(--border-strong); border-radius: var(--r-md);
+      box-shadow: 0 6px 24px rgba(0,0,0,.5);
+    }
+    .leaflet-popup-content { color: #e5e9f0; margin: 10px 12px; }
+    .leaflet-popup-tip { background: #131722; border: 1px solid var(--border-strong); }
+    .leaflet-popup-content a { color: #93c5fd; }
+    .leaflet-container a.leaflet-popup-close-button { color: #94a3b8; }
+
     /* Comp popups on the map */
-    .comp-popup .price { font-weight: 700; font-size: var(--fs-base); }
+    .comp-popup .price { font-weight: 700; font-size: var(--fs-base); color: #fff; }
     .comp-popup .adj  { color: #6ee7b7; font-size: var(--fs-sm); }
-    .comp-popup .addr { font-size: var(--fs-sm); color: var(--text-3); }
+    .comp-popup .addr { font-size: var(--fs-sm); color: #cbd5e1; }
 
     /* ════════════════════════════════════════════════════════════════════════
        LEAFLET FLOATING CONTROLS (layers FAB + dynamic legend)
@@ -1013,12 +1026,14 @@
        Bottom-LEFT corner (next to the Leaflet attribution); compact icon
        buttons so it stays out of the way on mobile. */
     .map-fs-toolbar {
-      position: absolute; bottom: 12px; left: 12px; z-index: 600;
-      display: none; gap: 4px; pointer-events: auto;
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      z-index: 600;
+      display: none; gap: 4px; pointer-events: auto; align-items: center;
       background: rgba(20,23,32,.95);
       border: 1px solid var(--border-strong);
-      border-radius: 6px; padding: 3px;
+      border-radius: 6px; padding: 3px 6px;
       box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
+      max-width: calc(100% - 24px);
     }
     .map-fs-toolbar.visible { display: flex; }
     .map-fs-toolbar button {
@@ -1034,14 +1049,14 @@
     }
     @keyframes fsSpin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
     .map-fs-toolbar .fs-tb-status {
-      color: var(--text-3); font-size: 10px; padding: 0 6px;
-      align-self: center; max-width: 130px; overflow: hidden;
+      color: var(--text-2); font-size: 11px; padding: 0 4px;
+      align-self: center; max-width: 46vw; overflow: hidden;
       text-overflow: ellipsis; white-space: nowrap;
     }
     @media (max-width: 600px) {
-      .map-fs-toolbar { bottom: 8px; left: 8px; padding: 2px; gap: 2px; }
+      .map-fs-toolbar { bottom: 8px; padding: 2px 4px; gap: 2px; }
       .map-fs-toolbar button { width: 26px; height: 26px; font-size: 12px; }
-      .map-fs-toolbar .fs-tb-status { font-size: 9px; max-width: 80px; }
+      .map-fs-toolbar .fs-tb-status { font-size: 10px; max-width: 50vw; }
     }
 
     .map-legend-floating .row {

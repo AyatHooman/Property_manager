@@ -182,6 +182,56 @@ def _download_polys(group, selectors):
     return feats
 
 
+def _download_mixed(group, selectors):
+    """Amenities — emit a Polygon for area features (ways / relation outers)
+    and a Point for node features, so distance is measured to the grounds of
+    big amenities (hospitals, universities, malls) not just a label point."""
+    parts = []
+    for sel, _ in selectors:
+        parts.append(f'nwr{sel}({BBOX});')
+    q = f'[out:json][timeout:150];({"".join(parts)});out geom tags;'
+    d = _overpass(q)
+
+    def cat_of(tags):
+        for sel, label in selectors:
+            k, v = sel.strip("[]").replace('"', "").split("=")
+            if tags.get(k) == v:
+                return label
+        return None
+
+    feats = []
+    for el in d.get("elements", []):
+        tags = el.get("tags") or {}
+        cat = cat_of(tags)
+        if not cat:
+            continue
+        name = tags.get("name") or ""
+        t = el.get("type")
+        if t == "node":
+            lon, lat = el.get("lon"), el.get("lat")
+            if lon is None:
+                continue
+            feats.append({"type": "Feature",
+                          "geometry": {"type": "Point", "coordinates": [round(lon, 5), round(lat, 5)]},
+                          "properties": {"cat": cat, "name": name}})
+        elif t == "way" and el.get("geometry"):
+            r = _ring([[round(p["lon"], 5), round(p["lat"], 5)] for p in el["geometry"]])
+            geom = ({"type": "Polygon", "coordinates": [r]} if len(r) >= 4
+                    else {"type": "Point", "coordinates": r[0]} if r else None)
+            if geom:
+                feats.append({"type": "Feature", "geometry": geom,
+                              "properties": {"cat": cat, "name": name}})
+        elif t == "relation":
+            for m in (el.get("members") or []):
+                if m.get("role") == "outer" and m.get("geometry"):
+                    r = _ring([[round(p["lon"], 5), round(p["lat"], 5)] for p in m["geometry"]])
+                    if len(r) >= 4:
+                        feats.append({"type": "Feature",
+                                      "geometry": {"type": "Polygon", "coordinates": [r]},
+                                      "properties": {"cat": cat, "name": name}})
+    return feats
+
+
 def _download_lines(group, selectors):
     """Power lines — keep the full LineString geometry."""
     parts = []
@@ -234,6 +284,8 @@ def main():
                 feats = _download_lines(name, GROUPS[name])
             elif name in ("parks", "nuisance"):
                 feats = _download_polys(name, GROUPS[name])   # areas → Polygons
+            elif name == "amenities":
+                feats = _download_mixed(name, GROUPS[name])   # polygons + points
             else:
                 feats = _download_points(name, GROUPS[name])
             _write(name, feats)

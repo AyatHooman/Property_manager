@@ -701,26 +701,41 @@
     .layer-fab-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
     .layer-fab-panel::-webkit-scrollbar-track { background: transparent; }
 
-    /* Collapsible layer-panel groups: header is a small category title, click to
-       expand/collapse. Active dot appears when any toggle inside is on. */
-    .lp-group { display: flex; flex-direction: column; gap: 1px; }
-    .layer-fab-panel .lp-group + .lp-group .lp-head { border-top: 1px solid var(--border); margin-top: 1px; }
+    /* Collapsible layer-panel groups. The header is a distinct bar; the child
+       toggles are indented under it with a connecting rail so the hierarchy
+       (e.g. Primary / Secondary under "Schools") is obvious. */
+    .lp-group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 7px; }
+    .lp-group:last-child { margin-bottom: 0; }
     .lp-head {
-      font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
-      color: var(--text-3); padding: 5px 4px 3px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+      color: #dfe6f2;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--r-sm);
+      padding: 5px 7px;
       cursor: pointer; user-select: none;
-      display: flex; align-items: center; gap: 4px;
+      display: flex; align-items: center; gap: 5px;
     }
-    .lp-head:hover { color: var(--text); }
-    .lp-caret { font-size: 8px; opacity: 0.6; display: inline-block; transition: transform 0.15s; }
+    .lp-head:hover { background: var(--bg-popover); color: #fff; }
+    .lp-caret { font-size: 8px; opacity: 0.7; display: inline-block; transition: transform 0.15s; }
     .lp-group.collapsed .lp-caret { transform: rotate(-90deg); }
     .lp-group.collapsed .zone-toggle { display: none; }
-    .lp-group.has-active .lp-head { color: var(--brand-strong); }
+    .lp-group.has-active .lp-head {
+      color: var(--brand-strong); border-color: var(--brand);
+      background: var(--brand-soft);
+    }
     .lp-group.has-active .lp-head::after {
       content: '●'; color: var(--brand); font-size: 7px;
       margin-left: auto; padding-left: 4px;
     }
-    @media (max-width: 600px) { .lp-head { font-size: 8.5px; padding: 4px 3px 2px; } }
+    /* Indent the child toggles + draw a left rail to tie them to the header. */
+    .layer-fab-panel .lp-group .zone-toggle {
+      margin-left: 9px;
+      border-left: 2px solid var(--border-strong);
+      border-top-left-radius: 0; border-bottom-left-radius: 0;
+    }
+    .layer-fab-panel .lp-group .zone-toggle.active { border-left-color: var(--brand); }
+    @media (max-width: 600px) { .lp-head { font-size: 9px; padding: 4px 5px; } }
 
     .zone-toggles { display: flex; gap: var(--s-2); flex-wrap: wrap; padding: 0; }
     .zone-toggle {

@@ -150,6 +150,43 @@ def _nearest_m(name, basename, P):
     return (P.distance(g) * _DEG_M, layer["props"].get(id(g)) or {})
 
 
+def _nearest_amenity_by_cat(P, cats=("hospital", "supermarket", "shopping",
+                                     "university", "library")):
+    """Return {cat: (distance_m, name)} for the nearest amenity of each
+    requested category. The amenities layer is mixed categories, so we scan
+    candidates in growing buffer rings and keep the closest per category —
+    much more useful than the single global-nearest (which is usually a
+    church). 'worship' / 'community' are deliberately not value drivers."""
+    layer = _load("amenities", "osm_amenities")
+    if not layer or not layer["tree"]:
+        return {}
+    tree = layer["tree"]
+    want = set(cats)
+    best = {}   # cat -> (dist_m, name)
+    seen = set()
+    for r in (0.009, 0.018, 0.03):   # ~1 / 2 / 3.3 km scaled-degree rings
+        try:
+            cand = tree.query(P.buffer(r))
+        except Exception:
+            cand = []
+        for g in cand:
+            gid = id(g)
+            if gid in seen:
+                continue
+            seen.add(gid)
+            pr = layer["props"].get(gid) or {}
+            cat = pr.get("cat")
+            if cat not in want:
+                continue
+            d = P.distance(g) * _DEG_M
+            cur = best.get(cat)
+            if cur is None or d < cur[0]:
+                best[cat] = (d, pr.get("name") or cat)
+        if want.issubset(best.keys()):
+            break
+    return best
+
+
 def _inside(name, basename, P):
     """Return the props of the first polygon containing P, or None."""
     layer = _load(name, basename)
@@ -460,15 +497,22 @@ def compute_factors(lat, lng, use_cache=True):
             if dist < 40:
                 risks.append({"label": "Abuts a watercourse (flood/erosion)", "detail": f"{pr.get('name') or 'creek'} · ~{dist:.0f} m"})
 
-        # 9. Amenities — hospital traffic (neg if very close) else positive
-        res = _nearest_m("amenities", "osm_amenities", P)
-        if res:
-            dist, pr = res
-            cat = pr.get("cat"); nm = pr.get("name") or cat or "amenity"
-            if cat == "hospital" and dist < 200:
-                risks.append({"label": "Adjacent to hospital (traffic)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif dist < 1500:
-                positives.append({"label": f"Near {cat or 'amenity'}", "detail": f"{nm} · ~{dist:.0f} m"})
+        # 9. Amenities — report the nearest of each USEFUL category (not just
+        #    the single closest POI, which was usually a church). Hospital is
+        #    special: very close = traffic risk, otherwise a convenience plus.
+        amen = _nearest_amenity_by_cat(P)
+        h = amen.get("hospital")
+        if h and h[0] < 200:
+            risks.append({"label": "Adjacent to hospital (traffic)", "detail": f"{h[1]} · ~{h[0]:.0f} m"})
+        elif h and h[0] < 2000:
+            positives.append({"label": "Near hospital", "detail": f"{h[1]} · ~{h[0]:.0f} m"})
+        for cat, label, maxm in (("supermarket", "supermarket", 1500),
+                                 ("shopping",    "shopping centre", 2000),
+                                 ("university",  "university", 2500),
+                                 ("library",     "library", 1500)):
+            v = amen.get(cat)
+            if v and v[0] < maxm:
+                positives.append({"label": f"Near {label}", "detail": f"{v[1]} · ~{v[0]:.0f} m"})
 
         # 10. Airport (aircraft noise)
         res = _nearest_m("airports", "airports", P)

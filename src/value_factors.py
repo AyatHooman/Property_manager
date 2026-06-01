@@ -25,6 +25,11 @@ _TRN  = os.path.join(_BASE, "static", "transport")
 _FACT_DB = os.path.join(_BASE, "data", "factors.db")
 _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 
+# Bump whenever the factor RULES change (thresholds, new factors, …). Cached
+# results (factors.db) and the for_sale.db risk_count carry this version, so a
+# bump auto-invalidates both and they recompute on next read.
+FACTOR_VERSION = 4
+
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
 _DEG_M = 111320.0                          # metres per degree latitude
@@ -407,7 +412,10 @@ def compute_factors(lat, lng, use_cache=True):
             row = con.execute("SELECT json FROM factors WHERE key=?", (key,)).fetchone()
             con.close()
             if row:
-                return json.loads(row[0])
+                cached = json.loads(row[0])
+                # Only trust the cache if it was computed by the current rules.
+                if cached.get("v") == FACTOR_VERSION:
+                    return cached
         except Exception:
             pass
 
@@ -565,6 +573,7 @@ def compute_factors(lat, lng, use_cache=True):
                              "detail": f"{ea.get('n_segments', 0)} segment(s) nearby"})
 
     result = {
+        "v": FACTOR_VERSION,
         "lat": lat, "lng": lng,
         "risk_count": len(risks),
         "risks": risks, "positives": positives, "info": info,

@@ -58,6 +58,8 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
         con.execute("ALTER TABLE listings ADD COLUMN risk_count INTEGER")
     if "favourite" not in cols:
         con.execute("ALTER TABLE listings ADD COLUMN favourite INTEGER NOT NULL DEFAULT 0")
+    if "rc_version" not in cols:
+        con.execute("ALTER TABLE listings ADD COLUMN rc_version INTEGER")
     # Spatial filter goes through these
     con.execute("CREATE INDEX IF NOT EXISTS listings_geo  ON listings(lat, lng)")
     con.execute("CREATE INDEX IF NOT EXISTS listings_seen ON listings(last_seen)")
@@ -87,24 +89,27 @@ def set_favourite(con: sqlite3.Connection, listing_id: int, fav: bool) -> bool:
 
 
 def fill_risk_counts(con: sqlite3.Connection, limit: int = 10000) -> int:
-    """Compute + persist risk_count for listings that don't have one yet,
-    using the value-factor engine (cached per coordinate, so cheap after the
-    first pass). Returns how many were filled."""
+    """Compute + persist risk_count for listings whose count is missing OR was
+    computed under an older factor-rule version. Cached per coordinate, so it's
+    cheap after the first pass. Returns how many were (re)filled."""
     try:
         from src import value_factors
+        ver = value_factors.FACTOR_VERSION
     except Exception:
         return 0
     rows = con.execute(
         "SELECT listing_id, lat, lng FROM listings "
-        "WHERE removed=0 AND lat IS NOT NULL AND risk_count IS NULL LIMIT ?",
-        (limit,)).fetchall()
+        "WHERE removed=0 AND lat IS NOT NULL "
+        "AND (risk_count IS NULL OR rc_version IS NULL OR rc_version != ?) LIMIT ?",
+        (ver, limit)).fetchall()
     n = 0
     for lid, lat, lng in rows:
         try:
             rc = value_factors.compute_factors(lat, lng).get("risk_count", 0)
         except Exception:
             continue
-        con.execute("UPDATE listings SET risk_count=? WHERE listing_id=?", (rc, lid))
+        con.execute("UPDATE listings SET risk_count=?, rc_version=? WHERE listing_id=?",
+                    (rc, ver, lid))
         n += 1
     if n:
         con.commit()
@@ -232,8 +237,11 @@ def _safe_float(x):
     except (TypeError, ValueError): return None
 
 
-_UNAVAILABLE_RE = re.compile(r"sold|under offer|under contract|under application",
-                             re.IGNORECASE)
+# Matches Domain's sold / under-offer markers in either the human text
+# ("Under Offer", "Sold") or the CSS class name ("is-under-offer", "is-sold").
+_UNAVAILABLE_RE = re.compile(
+    r"\bsold\b|is-sold|under[\s-]?offer|under[\s-]?contract|under[\s-]?application",
+    re.IGNORECASE)
 
 
 def _is_unavailable(item: dict, lm: dict) -> bool:

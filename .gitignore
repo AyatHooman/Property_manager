@@ -61,3 +61,6 @@ static/overlays/waterbody.geojson
 
 # Domain "for sale" scrape cache — rebuild via the in-app 🔄 Re-scrape button.
 data/for_sale.db
+
+# Per-coordinate value-factor cache (rebuilt on demand by value_factors.py).
+data/factors.db

@@ -235,6 +235,24 @@ def static_overlay_file(name):
     return jsonify({"error": f"{name}.geojson not found"}), 404
 
 
+# Property value factors — overlays/proximity risks for a single lat/lng.
+# Computed by src/value_factors.py against the LOCAL layer files; cached per
+# rounded coordinate in data/factors.db. Used by the "⚠ Risk factors" button
+# in both the for-sale and sold-property popups.
+@app.route("/api/property-factors")
+def api_property_factors():
+    try:
+        lat = float(request.args.get("lat"))
+        lng = float(request.args.get("lng"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "lat,lng required"}), 400
+    try:
+        from src import value_factors
+        return jsonify(value_factors.compute_factors(lat, lng))
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
 # Per-parcel rich detail (lot number, plan, LGA) fetched on click from the
 # v_parcel_mp WFS layer keyed by PFI. The bulk static file only carries the
 # PFI to keep it small; this endpoint fills in the rest on demand.
@@ -867,9 +885,22 @@ def scen_delete(name):
     return jsonify({"ok": True})
 
 
+def _warm_factors():
+    """Build the value-factor spatial indexes in the background so the first
+    property click is instant rather than paying a ~20-40 s one-time load."""
+    try:
+        from src import value_factors
+        t0 = time.time()
+        value_factors.warm_up()
+        print(f"[factors] value-factor indexes warm in {time.time()-t0:.1f}s", flush=True)
+    except Exception as ex:
+        print(f"[factors] warm-up failed: {ex}", flush=True)
+
+
 if __name__ == "__main__":
     import os
     host = os.environ.get("HOST", "0.0.0.0")           # 0.0.0.0 = LAN + tunnel reachable
     port = int(os.environ.get("PORT", "5000"))
+    threading.Thread(target=_warm_factors, daemon=True).start()
     print(f"Property Manager serving on http://{host}:{port}")
     app.run(host=host, debug=False, port=port, threaded=True, use_reloader=False)

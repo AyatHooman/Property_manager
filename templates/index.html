@@ -771,6 +771,27 @@
       padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
     }
     .fs-popup a.fs-link:hover { background: #059669; }
+    /* Risk-factors button + expandable panel (shared by for-sale + sold popups) */
+    .pf-btn {
+      display: inline-block; margin-top: 6px; margin-right: 6px;
+      background: #7f1d1d; color: #fecaca; border: 1px solid #b91c1c;
+      padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: 700;
+      cursor: pointer; user-select: none;
+    }
+    .pf-btn:hover { background: #991b1b; color: #fff; }
+    .pf-btn.clean { background: #064e3b; color: #6ee7b7; border-color: #047857; }
+    .pf-panel { display: none; margin-top: 6px; }
+    .pf-panel.open { display: block; }
+    .pf-panel .pf-sec { margin-top: 5px; }
+    .pf-panel .pf-sec-h { font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .03em; margin-bottom: 2px; }
+    .pf-panel .pf-sec-h.risk { color: #f87171; }
+    .pf-panel .pf-sec-h.pos  { color: #34d399; }
+    .pf-panel .pf-sec-h.info { color: #93c5fd; }
+    .pf-panel .pf-item { font-size: 11px; color: var(--text-2); line-height: 1.3; padding: 1px 0; }
+    .pf-panel .pf-item b { color: var(--text); }
+    .pf-panel .pf-item .pf-d { color: var(--text-4); font-size: 10px; }
+    .pf-loading { font-size: 11px; color: var(--text-4); font-style: italic; margin-top: 4px; }
     @media (max-width: 600px) {
       .fs-popup { min-width: 200px; max-width: 260px; }
       .fs-popup .fs-img-wrap { height: 120px; }
@@ -3981,15 +4002,22 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
       slopeStr,
       rentStr,
     ].filter(Boolean).join(' · ');
+    const soldUrl = r.url || '';
     circle.bindPopup(
-      `<div class="comp-popup">
+      `<div class="comp-popup fs-popup">
         <div class="addr">${r.address || ''}</div>
         <div class="price">${priceStr}</div>
         ${adjStr}
         <div style="font-size:11px;color:#94a3b8">${r.sold_date || ''} · ${r.type || ''}</div>
         ${dims ? `<div style="font-size:11px;color:#cbd5e1;margin-top:2px">${dims}</div>` : ''}
+        ${soldUrl ? `<a class="fs-link" href="${soldUrl}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
+        ${_factorsButtonHtml()}
       </div>`
     );
+    circle.on('popupopen', (e) => {
+      const root = e.popup.getElement();
+      if (root) _wireFactors(root, (+r.lat).toFixed(6), (+r.lng).toFixed(6));
+    });
   });
 
   if (pts.length >= 2) {
@@ -4819,6 +4847,54 @@ function _forSaleRender(fc) {
   }
 }
 
+// ─── Shared "⚠ Risk factors" button used by for-sale + sold popups ──────────
+// Returns HTML for a collapsed button + empty panel. _wireFactors() attaches
+// the lazy fetch (on first expand) to /api/property-factors?lat=&lng=.
+function _factorsButtonHtml() {
+  return `<span class="pf-btn" data-pf-btn>⚠ Risk factors</span>
+          <div class="pf-panel" data-pf-panel></div>`;
+}
+function _renderFactors(d) {
+  const sec = (title, cls, items, fmt) => {
+    if (!items || !items.length) return '';
+    return `<div class="pf-sec"><div class="pf-sec-h ${cls}">${title}</div>` +
+      items.map(fmt).join('') + `</div>`;
+  };
+  const row = (it) => `<div class="pf-item"><b>${it.label}</b>` +
+    (it.detail ? ` <span class="pf-d">${it.detail}</span>` : '') + `</div>`;
+  let html = '';
+  html += sec('⚠ Value risks', 'risk', d.risks, row);
+  html += sec('✓ Positives', 'pos', d.positives, row);
+  html += sec('ℹ Planning / context', 'info', d.info, row);
+  if (!html) html = `<div class="pf-item">No notable factors found.</div>`;
+  return html;
+}
+function _wireFactors(root, lat, lng) {
+  if (!root) return;
+  const btn = root.querySelector('[data-pf-btn]');
+  const panel = root.querySelector('[data-pf-panel]');
+  if (!btn || !panel) return;
+  let loaded = false;
+  btn.onclick = async (ev) => {
+    ev.stopPropagation();
+    panel.classList.toggle('open');
+    if (loaded || !panel.classList.contains('open')) return;
+    loaded = true;
+    panel.innerHTML = `<div class="pf-loading">Calculating…</div>`;
+    try {
+      const r = await fetch(`/api/property-factors?lat=${lat}&lng=${lng}`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const d = await r.json();
+      panel.innerHTML = _renderFactors(d);
+      // Recolour the button: green if clean, red with count if risks.
+      if (d.risk_count > 0) { btn.textContent = `⚠ ${d.risk_count} risk${d.risk_count>1?'s':''}`; btn.classList.remove('clean'); }
+      else { btn.textContent = '✓ No major risks'; btn.classList.add('clean'); }
+    } catch (e) {
+      panel.innerHTML = `<div class="pf-loading">Could not load factors (${e.message}).</div>`;
+    }
+  };
+}
+
 function _forSaleBindPopup(feature, layer) {
   const p = feature.properties || {};
   const imgs = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : [];
@@ -4848,11 +4924,14 @@ function _forSaleBindPopup(feature, layer) {
         ${p.agency ? '<br>' + p.agency : ''}
       </div>
       ${p.url ? `<a class="fs-link" href="${p.url}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
+      ${_factorsButtonHtml()}
     </div>`;
   layer.bindPopup(html, { maxWidth: 300, minWidth: 220 });
+  const ll = layer.getLatLng ? layer.getLatLng() : null;
   layer.on('popupopen', (e) => {
     const root = e.popup.getElement();
     if (!root) return;
+    if (ll) _wireFactors(root, ll.lat.toFixed(6), ll.lng.toFixed(6));
     const imgEl = root.querySelector('.fs-img');
     const idxEl = root.querySelector('.fs-img-idx');
     if (!imgEl || imgs.length < 2) return;

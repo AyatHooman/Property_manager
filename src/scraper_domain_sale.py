@@ -60,6 +60,8 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
         con.execute("ALTER TABLE listings ADD COLUMN favourite INTEGER NOT NULL DEFAULT 0")
     if "rc_version" not in cols:
         con.execute("ALTER TABLE listings ADD COLUMN rc_version INTEGER")
+    if "last_changed" not in cols:
+        con.execute("ALTER TABLE listings ADD COLUMN last_changed TEXT")
     # Spatial filter goes through these
     con.execute("CREATE INDEX IF NOT EXISTS listings_geo  ON listings(lat, lng)")
     con.execute("CREATE INDEX IF NOT EXISTS listings_seen ON listings(last_seen)")
@@ -123,8 +125,13 @@ def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tu
         return 0, 0
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     cur = con.cursor()
-    cur.execute("SELECT listing_id FROM listings")
-    existing = {row[0] for row in cur.fetchall()}
+    # Pull the fields we compare for "did it change?" so we can stamp
+    # last_changed only on a real change (price, status, specs).
+    prev = {}
+    for row in cur.execute(
+            "SELECT listing_id, price_text, price_low, price_high, sale_type, "
+            "beds, baths, carspaces, land_m2, prop_type FROM listings"):
+        prev[row[0]] = row[1:]
     inserted = updated = 0
     for L in listings:
         lid = L.get("listing_id")
@@ -139,15 +146,25 @@ def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tu
             json.dumps(L.get("image_urls") or [], separators=(",", ":")),
             now,            # last_seen
         )
-        if lid in existing:
-            cur.execute("""UPDATE listings SET
-                address=?, suburb=?, state=?, postcode=?, lat=?, lng=?,
-                price_text=?, price_low=?, price_high=?,
-                beds=?, baths=?, carspaces=?, land_m2=?,
-                prop_type=?, sale_type=?, agency=?, url=?,
-                image_urls=?, last_seen=?, removed=0
-                WHERE listing_id=?""",
-                params[1:] + (lid,))
+        if lid in prev:
+            # Did anything meaningful change vs the stored row?
+            new_cmp = (L.get("price_text"), L.get("price_low"), L.get("price_high"),
+                       L.get("sale_type"), L.get("beds"), L.get("baths"),
+                       L.get("carspaces"), L.get("land_m2"), L.get("prop_type"))
+            changed = (tuple(prev[lid]) != new_cmp)
+            if changed:
+                cur.execute("""UPDATE listings SET
+                    address=?, suburb=?, state=?, postcode=?, lat=?, lng=?,
+                    price_text=?, price_low=?, price_high=?,
+                    beds=?, baths=?, carspaces=?, land_m2=?,
+                    prop_type=?, sale_type=?, agency=?, url=?,
+                    image_urls=?, last_seen=?, removed=0, last_changed=?
+                    WHERE listing_id=?""",
+                    params[1:] + (now, lid))
+            else:
+                # Seen again but unchanged — refresh last_seen only.
+                cur.execute("UPDATE listings SET last_seen=?, removed=0 WHERE listing_id=?",
+                            (now, lid))
             updated += 1
         else:
             cur.execute("""INSERT INTO listings (
@@ -155,21 +172,27 @@ def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tu
                 price_text, price_low, price_high,
                 beds, baths, carspaces, land_m2,
                 prop_type, sale_type, agency, url,
-                image_urls, last_seen, first_seen
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                params + (now,))
+                image_urls, last_seen, first_seen, last_changed
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                params + (now, now))
             inserted += 1
     con.commit()
     return inserted, updated
 
 
 def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
+    # The latest scrape stamped all listings it saw with the same last_seen.
+    # Relative to that timestamp: NEW = first appeared this scrape; UPDATED =
+    # existed before but a field changed this scrape. Anything highlighted in a
+    # previous refresh but unchanged now is neither.
+    row = con.execute("SELECT MAX(last_seen) FROM listings WHERE removed=0").fetchone()
+    latest_ts = row[0] if row else None
     cur = con.execute("""
         SELECT listing_id, address, suburb, state, postcode, lat, lng,
                price_text, price_low, price_high,
                beds, baths, carspaces, land_m2,
                prop_type, sale_type, agency, url, image_urls,
-               risk_count, favourite, first_seen, last_seen
+               risk_count, favourite, first_seen, last_seen, last_changed
         FROM listings WHERE removed=0 AND lat IS NOT NULL AND lng IS NOT NULL
     """)
     cols = [d[0] for d in cur.description]
@@ -180,9 +203,9 @@ def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
             d["image_urls"] = json.loads(d.get("image_urls") or "[]")
         except Exception:
             d["image_urls"] = []
-        # "new" = first appeared in its most recent scrape (first_seen==last_seen),
-        # i.e. it showed up in the latest refresh and wasn't seen before.
-        d["is_new"] = 1 if (d.get("first_seen") and d.get("first_seen") == d.get("last_seen")) else 0
+        fs, lc = d.get("first_seen"), d.get("last_changed")
+        d["is_new"] = 1 if (latest_ts and fs == latest_ts) else 0
+        d["is_updated"] = 1 if (latest_ts and not d["is_new"] and lc == latest_ts) else 0
         out.append(d)
     return out
 

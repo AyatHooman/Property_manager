@@ -1058,9 +1058,11 @@
       text-overflow: ellipsis; white-space: nowrap;
     }
     @media (max-width: 600px) {
-      .map-fs-toolbar { bottom: 8px; padding: 2px 4px; gap: 2px; }
-      .map-fs-toolbar button { width: 26px; height: 26px; font-size: 12px; }
-      .map-fs-toolbar .fs-tb-status { font-size: 10px; max-width: 50vw; }
+      .map-fs-toolbar { bottom: 8px; padding: 2px 3px; gap: 1px; max-width: calc(100% - 96px); }
+      .map-fs-toolbar button { width: 24px; height: 24px; font-size: 11px; }
+      /* Hide the wordy status on phones — it pushed the toolbar wide enough to
+         overlap the bottom-left Layers button. The icons are what matter. */
+      .map-fs-toolbar .fs-tb-status { display: none; }
     }
 
     .map-legend-floating .row {
@@ -3759,7 +3761,7 @@ function _initMap() {
   fsTb.className = 'map-fs-toolbar';
   fsTb.innerHTML = `
     <button id="fs-tb-refresh" title="Re-scrape Domain for fresh listings">🔄</button>
-    <button id="fs-tb-new"     title="Show new-this-refresh only">🆕</button>
+    <button id="fs-tb-new"     title="Show new + updated this refresh (cyan=new, orange=updated)">🆕</button>
     <button id="fs-tb-fav"     title="Show favourites only">★</button>
     <button id="fs-tb-edit"    title="Change the Domain filter URL">✏️</button>
     <button id="fs-tb-off"     title="Hide For Sale layer">✕</button>
@@ -3784,9 +3786,10 @@ function _initMap() {
     _forSaleNewOnly = !_forSaleNewOnly;
     e.currentTarget.classList.toggle('active', _forSaleNewOnly);
     if (_forSale.lastFc) _forSaleRender(_forSale.lastFc);
-    const n = _forSale.lastFc
-      ? (_forSale.lastFc.features || []).filter(f => f.properties && f.properties.is_new).length : 0;
-    _forSaleStatus(`${n} new this refresh`);
+    const fts = _forSale.lastFc ? (_forSale.lastFc.features || []) : [];
+    const nw = fts.filter(f => f.properties && f.properties.is_new).length;
+    const up = fts.filter(f => f.properties && f.properties.is_updated).length;
+    _forSaleStatus(`${nw} new · ${up} updated`);
   };
 
   // Sync easements + lots toggle gates with current zoom + refresh their
@@ -4902,20 +4905,21 @@ function _forSaleRender(fc) {
   if (_forSale.layer) { _map.removeLayer(_forSale.layer); _forSale.layer = null; }
   let feats = (fc.features || []);
   if (_forSaleFavOnly) feats = feats.filter(f => (f.properties || {}).favourite);
-  if (_forSaleNewOnly) feats = feats.filter(f => (f.properties || {}).is_new);
+  if (_forSaleNewOnly) feats = feats.filter(f => { const p = f.properties || {}; return p.is_new || p.is_updated; });
 
-  // Build a featureGroup so we can also drop a highlight ring around NEW
-  // listings (a cyan empty circle, distinct from the gold favourite ring).
+  // Build a featureGroup so we can also drop a highlight ring around listings
+  // that are NEW (cyan) or UPDATED (orange) this refresh — distinct from the
+  // gold favourite ring. Unchanged listings from a prior refresh get no ring.
   const grp = L.featureGroup();
   feats.forEach(f => {
     const p = f.properties || {};
     const ll = L.latLng(f.geometry.coordinates[1], f.geometry.coordinates[0]);
     const fav = !!p.favourite;
-    if (p.is_new) {
-      // Cyan halo ring behind the marker — easy to spot new arrivals.
+    const hl = p.is_new ? '#22d3ee' : (p.is_updated ? '#fb923c' : null);
+    if (hl) {
       L.circleMarker(ll, {
         radius: fav ? 13 : 11, fillOpacity: 0,
-        color: '#22d3ee', weight: 3, opacity: 0.95,
+        color: hl, weight: 3, opacity: 0.95,
       }).addTo(grp);
     }
     const c = _forSaleMarkerColors(p.risk_count);
@@ -5236,9 +5240,10 @@ function _vecBuild(name, gj) {
     });
   }
   if (kind === 'roadline') {
-    const rs = { 1: { color: '#ef4444', weight: 4 }, 2: { color: '#f97316', weight: 3 },
-                 3: { color: '#eab308', weight: 2 } };
-    const lbl = { 1: 'Freeway / motorway', 2: 'Highway / arterial', 3: 'Sub-arterial' };
+    // DEECA class_code: 0 freeway, 1 highway, 2 arterial, 3 sub-arterial.
+    const rs = { 0: { color: '#ef4444', weight: 4 }, 1: { color: '#f97316', weight: 3.5 },
+                 2: { color: '#f59e0b', weight: 2.5 }, 3: { color: '#eab308', weight: 2 } };
+    const lbl = { 0: 'Freeway / motorway', 1: 'Highway', 2: 'Arterial / main road', 3: 'Sub-arterial' };
     return L.geoJSON(gj, {
       renderer: canvas,
       style: f => rs[(f.properties || {}).class] || { color: '#eab308', weight: 2 },

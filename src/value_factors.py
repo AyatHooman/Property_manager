@@ -28,7 +28,7 @@ _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 # Bump whenever the factor RULES change (thresholds, new factors, …). Cached
 # results (factors.db) and the for_sale.db risk_count carry this version, so a
 # bump auto-invalidates both and they recompute on next read.
-FACTOR_VERSION = 4
+FACTOR_VERSION = 5
 
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
@@ -446,17 +446,15 @@ def compute_factors(lat, lng, use_cache=True):
         if nr:
             dist, pr = nr
             cls = pr.get("class"); nm = pr.get("name") or "major road"
-            clslabel = {1: "freeway", 2: "highway/arterial", 3: "sub-arterial"}.get(cls, "major road")
-            # Per-class noise radius: freeway 500 m, highway 350 m,
-            # arterial 200 m (DEECA class 1 / 2 / 3 respectively).
+            # DEECA Vicmap road class_code: 0=freeway, 1=highway, 2=arterial,
+            # 3=sub-arterial. Per-class noise radius:
+            clslabel = {0: "freeway", 1: "highway", 2: "arterial",
+                        3: "sub-arterial"}.get(cls, "major road")
+            ROAD_THRESH = {0: 500, 1: 350, 2: 200, 3: 150}
             if dist < 40:
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 1 and dist < 500:
-                risks.append({"label": "Close to a freeway (noise)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 2 and dist < 350:
-                risks.append({"label": "Close to a highway (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 3 and dist < 200:
-                risks.append({"label": "Close to an arterial road (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls in ROAD_THRESH and dist < ROAD_THRESH[cls]:
+                risks.append({"label": f"Close to a {clslabel} (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
             else:
                 info.append({"label": f"Nearest {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
 

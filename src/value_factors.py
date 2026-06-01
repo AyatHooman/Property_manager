@@ -256,16 +256,22 @@ def compute_factors(lat, lng, use_cache=True):
             zc = zp.get("zone_code") or ""
             info.insert(0, {"label": f"Zone: {zc}", "detail": zp.get("desc") or zp.get("zone_description") or ""})
 
-        # 3. Nearest major road (class<=3). Abutting = bad; freeway near = noise.
+        # 3. Nearest major road (class<=3). On it = bad; nearby arterial or
+        #    freeway = traffic/noise (flagged out to a wider radius for
+        #    freeways, which carry noise much further).
         nr = _nearest_m("roads", "roads", P)
         if nr:
             dist, pr = nr
             cls = pr.get("class"); nm = pr.get("name") or "major road"
             clslabel = {1: "freeway", 2: "highway/arterial", 3: "sub-arterial"}.get(cls, "major road")
-            if dist < 35:
+            if dist < 40:
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls == 1 and dist < 300:
+            elif cls == 1 and dist < 500:
                 risks.append({"label": "Close to a freeway (noise)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls <= 2 and dist < 150:
+                risks.append({"label": "Close to a main road (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif cls == 3 and dist < 120:
+                risks.append({"label": "Close to a sub-arterial road", "detail": f"{nm} · ~{dist:.0f} m"})
             else:
                 info.append({"label": f"Nearest {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
 
@@ -296,13 +302,15 @@ def compute_factors(lat, lng, use_cache=True):
             if dist < 300:
                 risks.append({"label": f"Near {cat} site", "detail": f"{pr.get('name') or cat} · ~{dist:.0f} m"})
 
-        # 7. Park / reserve — abutting can reduce (rear access / fire / privacy)
+        # 7. Park / reserve — distance is now to the park BOUNDARY (polygons),
+        #    so "faces / adjacent" is accurate. Facing a reserve can reduce
+        #    value (privacy, anti-social use, parking, after-dark activity).
         res = _nearest_m("parks", "osm_parks", P)
         if res:
             dist, pr = res
-            if dist < 35:
-                risks.append({"label": "Backs onto park / reserve", "detail": f"{pr.get('name') or 'reserve'} · ~{dist:.0f} m"})
-            elif dist < 800:
+            if dist < 45:
+                risks.append({"label": "Faces / adjacent to park or reserve", "detail": f"{pr.get('name') or 'reserve'} · ~{dist:.0f} m"})
+            elif dist < 700:
                 positives.append({"label": "Walk to park", "detail": f"{pr.get('name') or 'park'} · ~{dist:.0f} m"})
 
         # 8. Rivers / creeks

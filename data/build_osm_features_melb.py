@@ -128,6 +128,60 @@ def _download_points(group, selectors):
     return feats
 
 
+def _ring(coords):
+    """Ensure a coordinate ring is closed (first == last)."""
+    if len(coords) >= 3 and coords[0] != coords[-1]:
+        coords = coords + [coords[0]]
+    return coords
+
+
+def _download_polys(group, selectors):
+    """Parks / nuisance — keep AREA geometry (Polygon) so the factor engine can
+    measure distance to the boundary, not a centroid. Ways become a Polygon;
+    relation outer members each become a Polygon. Nodes (rare) become a tiny
+    point→1-vertex skip."""
+    way_parts, rel_parts = [], []
+    for sel, _ in selectors:
+        way_parts.append(f'way{sel}({BBOX});')
+        rel_parts.append(f'relation{sel}({BBOX});')
+    q = (f'[out:json][timeout:150];'
+         f'({"".join(way_parts)}{"".join(rel_parts)});out geom tags;')
+    d = _overpass(q)
+
+    def cat_of(tags):
+        for sel, label in selectors:
+            k, v = sel.strip("[]").replace('"', "").split("=")
+            if tags.get(k) == v:
+                return label
+        return None
+
+    feats = []
+    for el in d.get("elements", []):
+        tags = el.get("tags") or {}
+        cat = cat_of(tags)
+        if not cat:
+            continue
+        name = tags.get("name") or ""
+        rings = []
+        if el.get("type") == "way" and el.get("geometry"):
+            r = _ring([[round(p["lon"], 5), round(p["lat"], 5)] for p in el["geometry"]])
+            if len(r) >= 4:
+                rings.append(r)
+        elif el.get("type") == "relation":
+            for m in (el.get("members") or []):
+                if m.get("role") == "outer" and m.get("geometry"):
+                    r = _ring([[round(p["lon"], 5), round(p["lat"], 5)] for p in m["geometry"]])
+                    if len(r) >= 4:
+                        rings.append(r)
+        for r in rings:
+            feats.append({
+                "type": "Feature",
+                "geometry": {"type": "Polygon", "coordinates": [r]},
+                "properties": {"cat": cat, "name": name},
+            })
+    return feats
+
+
 def _download_lines(group, selectors):
     """Power lines — keep the full LineString geometry."""
     parts = []
@@ -178,6 +232,8 @@ def main():
         try:
             if name == "powerlines":
                 feats = _download_lines(name, GROUPS[name])
+            elif name in ("parks", "nuisance"):
+                feats = _download_polys(name, GROUPS[name])   # areas → Polygons
             else:
                 feats = _download_points(name, GROUPS[name])
             _write(name, feats)

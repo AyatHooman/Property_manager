@@ -3755,14 +3755,18 @@ function _initMap() {
   // Sync easements + lots toggle gates with current zoom + refresh their
   // bbox-queried features on every pan/zoom. Both layers are disabled below
   // their MIN_ZOOM (browser would receive an oversized payload otherwise).
+  const _VEC_BBOX = ['zones', 'roads', 'rivers', 'waterbody', 'parks'];
   _easementsUpdateGate(); _lotsUpdateGate();
+  _VEC_BBOX.forEach(_vecUpdateGate);
   _map.on('zoomend', () => {
     _easementsUpdateGate(); _lotsUpdateGate();
     _easementsRefresh();    _lotsRefresh();
+    _VEC_BBOX.forEach(n => { _vecUpdateGate(n); _vecRefresh(n); });
     _appStateSave();
   });
   _map.on('moveend', () => {
     _easementsRefresh();    _lotsRefresh();
+    _VEC_BBOX.forEach(_vecRefresh);
     _appStateSave();
   });
   _map.on('baselayerchange', _appStateSave);
@@ -5090,19 +5094,23 @@ const _NUISANCE_STYLE = {
   quarry:     { color: '#a16207', icon: '⛏️', label: 'Quarry' },
 };
 
+// Heavy layers (bbox:true) are fetched per-viewport from /api/veclayer/<name>
+// and only render at zoom >= minZoom — like easements/lots — so we never load
+// 22k-77k features at once. Light layers load their whole (small) file once.
 const _vecCfg = {
-  zones:      { kind: 'zonepoly',   file: '/static/overlays/zones.geojson' },
-  roads:      { kind: 'roadline',   file: '/static/overlays/roads.geojson' },
-  rivers:     { kind: 'riverline',  file: '/static/overlays/rivers.geojson' },
-  waterbody:  { kind: 'waterpoly',  file: '/static/overlays/waterbody.geojson' },
+  zones:      { kind: 'zonepoly',   bbox: true, minZoom: 14 },
+  roads:      { kind: 'roadline',   bbox: true, minZoom: 13 },
+  rivers:     { kind: 'riverline',  bbox: true, minZoom: 13 },
+  waterbody:  { kind: 'waterpoly',  bbox: true, minZoom: 12 },
+  parks:      { kind: 'parkpoly',   bbox: true, minZoom: 13 },
   airports:   { kind: 'airportpoly',file: '/static/overlays/airports.geojson' },
   amenities:  { kind: 'amenitypts', file: '/static/overlays/osm_amenities.geojson' },
-  parks:      { kind: 'parkpoly',   file: '/static/overlays/osm_parks.geojson' },
   nuisance:   { kind: 'nuisancepoly',file: '/static/overlays/osm_nuisance.geojson' },
   powerlines: { kind: 'powerline',  file: '/static/overlays/osm_powerlines.geojson' },
 };
 const _vecData = {};
 const _vecLayer = {};
+const _vecState = {};   // name -> { on, lastKey, abortCtrl }  (bbox layers)
 
 function _vecBuild(name, gj) {
   const kind = _vecCfg[name].kind;
@@ -5192,19 +5200,91 @@ function _vecBuild(name, gj) {
   });
 }
 
+// Bbox-fetch refresh for a heavy vec layer (zones/roads/rivers/waterbody/parks).
+function _vecKey(b, z) {
+  return `${z}|${b.getWest().toFixed(4)},${b.getSouth().toFixed(4)},${b.getEast().toFixed(4)},${b.getNorth().toFixed(4)}`;
+}
+async function _vecRefresh(name) {
+  const st = _vecState[name];
+  if (!st || !st.on) return;
+  const cfg = _vecCfg[name];
+  const z = _map.getZoom();
+  const btn = document.getElementById('toggle-vec-' + name);
+  if (z < cfg.minZoom) return;     // gate handles the hide
+  const b = _map.getBounds();
+  const key = _vecKey(b, z);
+  if (key === st.lastKey) return;
+  st.lastKey = key;
+  if (st.abortCtrl) st.abortCtrl.abort();
+  const ctrl = new AbortController(); st.abortCtrl = ctrl;
+  if (btn) btn.classList.add('loading');
+  try {
+    const url = `/api/veclayer/${name}?w=${b.getWest()}&s=${b.getSouth()}&e=${b.getEast()}&n=${b.getNorth()}`;
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const fc = await r.json();
+    if (_vecLayer[name]) { _map.removeLayer(_vecLayer[name]); _vecLayer[name] = null; }
+    _vecLayer[name] = _vecBuild(name, fc).addTo(_map);
+  } catch (e) {
+    if (e.name !== 'AbortError') console.error('vec bbox fetch failed', name, e);
+  } finally {
+    if (btn) btn.classList.remove('loading');
+  }
+}
+
+// Enable/disable a bbox vec-layer toggle by zoom (auto-hide if zoomed out).
+function _vecUpdateGate(name) {
+  const cfg = _vecCfg[name];
+  if (!cfg || !cfg.bbox) return;
+  const btn = document.getElementById('toggle-vec-' + name);
+  if (!btn || !_map) return;
+  const z = _map.getZoom();
+  const st = _vecState[name] || (_vecState[name] = { on: false, lastKey: '' });
+  if (z < cfg.minZoom) {
+    btn.classList.add('disabled');
+    btn.title = `Zoom in to ${cfg.minZoom}+ to enable (you're at ${z})`;
+    if (st.on && _vecLayer[name]) { _map.removeLayer(_vecLayer[name]); _vecLayer[name] = null; st.lastKey = ''; }
+  } else {
+    btn.classList.remove('disabled');
+    if (st.on && !_vecLayer[name]) _vecRefresh(name);
+  }
+}
+
 async function toggleVec(name) {
   _initMap();
+  const cfg = _vecCfg[name];
   const btn = document.getElementById('toggle-vec-' + name);
+
+  // ── Heavy (bbox-fetched, zoom-gated) layers ──
+  if (cfg.bbox) {
+    const st = _vecState[name] || (_vecState[name] = { on: false, lastKey: '' });
+    if (st.on) {
+      st.on = false; st.lastKey = '';
+      if (st.abortCtrl) st.abortCtrl.abort();
+      if (_vecLayer[name]) { _map.removeLayer(_vecLayer[name]); _vecLayer[name] = null; }
+      btn.classList.remove('active'); updateMapLegend();
+      return;
+    }
+    if (_map.getZoom() < cfg.minZoom) {
+      alert(`Zoom in to ${cfg.minZoom}+ first (you're at ${_map.getZoom()}).`);
+      return;
+    }
+    st.on = true; st.lastKey = '';
+    btn.classList.add('active'); updateMapLegend();
+    _vecRefresh(name);
+    return;
+  }
+
+  // ── Light layers — load the whole (small) file once ──
   if (_vecLayer[name]) {
     _map.removeLayer(_vecLayer[name]); _vecLayer[name] = null;
-    btn.classList.remove('active');
-    updateMapLegend();
+    btn.classList.remove('active'); updateMapLegend();
     return;
   }
   if (!_vecData[name]) {
     btn.classList.add('loading');
     try {
-      const r = await fetch(_vecCfg[name].file);
+      const r = await fetch(cfg.file);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       _vecData[name] = await r.json();
     } catch (e) {

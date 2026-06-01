@@ -491,6 +491,65 @@ def api_lots():
     return jsonify(fc)
 
 
+# Heavy value-context layers (zones/roads/rivers/waterbody/parks) indexed into
+# data/veclayers.db + data/<name>.idx by data/build_veclayer_index.py. Same
+# bbox-fetch pattern as easements/lots so the map only transfers what's in view.
+_VECLAYERS_DB = os.path.join(os.path.dirname(__file__), "..", "data", "veclayers.db")
+_VEC_BBOX_LAYERS = {"zones", "roads", "rivers", "waterbody", "parks"}
+
+
+def _veclayer_bbox_query(layer, w, s, e, n, cap=12000):
+    if layer not in _VEC_BBOX_LAYERS or not os.path.exists(_VECLAYERS_DB):
+        return None
+    idx = _rtree_for(layer)
+    if idx is None:
+        return None
+    ids = list(idx.intersection((w, s, e, n)))
+    if not ids:
+        return {"type": "FeatureCollection", "features": []}
+    if len(ids) > cap:
+        ids = ids[:cap]
+    feats = []
+    uri = f"file:{os.path.abspath(_VECLAYERS_DB)}?mode=ro"
+    con = sqlite3.connect(uri, uri=True, timeout=10)
+    try:
+        cur = con.cursor()
+        for cs in range(0, len(ids), 900):
+            chunk = ids[cs:cs + 900]
+            ph = ",".join("?" * len(chunk))
+            for props, geom in cur.execute(
+                    f"SELECT props, geom FROM {layer} WHERE id IN ({ph})", chunk):
+                try:
+                    feats.append({"type": "Feature",
+                                  "geometry": json.loads(geom),
+                                  "properties": json.loads(props)})
+                except Exception:
+                    continue
+    finally:
+        con.close()
+    return {"type": "FeatureCollection", "features": feats}
+
+
+@app.route("/api/veclayer/<name>")
+def api_veclayer(name):
+    if name not in _VEC_BBOX_LAYERS:
+        return jsonify({"error": "unknown layer"}), 404
+    try:
+        w = float(request.args.get("w")); s = float(request.args.get("s"))
+        e = float(request.args.get("e")); n = float(request.args.get("n"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "w,s,e,n required"}), 400
+    if not (w < e and s < n):
+        return jsonify({"error": "invalid bbox"}), 400
+    if (e - w) > 0.4 or (n - s) > 0.4:
+        return jsonify({"type": "FeatureCollection", "features": [],
+                        "warning": "bbox too large — zoom in"}), 200
+    fc = _veclayer_bbox_query(name, w, s, e, n)
+    if fc is None:
+        return jsonify({"error": "veclayers.db missing. Run data/build_veclayer_index.py."}), 503
+    return jsonify(fc)
+
+
 # ── API: fetch reference-property specs from a Domain URL ─────────────
 
 @app.route("/api/listing-info")

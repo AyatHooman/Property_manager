@@ -64,3 +64,7 @@ data/for_sale.db
 
 # Per-coordinate value-factor cache (rebuilt on demand by value_factors.py).
 data/factors.db
+
+# Heavy vec-layer spatial index (zones/roads/rivers/waterbody/parks).
+# Rebuild with data/build_veclayer_index.py.
+data/veclayers.db

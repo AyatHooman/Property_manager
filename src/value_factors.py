@@ -28,7 +28,7 @@ _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 # Bump whenever the factor RULES change (thresholds, new factors, …). Cached
 # results (factors.db) and the for_sale.db risk_count carry this version, so a
 # bump auto-invalidates both and they recompute on next read.
-FACTOR_VERSION = 5
+FACTOR_VERSION = 6
 
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
@@ -192,6 +192,35 @@ def _nearest_amenity_by_cat(P, cats=("hospital", "supermarket", "shopping",
         if want.issubset(best.keys()):
             break
     return best
+
+
+_RESERVE_ZONE_PREFIXES = ("PPRZ", "PCRZ", "PUZ")   # public park / conservation / use
+
+
+def _nearest_public_reserve(P):
+    """Nearest Vicmap public open-space zone (PPRZ/PCRZ/PUZ) → (dist_m, props).
+    Catches council reserves that OSM hasn't mapped as parks."""
+    layer = _load("zones", "zones")
+    if not layer or not layer["tree"]:
+        return None
+    tree = layer["tree"]
+    for r in (0.0009, 0.0027, 0.0072):   # ~100 / 300 / 800 m rings
+        try:
+            cand = tree.query(P.buffer(r))
+        except Exception:
+            cand = []
+        best = None
+        for g in cand:
+            pr = layer["props"].get(id(g)) or {}
+            zc = (pr.get("zone_code") or "").upper()
+            if not any(zc.startswith(px) for px in _RESERVE_ZONE_PREFIXES):
+                continue
+            d = P.distance(g) * _DEG_M
+            if best is None or d < best[0]:
+                best = (d, pr)
+        if best:
+            return best
+    return None
 
 
 def _inside(name, basename, P):
@@ -497,16 +526,21 @@ def compute_factors(lat, lng, use_cache=True):
             if dist < thresh:
                 risks.append({"label": f"Near {NLAB.get(cat, cat)}", "detail": f"{pr.get('name') or NLAB.get(cat, cat)} · ~{dist:.0f} m"})
 
-        # 7. Park / reserve — distance is now to the park BOUNDARY (polygons),
-        #    so "faces / adjacent" is accurate. Facing a reserve can reduce
-        #    value (privacy, anti-social use, parking, after-dark activity).
-        res = _nearest_m("parks", "osm_parks", P)
-        if res:
-            dist, pr = res
-            if dist < 45:
-                risks.append({"label": "Faces / adjacent to park or reserve", "detail": f"{pr.get('name') or 'reserve'} · ~{dist:.0f} m"})
+        # 7. Park / reserve — uses TWO sources for the boundary distance: the
+        #    OSM parks polygons AND the Vicmap public open-space planning zones
+        #    (PPRZ/PCRZ/PUZ), which catch council reserves missing from OSM.
+        #    Distance is to the boundary; the geocode sits at the house (not the
+        #    lot edge), so "adjacent" allows for a typical lot depth.
+        pk = _nearest_m("parks", "osm_parks", P)
+        rz = _nearest_public_reserve(P)
+        cand = [x for x in (pk, rz) if x]
+        if cand:
+            dist, pr = min(cand, key=lambda x: x[0])
+            name = pr.get("name") or pr.get("desc") or "reserve"
+            if dist < 75:
+                risks.append({"label": "Faces / adjacent to park or reserve", "detail": f"{name} · ~{dist:.0f} m"})
             elif dist < 700:
-                positives.append({"label": "Walk to park", "detail": f"{pr.get('name') or 'park'} · ~{dist:.0f} m"})
+                positives.append({"label": "Walk to park", "detail": f"{name} · ~{dist:.0f} m"})
 
         # 8. Rivers / creeks
         res = _nearest_m("rivers", "rivers", P)

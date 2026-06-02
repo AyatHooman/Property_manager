@@ -28,7 +28,7 @@ _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 # Bump whenever the factor RULES change (thresholds, new factors, …). Cached
 # results (factors.db) and the for_sale.db risk_count carry this version, so a
 # bump auto-invalidates both and they recompute on next read.
-FACTOR_VERSION = 7
+FACTOR_VERSION = 8
 
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
@@ -476,12 +476,13 @@ def compute_factors(lat, lng, use_cache=True):
             dist, pr = nr
             cls = pr.get("class"); nm = pr.get("name") or "major road"
             # DEECA Vicmap road class_code: 0=freeway, 1=highway, 2=arterial,
-            # 3=sub-arterial. Two bands per class: within HIGH = high risk
-            # (close, loud); HIGH..MEDIUM = medium risk (audible but further).
+            # 3=sub-arterial. Two bands per class: within MEDIUM (the previous
+            # thresholds) = at least medium risk; within the closer HIGH
+            # threshold = high risk (very close, loud).
             clslabel = {0: "freeway", 1: "highway", 2: "arterial",
                         3: "sub-arterial"}.get(cls, "major road")
-            ROAD_HIGH = {0: 500, 1: 350, 2: 200, 3: 150}
-            ROAD_MED  = {0: 800, 1: 550, 2: 330, 3: 250}
+            ROAD_MED  = {0: 500, 1: 350, 2: 200, 3: 150}   # previous = medium boundary
+            ROAD_HIGH = {0: 250, 1: 175, 2: 100, 3: 75}    # closer = high
             hi = ROAD_HIGH.get(cls); md = ROAD_MED.get(cls)
             if dist < 40:
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})

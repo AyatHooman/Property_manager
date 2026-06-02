@@ -749,12 +749,14 @@ def api_for_sale_refresh():
     except Exception as ex:
         return jsonify({"error": f"scrape failed: {ex}"}), 502
     con = sds.init_db(_FORSALE_DB)
+    now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     try:
         ins, upd = sds.save_listings(con, listings)
-        # Hide anything not seen in this scrape (sold / under-offer / withdrawn)
-        # — but only if the scrape looks complete, so a partial failure can't
-        # wipe the map. Favourites are kept.
-        hidden = sds.hide_stale(con, scrape_start) if len(listings) >= 30 else 0
+        # Listings not seen this scrape went sold/under-offer/withdrawn. Two
+        # stages: just-disappeared → flag off-market + show once as "updated";
+        # already-off-market → remove. Guarded so a partial scrape can't wipe
+        # the map.
+        newly_off, hidden = sds.process_absent(con, scrape_start, now_iso) if len(listings) >= 30 else (0, 0)
         # Compute value-risk counts for every listing (cached per coordinate;
         # the scrape already took 30-90 s so this one-time pass is unnoticed).
         try:
@@ -769,7 +771,8 @@ def api_for_sale_refresh():
         "scraped":  len(listings),
         "inserted": ins,
         "updated":  upd,
-        "hidden":   hidden,
+        "off_market": newly_off,
+        "removed":  hidden,
         "total_in_db": len(items),
     }
     return jsonify(fc)

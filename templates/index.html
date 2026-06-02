@@ -810,12 +810,21 @@
     .pf-btn { background: #7f1d1d; color: #fecaca; border: 1px solid #b91c1c; }
     .pf-btn:hover { background: #991b1b; color: #fff; }
     .pf-btn.clean { background: #064e3b; color: #6ee7b7; border-color: #047857; }
+    .pf-btn.medium { background: #78350f; color: #fde68a; border-color: #b45309; }
+    .fs-popup .fs-offmarket {
+      display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; background: #4c1d95; color: #ddd6fe;
+      border: 1px solid #7c3aed;
+    }
+    .fs-popup .fs-adjval { font-size: 11px; color: #fbbf24; margin-top: 4px; }
+    .fs-popup .fs-adjval .fs-d { color: #9fb0c7; font-weight: 400; }
     .pf-panel { display: none; margin-top: 6px; }
     .pf-panel.open { display: block; }
     .pf-panel .pf-sec { margin-top: 5px; }
     .pf-panel .pf-sec-h { font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: .03em; margin-bottom: 2px; }
     .pf-panel .pf-sec-h.risk { color: #f87171; }
+    .pf-panel .pf-sec-h.med  { color: #fbbf24; }
     .pf-panel .pf-sec-h.pos  { color: #34d399; }
     .pf-panel .pf-sec-h.info { color: #93c5fd; }
     .pf-panel .pf-item { font-size: 11px; color: #e5e9f0; line-height: 1.35; padding: 1px 0; }
@@ -4886,12 +4895,15 @@ function editForSaleUrl() {
   }
 }
 
-// Marker colour by value-risk: red = has risks, green = no risks, grey =
-// risk_count not computed yet (will colour after the server fills it in).
-function _forSaleMarkerColors(rc) {
-  if (rc == null)  return { fill: '#94a3b8', ring: '#334155' };  // unknown
-  if (rc > 0)      return { fill: '#ef4444', ring: '#7f1d1d' };  // risky
-  return { fill: '#34d399', ring: '#064e3b' };                   // clean
+// Marker FILL by risk tier: red = high, amber = medium, green = none,
+// grey = not computed yet. (Halo rings below convey new/updated/favourite.)
+function _forSaleTierColors(tier) {
+  switch (tier) {
+    case 'high':   return { fill: '#ef4444', ring: '#7f1d1d' };
+    case 'medium': return { fill: '#f59e0b', ring: '#92400e' };
+    case 'none':   return { fill: '#22c55e', ring: '#064e3b' };
+    default:       return { fill: '#94a3b8', ring: '#334155' };  // unknown
+  }
 }
 let _forSaleFavOnly = false;   // "show favourites only" toggle
 let _forSaleNewOnly = false;   // "show new-this-refresh only" toggle
@@ -4930,14 +4942,16 @@ function _forSaleRender(fc) {
     const p = f.properties || {};
     const ll = L.latLng(f.geometry.coordinates[1], f.geometry.coordinates[0]);
     const fav = !!p.favourite;
-    const hl = p.is_new ? '#22d3ee' : (p.is_updated ? '#fb923c' : null);
+    // Halo ring: white = new this refresh, violet = updated/off-market this
+    // refresh. (Distinct from the green "no-risk" fill that confused before.)
+    const hl = p.is_new ? '#ffffff' : (p.is_updated ? '#c084fc' : null);
     if (hl) {
       L.circleMarker(ll, {
         radius: fav ? 13 : 11, fillOpacity: 0,
         color: hl, weight: 3, opacity: 0.95,
       }).addTo(grp);
     }
-    const c = _forSaleMarkerColors(p.risk_count);
+    const c = _forSaleTierColors(p.tier);
     const m = L.circleMarker(ll, {
       radius: fav ? 8 : 6,
       fillColor: c.fill,
@@ -4957,14 +4971,15 @@ function _forSaleRender(fc) {
 // ─── Shared "⚠ Risk factors" button used by for-sale + sold popups ──────────
 // Returns HTML for a collapsed button + empty panel. _wireFactors() attaches
 // the lazy fetch (on first expand) to /api/property-factors?lat=&lng=.
-function _factorsButtonHtml(riskCount) {
-  // If we already know the risk count (for-sale listings carry it), show it up
-  // front so the user sees the number before expanding.
-  let label = '⚠ Risk factors', cls = 'pf-btn';
-  if (riskCount != null) {
-    if (riskCount > 0) label = `⚠ ${riskCount} risk${riskCount > 1 ? 's' : ''}`;
-    else { label = '✓ No risks'; cls = 'pf-btn clean'; }
-  }
+function _pfLabel(riskCount, mediumCount) {
+  // → { label, cls } for the risk button, by tier.
+  if (riskCount == null) return { label: '⚠ Risk factors', cls: 'pf-btn' };
+  if (riskCount > 0) return { label: `⚠ ${riskCount} high risk${riskCount > 1 ? 's' : ''}`, cls: 'pf-btn' };
+  if (mediumCount > 0) return { label: `△ ${mediumCount} medium`, cls: 'pf-btn medium' };
+  return { label: '✓ No risks', cls: 'pf-btn clean' };
+}
+function _factorsButtonHtml(riskCount, mediumCount) {
+  const { label, cls } = _pfLabel(riskCount, mediumCount);
   return `<span class="${cls}" data-pf-btn>${label}</span>
           <div class="pf-panel" data-pf-panel></div>`;
 }
@@ -4977,7 +4992,8 @@ function _renderFactors(d) {
   const row = (it) => `<div class="pf-item"><b>${it.label}</b>` +
     (it.detail ? ` <span class="pf-d">${it.detail}</span>` : '') + `</div>`;
   let html = '';
-  html += sec('⚠ Value risks', 'risk', d.risks, row);
+  html += sec('⚠ High-risk', 'risk', d.risks, row);
+  html += sec('△ Medium-risk', 'med', d.medium, row);
   html += sec('✓ Positives', 'pos', d.positives, row);
   html += sec('ℹ Planning / context', 'info', d.info, row);
   if (!html) html = `<div class="pf-item">No notable factors found.</div>`;
@@ -5000,13 +5016,29 @@ function _wireFactors(root, lat, lng) {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       panel.innerHTML = _renderFactors(d);
-      // Recolour the button: green if clean, red with count if risks.
-      if (d.risk_count > 0) { btn.textContent = `⚠ ${d.risk_count} risk${d.risk_count>1?'s':''}`; btn.classList.remove('clean'); }
-      else { btn.textContent = '✓ No major risks'; btn.classList.add('clean'); }
+      const { label, cls } = _pfLabel(d.risk_count, d.medium_count);
+      btn.textContent = label;
+      btn.className = cls;   // data-pf-btn attribute is preserved (not a class)
     } catch (e) {
       panel.innerHTML = `<div class="pf-loading">Could not load factors (${e.message}).</div>`;
     }
   };
+}
+
+// Rough risk-adjusted indicative value: take the asking-range midpoint and
+// discount it for the listed risks — 2.5% per high-risk factor + 1% per
+// medium-risk factor, capped at 15%. Purely indicative (a quick heuristic),
+// shown so the risk factors translate into an approximate $ impact.
+function _riskAdjustedHtml(p) {
+  const lo = +p.price_low || 0, hi = +p.price_high || 0;
+  const mid = (lo && hi) ? (lo + hi) / 2 : (lo || hi);
+  if (!mid) return '';
+  const high = +p.risk_count || 0, med = +p.medium_count || 0;
+  const pct = Math.min(0.15, 0.025 * high + 0.01 * med);
+  if (pct <= 0) return '';
+  const adj = Math.round(mid * (1 - pct) / 1000) * 1000;
+  return `<div class="fs-adjval">≈ $${adj.toLocaleString()} risk-adjusted ` +
+         `<span class="fs-d">(−${(pct * 100).toFixed(0)}% for ${high} high${med ? ' + ' + med + ' med' : ''})</span></div>`;
 }
 
 function _forSaleBindPopup(feature, layer) {
@@ -5029,6 +5061,8 @@ function _forSaleBindPopup(feature, layer) {
       </div>` : ''}
       <div class="fs-addr">${p.address || ''}</div>
       <div class="fs-price">${p.price_text || ''}</div>
+      ${p.status === 'offmarket' ? `<div class="fs-offmarket">● Off market (sold / under offer)</div>` : ''}
+      ${_riskAdjustedHtml(p)}
       <div class="fs-stats">
         ${stat('🛏', p.beds)}${stat('🛁', p.baths)}${stat('🚗', p.carspaces)}
         ${stat('📐', p.land_m2 ? p.land_m2 + ' m²' : '')}
@@ -5039,7 +5073,7 @@ function _forSaleBindPopup(feature, layer) {
       </div>
       ${p.url ? `<a class="fs-link" href="${p.url}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
       <span class="fs-fav ${p.favourite ? 'on' : ''}" data-fs-fav title="Save to favourites">${p.favourite ? '★ Saved' : '☆ Save'}</span>
-      ${_factorsButtonHtml(p.risk_count)}
+      ${_factorsButtonHtml(p.risk_count, p.medium_count)}
     </div>`;
   layer.bindPopup(html, { maxWidth: 300, minWidth: 220 });
   const ll = layer.getLatLng ? layer.getLatLng() : null;

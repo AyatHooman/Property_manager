@@ -28,7 +28,7 @@ _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 # Bump whenever the factor RULES change (thresholds, new factors, …). Cached
 # results (factors.db) and the for_sale.db risk_count carry this version, so a
 # bump auto-invalidates both and they recompute on next read.
-FACTOR_VERSION = 6
+FACTOR_VERSION = 7
 
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
@@ -450,7 +450,7 @@ def compute_factors(lat, lng, use_cache=True):
 
     with _lock:
         P = _pt(lat, lng)
-        risks, positives, info = [], [], []
+        risks, medium, positives, info = [], [], [], []
 
         # 1. Overlays you sit inside
         for nm, (label, sev) in _POLY_OVERLAYS.items():
@@ -476,14 +476,19 @@ def compute_factors(lat, lng, use_cache=True):
             dist, pr = nr
             cls = pr.get("class"); nm = pr.get("name") or "major road"
             # DEECA Vicmap road class_code: 0=freeway, 1=highway, 2=arterial,
-            # 3=sub-arterial. Per-class noise radius:
+            # 3=sub-arterial. Two bands per class: within HIGH = high risk
+            # (close, loud); HIGH..MEDIUM = medium risk (audible but further).
             clslabel = {0: "freeway", 1: "highway", 2: "arterial",
                         3: "sub-arterial"}.get(cls, "major road")
-            ROAD_THRESH = {0: 500, 1: 350, 2: 200, 3: 150}
+            ROAD_HIGH = {0: 500, 1: 350, 2: 200, 3: 150}
+            ROAD_MED  = {0: 800, 1: 550, 2: 330, 3: 250}
+            hi = ROAD_HIGH.get(cls); md = ROAD_MED.get(cls)
             if dist < 40:
                 risks.append({"label": f"Fronts/abuts a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
-            elif cls in ROAD_THRESH and dist < ROAD_THRESH[cls]:
+            elif hi is not None and dist < hi:
                 risks.append({"label": f"Close to a {clslabel} (traffic/noise)", "detail": f"{nm} · ~{dist:.0f} m"})
+            elif md is not None and dist < md:
+                medium.append({"label": f"Moderately near a {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
             else:
                 info.append({"label": f"Nearest {clslabel}", "detail": f"{nm} · ~{dist:.0f} m"})
 
@@ -604,11 +609,14 @@ def compute_factors(lat, lng, use_cache=True):
                 info.append({"label": "Easement on/near title",
                              "detail": f"{ea.get('n_segments', 0)} segment(s) nearby"})
 
+    tier = "high" if risks else ("medium" if medium else "none")
     result = {
         "v": FACTOR_VERSION,
         "lat": lat, "lng": lng,
         "risk_count": len(risks),
-        "risks": risks, "positives": positives, "info": info,
+        "medium_count": len(medium),
+        "tier": tier,
+        "risks": risks, "medium": medium, "positives": positives, "info": info,
     }
     try:
         con = _factors_db()

@@ -62,6 +62,12 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
         con.execute("ALTER TABLE listings ADD COLUMN rc_version INTEGER")
     if "last_changed" not in cols:
         con.execute("ALTER TABLE listings ADD COLUMN last_changed TEXT")
+    if "medium_count" not in cols:
+        con.execute("ALTER TABLE listings ADD COLUMN medium_count INTEGER")
+    # status: 'active' (on market) or 'offmarket' (sold/under offer/withdrawn —
+    # shown one more scrape as an update, then removed on the following scrape).
+    if "status" not in cols:
+        con.execute("ALTER TABLE listings ADD COLUMN status TEXT NOT NULL DEFAULT 'active'")
     # Spatial filter goes through these
     con.execute("CREATE INDEX IF NOT EXISTS listings_geo  ON listings(lat, lng)")
     con.execute("CREATE INDEX IF NOT EXISTS listings_seen ON listings(last_seen)")
@@ -69,17 +75,30 @@ def init_db(db_path: str = DB_PATH) -> sqlite3.Connection:
     return con
 
 
-def hide_stale(con: sqlite3.Connection, scrape_start_iso: str) -> int:
-    """Mark listings not seen in the latest scrape as removed (hidden from the
-    map). Sold / under-offer / withdrawn listings drop out of Domain's sale
-    results, so anything whose last_seen predates this scrape is no longer on
-    the market. Favourites are kept so the user doesn't lose saved ones.
-    Returns how many were hidden."""
-    cur = con.execute(
-        "UPDATE listings SET removed=1 WHERE last_seen < ? AND favourite=0 AND removed=0",
+def process_absent(con: sqlite3.Connection, scrape_start_iso: str, now_iso: str):
+    """Two-stage handling of listings NOT seen in the latest scrape (they went
+    sold / under-offer / withdrawn — they drop out of Domain's sale results):
+
+      stage 1 (just disappeared, was 'active') → mark status='offmarket',
+        stamp last_changed=now so it shows ONE more scrape with the "updated"
+        highlight + an off-market note. Stays on the map (removed=0).
+      stage 2 (already 'offmarket' and still absent) → removed=1 (gone).
+
+    Favourites are always kept. Returns (newly_offmarket, removed)."""
+    # stage 2 first: anything already offmarket and still not seen → remove.
+    cur2 = con.execute(
+        "UPDATE listings SET removed=1 "
+        "WHERE last_seen < ? AND status='offmarket' AND favourite=0 AND removed=0",
         (scrape_start_iso,))
+    removed = cur2.rowcount
+    # stage 1: active listings that just disappeared → flag offmarket + update.
+    cur1 = con.execute(
+        "UPDATE listings SET status='offmarket', last_changed=? "
+        "WHERE last_seen < ? AND status='active' AND removed=0",
+        (now_iso, scrape_start_iso))
+    newly = cur1.rowcount
     con.commit()
-    return cur.rowcount
+    return newly, removed
 
 
 def set_favourite(con: sqlite3.Connection, listing_id: int, fav: bool) -> bool:
@@ -107,11 +126,12 @@ def fill_risk_counts(con: sqlite3.Connection, limit: int = 10000) -> int:
     n = 0
     for lid, lat, lng in rows:
         try:
-            rc = value_factors.compute_factors(lat, lng).get("risk_count", 0)
+            fc = value_factors.compute_factors(lat, lng)
+            rc = fc.get("risk_count", 0); mc = fc.get("medium_count", 0)
         except Exception:
             continue
-        con.execute("UPDATE listings SET risk_count=?, rc_version=? WHERE listing_id=?",
-                    (rc, ver, lid))
+        con.execute("UPDATE listings SET risk_count=?, medium_count=?, rc_version=? WHERE listing_id=?",
+                    (rc, mc, ver, lid))
         n += 1
     if n:
         con.commit()
@@ -158,13 +178,14 @@ def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tu
                     price_text=?, price_low=?, price_high=?,
                     beds=?, baths=?, carspaces=?, land_m2=?,
                     prop_type=?, sale_type=?, agency=?, url=?,
-                    image_urls=?, last_seen=?, removed=0, last_changed=?
+                    image_urls=?, last_seen=?, removed=0, last_changed=?,
+                    status='active'
                     WHERE listing_id=?""",
                     params[1:] + (now, lid))
             else:
-                # Seen again but unchanged — refresh last_seen only.
-                cur.execute("UPDATE listings SET last_seen=?, removed=0 WHERE listing_id=?",
-                            (now, lid))
+                # Seen again but unchanged — refresh last_seen, ensure on-market.
+                cur.execute("UPDATE listings SET last_seen=?, removed=0, status='active' "
+                            "WHERE listing_id=?", (now, lid))
             updated += 1
         else:
             cur.execute("""INSERT INTO listings (
@@ -192,7 +213,8 @@ def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
                price_text, price_low, price_high,
                beds, baths, carspaces, land_m2,
                prop_type, sale_type, agency, url, image_urls,
-               risk_count, favourite, first_seen, last_seen, last_changed
+               risk_count, medium_count, favourite, status,
+               first_seen, last_seen, last_changed
         FROM listings WHERE removed=0 AND lat IS NOT NULL AND lng IS NOT NULL
     """)
     cols = [d[0] for d in cur.description]
@@ -206,6 +228,11 @@ def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
         fs, lc = d.get("first_seen"), d.get("last_changed")
         d["is_new"] = 1 if (latest_ts and fs == latest_ts) else 0
         d["is_updated"] = 1 if (latest_ts and not d["is_new"] and lc == latest_ts) else 0
+        # risk tier for the marker fill colour
+        hi = d.get("risk_count"); md = d.get("medium_count")
+        d["tier"] = ("high" if (hi or 0) > 0 else
+                     "medium" if (md or 0) > 0 else
+                     ("none" if hi is not None else None))
         out.append(d)
     return out
 

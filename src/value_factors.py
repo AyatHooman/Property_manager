@@ -28,7 +28,7 @@ _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 # Bump whenever the factor RULES change (thresholds, new factors, …). Cached
 # results (factors.db) and the for_sale.db risk_count carry this version, so a
 # bump auto-invalidates both and they recompute on next read.
-FACTOR_VERSION = 8
+FACTOR_VERSION = 9
 
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
@@ -363,6 +363,14 @@ def _easement_analysis(lat, lng):
                 ease_m.append(em)
         except Exception:
             continue
+    # CRITICAL: only count easements that actually touch THIS lot. Easements on
+    # a neighbour's land or in the road reserve sit just outside the polygon and
+    # must not be attributed to this lot. buffer(1.5 m) tolerates the ~1 m
+    # coordinate rounding so on-boundary easements still register.
+    lot_skirt = lot_m.buffer(1.5)
+    ease_m = [em for em in ease_m if em.intersects(lot_skirt)]
+    res["present"] = len(ease_m) > 0
+    res["n_segments"] = len(ease_m)
     if not ease_m:
         return res
 

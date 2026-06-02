@@ -842,6 +842,35 @@ def api_nearby_sales():
             })
         return out
 
+    def _attach_factor_tiers(items):
+        """Fill risk_count / medium_count / tier for each sold comp from the
+        value-factor engine (cached per coordinate + version-aware, so cheap
+        and never stale). Lets the sold popup show the count up front and the
+        adjustment apply a risk discount."""
+        try:
+            from src import value_factors
+        except Exception:
+            return items
+        for it in items:
+            la, lo = it.get("lat"), it.get("lng")
+            if la is None or lo is None:
+                continue
+            try:
+                fc = value_factors.compute_factors(la, lo)
+                it["risk_count"] = fc.get("risk_count", 0)
+                it["medium_count"] = fc.get("medium_count", 0)
+                it["tier"] = fc.get("tier")
+            except Exception:
+                pass
+        return items
+
+    def _ref_factors():
+        try:
+            from src import value_factors
+            return value_factors.compute_factors(lat, lng)
+        except Exception:
+            return None
+
     def generate():
         yield f"data: {json.dumps({'status': 'searching', 'address': address_label, 'lat': lat, 'lng': lng})}\n\n"
 
@@ -852,7 +881,8 @@ def api_nearby_sales():
             print(f"[cache] HIT for {cache_key[:3]} (age {age_min}m, {len(hit['items'])} items)", flush=True)
             if hit.get('ref'):
                 yield f"data: {json.dumps({'status': 'ref_specs', 'ref': hit['ref']})}\n\n"
-            yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min})}\n\n"
+            _attach_factor_tiers(hit['items'])
+            yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min, 'ref_factors': _ref_factors()})}\n\n"
             return
         if force_refresh:
             print(f"[cache] FORCE refresh for {cache_key[:3]} -- bypassing cache", flush=True)
@@ -890,7 +920,8 @@ def api_nearby_sales():
             _sales_cache[cache_key] = {'ts': time.time(), 'ref': ref, 'items': items}
         _cache_save_one(cache_key, ref, items)
         print(f"[cache] STORE for {cache_key[:3]} ({len(items)} items) -> disk", flush=True)
-        yield f"data: {json.dumps({'status': 'done', 'results': items, 'ref_address': address_label, 'lat': lat, 'lng': lng})}\n\n"
+        _attach_factor_tiers(items)
+        yield f"data: {json.dumps({'status': 'done', 'results': items, 'ref_address': address_label, 'lat': lat, 'lng': lng, 'ref_factors': _ref_factors()})}\n\n"
 
     return Response(stream_with_context(generate()), mimetype="text/event-stream")
 

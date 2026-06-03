@@ -625,6 +625,54 @@
     @media (max-width: 640px) { #map { height: 60vh; min-height: 380px; } }
     .ref-map-marker { background: none; border: none; }
 
+    /* Map maximise toggle — implemented as a native Leaflet control so it
+       auto-stacks with the zoom buttons in the top-left corner, instead of
+       free-floating and overlapping the Streets/Satellite layer control on
+       phones. Square, white, same 30 px footprint as the zoom +/− buttons. */
+    .leaflet-bar a.map-max-link {
+      font: 18px/30px 'Segoe UI Symbol', sans-serif;
+      text-align: center; text-decoration: none;
+      color: #1a1d27; background: #fff;
+      width: 30px; height: 30px; display: block;
+    }
+    .leaflet-bar a.map-max-link:hover { background: #f4f4f4; }
+    body.map-maxed .map-wrap {
+      position: fixed !important;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw !important;
+      height: 100vh !important;       /* fallback */
+      height: 100dvh !important;      /* track the *visible* viewport, not the
+                                         larger one hidden behind browser chrome */
+      z-index: 9999;
+      margin: 0 !important; padding: 0 !important;
+      background: #1a1d27;
+    }
+    body.map-maxed #map {
+      width: 100vw !important;
+      height: 100vh !important; min-height: 100vh !important;
+      height: 100dvh !important; min-height: 100dvh !important;
+    }
+    /* When maximised the map fills the whole viewport, so any browser bottom bar
+       / home-indicator (we use viewport-fit=cover) would otherwise sit on top of
+       the bottom-pinned controls. Lift them clear by the safe-area inset so the
+       measure tool, Layers FAB, for-sale toolbar and attribution stay tappable. */
+    body.map-maxed .map-measure-wrap { bottom: calc(12px + env(safe-area-inset-bottom)); }
+    body.map-maxed .map-fs-toolbar   { bottom: calc(12px + env(safe-area-inset-bottom)); }
+    body.map-maxed .leaflet-bottom   { bottom: env(safe-area-inset-bottom); }
+    body.map-maxed .ai-fab           { bottom: calc(68px + env(safe-area-inset-bottom)); }
+    /* On phones, the Leaflet controls (zoom, our maximise, layer toggle) are
+       tiny taps. Bump the hit target to ~34 px so fingers can hit them. */
+    @media (max-width: 640px) {
+      .leaflet-bar a, .leaflet-bar a.map-max-link {
+        width: 34px; height: 34px; line-height: 34px; font-size: 20px;
+      }
+      .leaflet-control-layers-toggle {
+        width: 38px !important; height: 38px !important;
+        background-size: 22px 22px !important;
+      }
+      .layer-fab { font-size: 13px !important; padding: 8px 12px !important; }
+    }
+
     /* Dark-theme the Leaflet popups (default is white → our light text was
        unreadable). Applies to every map popup: sold, for-sale, factors,
        overlays. */
@@ -1795,6 +1843,127 @@
       }
       .scen-list { max-height: calc(70vh - 120px); }
     }
+
+    /* ── AI Chat (Copilot bridge via JSON queue) ─────────────────────── */
+    .ai-fab {
+      position: fixed; right: 14px; bottom: 68px; z-index: 10001;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: #fff; border: none; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(79,70,229,.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; transition: transform .15s ease;
+    }
+    .ai-fab:hover { transform: scale(1.05); }
+    .ai-fab__dot {
+      position: absolute; top: 6px; right: 6px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #f59e0b; border: 2px solid #fff; display: none;
+    }
+    .ai-fab__dot.on { display: block; }
+
+    .ai-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.35);
+      z-index: 10002; opacity: 0; pointer-events: none;
+      transition: opacity .2s ease;
+    }
+    .ai-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .ai-panel {
+      position: fixed; right: 14px; bottom: 68px; z-index: 10003;
+      width: 380px; max-width: calc(100vw - 28px);
+      height: 70vh; max-height: 640px;
+      background: var(--bg-1, #fff); color: var(--text-1, #111);
+      border-radius: 14px; border: 1px solid var(--border, #e5e7eb);
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      display: flex; flex-direction: column;
+      transform: translateY(20px) scale(.96); opacity: 0;
+      pointer-events: none;
+      transition: transform .2s ease, opacity .2s ease;
+    }
+    .ai-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+    .ai-panel__hdr {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-bottom: 1px solid var(--border, #e5e7eb);
+      background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff;
+      border-radius: 14px 14px 0 0;
+    }
+    .ai-panel__hdr h3 { margin: 0; font-size: 14px; font-weight: 600; flex: 1; }
+    .ai-panel__close {
+      background: rgba(255,255,255,.18); border: none; color: #fff;
+      width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+      font-size: 16px; line-height: 1;
+    }
+    .ai-panel__clear {
+      background: rgba(255,255,255,.18); border: none; color: #fff;
+      padding: 4px 8px; border-radius: 6px; cursor: pointer;
+      font-size: 11px;
+    }
+    .ai-msgs {
+      flex: 1; overflow-y: auto; padding: 12px;
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--bg-2, #f8fafc);
+    }
+    .ai-msgs:empty::before {
+      content: "Ask anything — request goes to Copilot Chat in VS Code.";
+      color: var(--text-3, #6b7280); font-size: 12px; text-align: center;
+      margin: auto; padding: 0 20px;
+    }
+    .ai-bubble {
+      max-width: 88%; padding: 8px 12px; border-radius: 12px;
+      font-size: 13px; line-height: 1.45; word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .ai-bubble--user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .ai-bubble--bot {
+      align-self: flex-start;
+      background: #ecfdf5; color: #065f46;
+      border: 1px solid #a7f3d0; border-bottom-left-radius: 4px;
+    }
+    .ai-bubble--pending {
+      align-self: flex-start;
+      background: #fff; color: var(--text-3, #6b7280);
+      border: 1px dashed #cbd5e1; font-style: italic;
+    }
+    .ai-bubble--bot code {
+      background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px;
+      font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+    }
+    .ai-bubble--bot pre {
+      background: #0f172a; color: #e2e8f0; padding: 8px 10px;
+      border-radius: 6px; overflow-x: auto; margin: 6px 0;
+      font-size: 11.5px;
+    }
+    .ai-bubble--bot pre code { background: none; padding: 0; color: inherit; }
+    .ai-compose {
+      display: flex; gap: 6px; padding: 8px;
+      border-top: 1px solid var(--border, #e5e7eb);
+    }
+    .ai-compose textarea {
+      flex: 1; resize: none; min-height: 36px; max-height: 100px;
+      padding: 7px 10px; border-radius: 8px;
+      border: 1px solid var(--border, #d1d5db);
+      font-size: 13px; font-family: inherit;
+    }
+    .ai-compose button {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: #fff; border: none; padding: 0 14px; border-radius: 8px;
+      cursor: pointer; font-weight: 600; font-size: 13px;
+    }
+    .ai-compose button:disabled { opacity: .5; cursor: not-allowed; }
+
+    @media (max-width: 640px) {
+      .ai-fab { width: 44px; height: 44px; right: 10px; bottom: 58px; font-size: 20px; }
+      .ai-panel {
+        right: 0; left: 0; bottom: 0; width: auto; max-width: none;
+        height: 80vh; max-height: none;
+        border-radius: 14px 14px 0 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1997,6 +2166,20 @@
             </select>
           </div>
         </div>
+        <div class="ref-field" id="ref-field-slope" style="display:none">
+          <div class="ref-field-icon">⛰</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label">Slope</label>
+            <div class="ref-field-input" id="ref-slope-display" style="border:none;background:transparent;padding:0">—</div>
+          </div>
+        </div>
+        <div class="ref-field" id="ref-field-risks" style="display:none">
+          <div class="ref-field-icon">⚠</div>
+          <div class="ref-field-body">
+            <label class="ref-field-label">Risks</label>
+            <div class="ref-field-input" id="ref-risks-display" style="border:none;background:transparent;padding:0;font-size:12px;line-height:1.3" title="Risk factors at the searched property. These offset the comp risk discount: only the NET difference (comp − ref) affects each adjusted price.">—</div>
+          </div>
+        </div>
       </div>
 
       <details class="adj-details">
@@ -2089,7 +2272,7 @@
        MAP — full width on mobile, right column on desktop
        ═══════════════════════════════════════════════════════════════════════ -->
   <div class="app__map">
-    <div id="map-card" class="card card--flush">
+    <div id="map-card" class="card card--flush map-wrap" style="position:relative">
       <!-- Hidden seed for the floating layer-toggle pills (moved into the map's
            Leaflet control on _initMap). Kept here so onclick handlers + IDs
            are valid when toggles are wired. -->
@@ -3289,21 +3472,56 @@ function showRefBanner(address, lat, lng) {
 }
 
 // Show the searched property's own risk tier as a badge next to the result
-// count, and let it open the same factors popup on the map.
+// count, and let it open the same factors popup on the map. Also populate
+// the inline display in the reference panel so the user sees ref risks next
+// to bed/bath/land while configuring adjustments.
 function _updateRefBannerRisk() {
   const el = document.getElementById('ref-risk-badge');
-  if (!el) return;
   const rf = window._refFactors;
-  if (!rf) { el.style.display = 'none'; return; }
+  const inlineWrap = document.getElementById('ref-field-risks');
+  const inline = document.getElementById('ref-risks-display');
+  if (!rf) {
+    if (el) el.style.display = 'none';
+    if (inlineWrap) inlineWrap.style.display = 'none';
+    return;
+  }
   const hi = rf.risk_count || 0, md = rf.medium_count || 0;
   let txt, cls;
   if (hi > 0)      { txt = `⚠ ${hi} high risk${hi > 1 ? 's' : ''}${md ? ' · ' + md + ' med' : ''}`; cls = 'ref-risk-badge high'; }
   else if (md > 0) { txt = `△ ${md} medium risk${md > 1 ? 's' : ''}`; cls = 'ref-risk-badge medium'; }
   else             { txt = '✓ no major risks'; cls = 'ref-risk-badge clean'; }
-  el.textContent = txt;
-  el.className = cls;
-  el.style.display = 'inline-flex';
-  el.title = 'Searched property — click its red pin on the map for the full breakdown';
+  if (el) {
+    el.textContent = txt;
+    el.className = cls;
+    el.style.display = 'inline-flex';
+    el.title = 'Searched property — click its red pin on the map for the full breakdown';
+  }
+  if (inlineWrap && inline) {
+    // Compact summary inside the ref panel so the user sees ref risks while
+    // tuning the CMA — the adjusted comp prices subtract these via computeAdjusted.
+    const topRisks = (rf.risks || []).slice(0, 2).map(r => r.label).join(', ');
+    const topMed   = (rf.medium || []).slice(0, 2).map(r => r.label).join(', ');
+    let detail = '';
+    if (hi > 0)      detail = `<span style="color:#fecaca">${txt}</span>${topRisks ? '<div class="sub-muted" style="font-size:11px">' + topRisks + (rf.risks.length > 2 ? ' +' + (rf.risks.length - 2) : '') + '</div>' : ''}`;
+    else if (md > 0) detail = `<span style="color:#fde68a">${txt}</span>${topMed ? '<div class="sub-muted" style="font-size:11px">' + topMed + (rf.medium.length > 2 ? ' +' + (rf.medium.length - 2) : '') + '</div>' : ''}`;
+    else             detail = `<span style="color:#6ee7b7">${txt}</span>`;
+    inline.innerHTML = detail;
+    inlineWrap.style.display = '';
+  }
+}
+
+// Display the auto-detected slope inline in the ref panel (the field itself
+// is hidden, just used as a CMA input).
+function _updateRefSlopeDisplay() {
+  const wrap = document.getElementById('ref-field-slope');
+  const out  = document.getElementById('ref-slope-display');
+  const inp  = document.getElementById('ref-slope');
+  if (!wrap || !out || !inp) return;
+  const v = parseFloat(inp.value);
+  if (isNaN(v)) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  const s = (typeof formatSlope === 'function') ? formatSlope(v) : (v.toFixed(1) + '%');
+  out.textContent = s;
 }
 
 // ── Render results ──────────────────────────────────────────────────────────────
@@ -3440,6 +3658,11 @@ function readAdjustmentRates() {
     riskHighPct: num('adj-risk-high', 2.5),   // % off per high-risk factor
     riskMedPct:  num('adj-risk-med', 1.0),    // % off per medium-risk factor
     riskCapPct:  num('adj-risk-cap', 15),     // max total risk discount %
+    // Reference-property risk counts — used to neutralise comp risks that the
+    // ref also has. E.g. if ref sits on a busy road too, a comp's busy-road
+    // discount cancels out and the comp's price isn't pulled down vs ref.
+    refRiskHigh: (window._refFactors ? (+window._refFactors.risk_count || 0) : 0),
+    refRiskMed:  (window._refFactors ? (+window._refFactors.medium_count || 0) : 0),
     iqrMult:    num('adj-iqr', 1.0),
   };
 }
@@ -3500,16 +3723,26 @@ function computeAdjusted(r, rates) {
     slopeNote = `Slope (skipped — comp slope loading…)`;
   }
 
-  // Risk discount: −riskHighPct per high-risk factor, −riskMedPct per medium,
-  // capped at riskCapPct. Applied to the time-adjusted price.
+  // Risk discount: capped per-factor % off, applied to the time-adjusted
+  // price. Uses the NET count (comp risks minus ref risks) so risks the ref
+  // also carries don't double-penalise the comp. A comp with FEWER risks than
+  // the ref gets a positive (price-up) adjustment — the ref is worth less
+  // because of risks the comp doesn't have.
   let dRisk = 0, riskNote = null;
   const rHigh = +r.risk_count || 0, rMed = +r.medium_count || 0;
-  if (rHigh || rMed) {
-    const pct = Math.min(rates.riskCapPct, rHigh * rates.riskHighPct + rMed * rates.riskMedPct);
+  const refHigh = +rates.refRiskHigh || 0, refMed = +rates.refRiskMed || 0;
+  const netHigh = rHigh - refHigh, netMed = rMed - refMed;
+  if (netHigh !== 0 || netMed !== 0) {
+    const rawPct = netHigh * rates.riskHighPct + netMed * rates.riskMedPct;
+    const cap = rates.riskCapPct;
+    const pct = Math.max(-cap, Math.min(cap, rawPct));
     dRisk = -(pct / 100) * timeAdj;
-    riskNote = `${rHigh} high${rMed ? ' + ' + rMed + ' med' : ''} · −${pct.toFixed(1)}%`;
+    const sign = pct >= 0 ? '−' : '+';
+    riskNote = `comp ${rHigh}H/${rMed}M vs ref ${refHigh}H/${refMed}M · ${sign}${Math.abs(pct).toFixed(1)}%`;
   } else if (r.risk_count == null) {
     riskNote = 'Risk  (computing…)';
+  } else if (rHigh || rMed) {
+    riskNote = `${rHigh}H/${rMed}M (matches ref, no net adj.)`;
   }
 
   const raw = timeAdj + dBed + dBath + dCar + dLand + dPool + dStorey + dSlope + dRisk;
@@ -3577,6 +3810,21 @@ function _initMap() {
     {},
     { position: 'topright', collapsed: true }
   ).addTo(_map);
+
+  // Fullscreen toggle — sits right under the zoom +/− buttons, same square
+  // 30 px footprint, so the top-left column reads as one tidy stack.
+  const MaxControl = L.Control.extend({
+    onAdd: function() {
+      const c = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      const a = L.DomUtil.create('a', 'map-max-link', c);
+      a.href = '#'; a.title = 'Maximise map'; a.innerHTML = '⛶';
+      a.setAttribute('role', 'button');
+      L.DomEvent.on(a, 'click', (ev) => { L.DomEvent.preventDefault(ev); toggleMapMax(); });
+      L.DomEvent.disableClickPropagation(c);
+      return c;
+    }
+  });
+  new MaxControl({ position: 'topleft' }).addTo(_map);
 
   const layerCtrl = L.control({ position: 'bottomleft' });
   layerCtrl.onAdd = function() {
@@ -4169,6 +4417,23 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
 }
 
 document.addEventListener('DOMContentLoaded', () => setTimeout(_initMap, 100));
+
+// Maximise / restore the map to fill the whole viewport (like Google Maps
+// fullscreen). Implemented as a Leaflet control (added in _initMap) so it
+// stacks neatly under the zoom buttons in the top-left, instead of overlapping
+// the Streets/Satellite layer control on phones. Toggles a body-level class
+// so the CSS pins .map-wrap to 100vw/100vh; Leaflet needs invalidateSize()
+// after the container resizes or tiles render in the wrong spot.
+function toggleMapMax() {
+  const body = document.body;
+  const isMax = body.classList.toggle('map-maxed');
+  document.querySelectorAll('.map-max-link').forEach(a => {
+    a.innerHTML = isMax ? '×' : '⛶';
+    a.title = isMax ? 'Restore map size' : 'Maximise map';
+  });
+  setTimeout(() => { if (_map) _map.invalidateSize(); }, 60);
+  setTimeout(() => { if (_map) _map.invalidateSize(); }, 250);
+}
 
 // DFFH Rental Report — median weekly rent by suburb
 let _rentLookup = null;
@@ -5098,20 +5363,30 @@ function _wireFactors(root, lat, lng) {
   };
 }
 
-// Rough risk-adjusted indicative value: take the asking-range midpoint and
-// discount it for the listed risks — 2.5% per high-risk factor + 1% per
-// medium-risk factor, capped at 15%. Purely indicative (a quick heuristic),
-// shown so the risk factors translate into an approximate $ impact.
+// Rough risk-adjusted indicative value: discount the asking RANGE for the
+// listed risks — uses the same per-factor rates as the sold-comps CMA
+// (adj-risk-high/med/cap), so this and the sold table speak the same language.
+// Shows the adjusted range when both ends exist, else a single point.
 function _riskAdjustedHtml(p) {
   const lo = +p.price_low || 0, hi = +p.price_high || 0;
-  const mid = (lo && hi) ? (lo + hi) / 2 : (lo || hi);
-  if (!mid) return '';
+  if (!lo && !hi) return '';
   const high = +p.risk_count || 0, med = +p.medium_count || 0;
-  const pct = Math.min(0.15, 0.025 * high + 0.01 * med);
+  // Read live rates if available; fall back to defaults if the ref panel
+  // hasn't been initialised yet (e.g. fresh page load, no search done).
+  const num = (id, def) => { const el = document.getElementById(id); if (!el) return def; const v = parseFloat(el.value); return isNaN(v) ? def : v; };
+  const hiPct = num('adj-risk-high', 2.5);
+  const medPct = num('adj-risk-med', 1.0);
+  const capPct = num('adj-risk-cap', 15);
+  const pct = Math.min(capPct, high * hiPct + med * medPct) / 100;
   if (pct <= 0) return '';
-  const adj = Math.round(mid * (1 - pct) / 1000) * 1000;
-  return `<div class="fs-adjval">≈ $${adj.toLocaleString()} risk-adjusted ` +
-         `<span class="fs-d">(−${(pct * 100).toFixed(0)}% for ${high} high${med ? ' + ' + med + ' med' : ''})</span></div>`;
+  const round1k = v => Math.round(v * (1 - pct) / 1000) * 1000;
+  const loAdj = lo ? round1k(lo) : 0;
+  const hiAdj = hi ? round1k(hi) : 0;
+  const rangeStr = (lo && hi)
+    ? `$${loAdj.toLocaleString()} – $${hiAdj.toLocaleString()}`
+    : `$${(loAdj || hiAdj).toLocaleString()}`;
+  return `<div class="fs-adjval">≈ ${rangeStr} risk-adjusted ` +
+         `<span class="fs-d">(−${(pct * 100).toFixed(1)}% for ${high} high${med ? ' + ' + med + ' med' : ''})</span></div>`;
 }
 
 function _forSaleBindPopup(feature, layer) {
@@ -6092,7 +6367,7 @@ function renderEstimate(sorted, rates) {
   });
 }
 
-['ref-beds','ref-baths','ref-cars','ref-land','ref-pool','ref-storeys','adj-growth','adj-bed','adj-bath','adj-car','adj-land','adj-pool','adj-storey','adj-iqr'].forEach(id => {
+['ref-beds','ref-baths','ref-cars','ref-land','ref-pool','ref-storeys','adj-growth','adj-bed','adj-bath','adj-car','adj-land','adj-pool','adj-storey','adj-slope','adj-iqr','adj-risk-high','adj-risk-med','adj-risk-cap'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', () => { if (allResults.length) renderResults(); });
 });
@@ -6206,7 +6481,7 @@ async function fetchRefExtras(address, lat, lng) {
       bldgEl.value = String(data.building_m2);
     }
     const slopeEl = document.getElementById('ref-slope');
-    if (slopeEl && data.slope_pct != null) slopeEl.value = String(data.slope_pct);
+    if (slopeEl && data.slope_pct != null) { slopeEl.value = String(data.slope_pct); _updateRefSlopeDisplay(); }
     const msg = document.getElementById('ref-fetch-msg');
     if (msg) {
       const extras = [
@@ -7699,6 +7974,144 @@ document.addEventListener('click', e => {
     closeScenPanel();
 });
 
+// ── AI Chat (Copilot bridge via JSON queue) ───────────────────────────
+const AI_LS_KEY = 'pm_ai_chat_v1';
+let _aiItems = [];
+let _aiPollTimer = null;
+
+function _aiLoad() {
+  try { _aiItems = JSON.parse(localStorage.getItem(AI_LS_KEY) || '[]'); }
+  catch { _aiItems = []; }
+}
+function _aiSave() {
+  try { localStorage.setItem(AI_LS_KEY, JSON.stringify(_aiItems.slice(-100))); } catch {}
+}
+function _aiEscape(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function _aiMarkdown(s) {
+  let h = _aiEscape(s);
+  h = h.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
+  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return h;
+}
+function _aiRender() {
+  const box = _$('ai-msgs'); if (!box) return;
+  box.innerHTML = '';
+  for (const it of _aiItems) {
+    const u = document.createElement('div');
+    u.className = 'ai-bubble ai-bubble--user';
+    u.textContent = it.text;
+    box.appendChild(u);
+    if (it.status === 'processed' && it.response) {
+      const b = document.createElement('div');
+      b.className = 'ai-bubble ai-bubble--bot';
+      b.innerHTML = _aiMarkdown(it.response);
+      box.appendChild(b);
+    } else if (it.status === 'pending') {
+      const p = document.createElement('div');
+      p.className = 'ai-bubble ai-bubble--pending';
+      p.textContent = 'Thinking… (Copilot Chat in VS Code is processing)';
+      box.appendChild(p);
+    }
+  }
+  box.scrollTop = box.scrollHeight;
+  const pending = _aiItems.some(x => x.status === 'pending');
+  const dot = document.querySelector('.ai-fab__dot');
+  if (dot) dot.classList.toggle('on', pending);
+}
+async function _aiSyncFromServer() {
+  try {
+    const r = await fetch('/api/ai-requests', { credentials: 'same-origin' });
+    if (!r.ok) return;
+    const remote = await r.json();
+    if (!Array.isArray(remote)) return;
+    const byId = new Map(remote.map(x => [x.id, x]));
+    let changed = false;
+    for (let i = 0; i < _aiItems.length; i++) {
+      const r2 = byId.get(_aiItems[i].id);
+      if (r2 && (r2.status !== _aiItems[i].status || r2.response !== _aiItems[i].response)) {
+        _aiItems[i] = { ..._aiItems[i], ...r2 };
+        changed = true;
+      }
+    }
+    if (changed) { _aiSave(); _aiRender(); }
+    const stillPending = _aiItems.some(x => x.status === 'pending');
+    if (!stillPending && _aiPollTimer) { clearInterval(_aiPollTimer); _aiPollTimer = null; }
+  } catch {}
+}
+function _aiStartPoll() {
+  if (_aiPollTimer) return;
+  _aiPollTimer = setInterval(_aiSyncFromServer, 4000);
+}
+async function sendAIRequest() {
+  const ta = _$('ai-input');
+  const text = (ta.value || '').trim();
+  if (!text) return;
+  const item = { id: `req-${Date.now()}`, text, status: 'pending', createdAt: Date.now() };
+  _aiItems.push(item);
+  _aiSave(); _aiRender();
+  ta.value = '';
+  try {
+    await fetch('/api/ai-requests/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(item),
+    });
+  } catch (e) { console.warn('ai send failed', e); }
+  _aiStartPoll();
+}
+function openAIChat() {
+  _$('ai-overlay').classList.add('open');
+  _$('ai-panel').classList.add('open');
+  setTimeout(() => _$('ai-input')?.focus(), 100);
+  _aiSyncFromServer();
+}
+function closeAIChat() {
+  _$('ai-overlay').classList.remove('open');
+  _$('ai-panel').classList.remove('open');
+}
+function clearAIChat() {
+  if (!confirm('Clear chat history?')) return;
+  _aiItems = []; _aiSave(); _aiRender();
+  fetch('/api/ai-requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: '[]',
+  }).catch(() => {});
+}
+(function _aiInit() {
+  _aiLoad(); _aiRender();
+  const ta = _$('ai-input');
+  if (ta) ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAIRequest(); }
+  });
+  if (_aiItems.some(x => x.status === 'pending')) _aiStartPoll();
+  _aiSyncFromServer();
+})();
+
 </script>
+<!-- ── AI Chat (Copilot bridge) ─────────────────────────────────────── -->
+<button class="ai-fab" onclick="openAIChat()" title="AI Chat (Copilot)">
+  <span>💬</span><span class="ai-fab__dot"></span>
+</button>
+<div class="ai-overlay" id="ai-overlay" onclick="closeAIChat()"></div>
+<div class="ai-panel" id="ai-panel" role="dialog" aria-label="AI Chat">
+  <div class="ai-panel__hdr">
+    <h3>AI Chat · Copilot</h3>
+    <button class="ai-panel__clear" onclick="clearAIChat()" title="Clear history">Clear</button>
+    <button class="ai-panel__close" onclick="closeAIChat()" aria-label="Close">×</button>
+  </div>
+  <div class="ai-msgs" id="ai-msgs"></div>
+  <div class="ai-compose">
+    <textarea id="ai-input" placeholder="Ask anything… (Enter to send, Shift+Enter for newline)" rows="1"></textarea>
+    <button onclick="sendAIRequest()">Send</button>
+  </div>
+</div>
 </body>
 </html>

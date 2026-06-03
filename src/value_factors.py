@@ -28,7 +28,7 @@ _SPATIAL_DB = os.path.join(_BASE, "data", "spatial.db")
 # Bump whenever the factor RULES change (thresholds, new factors, …). Cached
 # results (factors.db) and the for_sale.db risk_count carry this version, so a
 # bump auto-invalidates both and they recompute on next read.
-FACTOR_VERSION = 9
+FACTOR_VERSION = 11
 
 _MEAN_LAT = -37.9
 _KX = math.cos(math.radians(_MEAN_LAT))   # x-scale so degrees→~isotropic
@@ -365,9 +365,12 @@ def _easement_analysis(lat, lng):
             continue
     # CRITICAL: only count easements that actually touch THIS lot. Easements on
     # a neighbour's land or in the road reserve sit just outside the polygon and
-    # must not be attributed to this lot. buffer(1.5 m) tolerates the ~1 m
-    # coordinate rounding so on-boundary easements still register.
-    lot_skirt = lot_m.buffer(1.5)
+    # must not be attributed to this lot. We accept easements only if they
+    # genuinely intersect the lot interior OR sit within a tight 0.4 m skirt
+    # (just enough for coordinate rounding noise). A wider buffer (1.5 m)
+    # mis-attributed road-reserve easements to the lot — e.g. 4 Highland Ave
+    # Oakleigh East, where the easement runs outside the long boundary.
+    lot_skirt = lot_m.buffer(0.4)
     ease_m = [em for em in ease_m if em.intersects(lot_skirt)]
     res["present"] = len(ease_m) > 0
     res["n_segments"] = len(ease_m)
@@ -543,15 +546,19 @@ def compute_factors(lat, lng, use_cache=True):
         # 7. Park / reserve — uses TWO sources for the boundary distance: the
         #    OSM parks polygons AND the Vicmap public open-space planning zones
         #    (PPRZ/PCRZ/PUZ), which catch council reserves missing from OSM.
-        #    Distance is to the boundary; the geocode sits at the house (not the
-        #    lot edge), so "adjacent" allows for a typical lot depth.
+        #    Distance is from the geocoded HOUSE point to the reserve boundary,
+        #    not from the lot edge — so "truly adjacent" means the reserve sits
+        #    right at the back/side fence. A typical suburban lot is ~30 m deep
+        #    house-to-back-fence, so anything beyond ~35 m is across a road or
+        #    one lot away and shouldn't carry the adjacency risk (e.g.
+        #    10 Callaway Cres Mernda was being mis-flagged at ~60 m).
         pk = _nearest_m("parks", "osm_parks", P)
         rz = _nearest_public_reserve(P)
         cand = [x for x in (pk, rz) if x]
         if cand:
             dist, pr = min(cand, key=lambda x: x[0])
             name = pr.get("name") or pr.get("desc") or "reserve"
-            if dist < 75:
+            if dist < 35:
                 risks.append({"label": "Faces / adjacent to park or reserve", "detail": f"{name} · ~{dist:.0f} m"})
             elif dist < 700:
                 positives.append({"label": "Walk to park", "detail": f"{name} · ~{dist:.0f} m"})

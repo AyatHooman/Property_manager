@@ -6,9 +6,13 @@ import os
 import re
 import json
 import time
+import glob
+import shutil
 import hashlib
 import sqlite3
+import datetime
 import threading
+import subprocess
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from src import scraper
 
@@ -854,6 +858,11 @@ def api_nearby_sales():
         for it in items:
             la, lo = it.get("lat"), it.get("lng")
             if la is None or lo is None:
+                # Without coordinates we cannot compute factors — default to
+                # 0/0 so the popup button shows a definitive label rather than
+                # the indeterminate "⚠ Risk factors" placeholder.
+                it.setdefault("risk_count", 0)
+                it.setdefault("medium_count", 0)
                 continue
             try:
                 fc = value_factors.compute_factors(la, lo)
@@ -861,7 +870,8 @@ def api_nearby_sales():
                 it["medium_count"] = fc.get("medium_count", 0)
                 it["tier"] = fc.get("tier")
             except Exception:
-                pass
+                it.setdefault("risk_count", 0)
+                it.setdefault("medium_count", 0)
         return items
 
     def _ref_factors():
@@ -1012,6 +1022,195 @@ def scen_delete(name):
         conn.execute("DELETE FROM scenarios WHERE name=?", (name,))
         conn.commit()
     return jsonify({"ok": True})
+
+
+# ── AI Chat queue (processed server-side by the Claude Code CLI) ─────────────
+#
+# Mechanism: the front-end POSTs a new request to ai_requests_data.json with
+# status="pending". This server then runs the Claude Code CLI in headless print
+# mode (`claude -p`) against the repo, captures its reply, and writes
+# status="processed" + response back into the same file. The front-end polls
+# /api/ai-requests for the response.
+#
+# Auth: the CLI uses the same subscription login stored in ~/.claude — no API
+# key and no extra billing beyond the existing Claude subscription.
+#
+# NOTE: this replaces the old VS Code extension that pasted a prompt into
+# Copilot Chat. That extension must stay uninstalled/disabled, otherwise both
+# it and this server would answer the same request (double processing).
+
+_AI_REQ_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "main", "ai_requests_data.json")
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_ai_req_lock = threading.Lock()
+
+# How long to let a single request run, and what permission posture Claude uses.
+#   bypassPermissions = full autonomy: edits files AND runs terminal commands
+#       (restart server, install deps, etc.) with NO approval prompts. This is
+#       the default so the chat box is fully hands-off from the browser.
+#   acceptEdits = auto-accept file edits only; shell commands are denied.
+#   default     = prompt for everything (unusable headless — will just deny).
+# Override with the AI_CHAT_PERMISSION env var if you want a safer posture.
+# SECURITY: bypass means anything typed in the web chat box can run arbitrary
+# commands on this machine. Safe here because the server is localhost-only and
+# token-gated, but do not expose it more widely without reconsidering this.
+_AI_TIMEOUT_SEC = int(os.environ.get("AI_CHAT_TIMEOUT", "900"))
+_AI_PERMISSION = os.environ.get("AI_CHAT_PERMISSION", "bypassPermissions")
+_AI_MAX_HISTORY = 6
+
+_AI_SYSTEM_PROMPT = (
+    "You are the in-app AI assistant for the Property Manager web app (a Flask + "
+    "Leaflet property-analysis tool). Answer the user's request directly. If the "
+    "request asks for a code or UI change, implement it fully in this repository. "
+    "Format your reply as clean Markdown (use '- ' bullets, '## ' headings, "
+    "**bold**, and `code` / fenced code blocks where helpful) because the app "
+    "renders your reply as Markdown in a chat bubble."
+)
+
+
+def _resolve_claude_cli():
+    """Find the Claude Code CLI executable. Order: explicit env override, then a
+    `claude` on PATH, then the binary bundled inside the installed VS Code
+    extension (latest version by mtime)."""
+    override = os.environ.get("CLAUDE_CLI")
+    if override and os.path.exists(override):
+        return override
+    on_path = shutil.which("claude")
+    if on_path:
+        return on_path
+    home = os.path.expanduser("~")
+    pattern = os.path.join(
+        home, ".vscode", "extensions",
+        "anthropic.claude-code-*", "resources", "native-binary", "claude.exe",
+    )
+    matches = glob.glob(pattern)
+    if matches:
+        return max(matches, key=os.path.getmtime)
+    return None
+
+
+def _ai_req_read():
+    try:
+        with open(_AI_REQ_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _ai_req_write(arr):
+    os.makedirs(os.path.dirname(_AI_REQ_PATH), exist_ok=True)
+    tmp = _AI_REQ_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(arr, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, _AI_REQ_PATH)
+
+
+def _ai_history_prefix(arr, exclude_id):
+    """Build a short conversation-history preamble from recent processed items so
+    the assistant has context (mirrors the old extension's behaviour)."""
+    done = [i for i in arr
+            if i.get("status") == "processed" and i.get("response") and i.get("id") != exclude_id]
+    done = done[-_AI_MAX_HISTORY:]
+    if not done:
+        return ""
+    lines = []
+    for idx, it in enumerate(done, 1):
+        resp = (it.get("response") or "").replace("\n", " ")
+        if len(resp) > 300:
+            resp = resp[:300] + "..."
+        lines.append(f"[{idx}] User: {(it.get('text') or '').strip()}\n    Assistant: {resp}")
+    return ("CONVERSATION HISTORY (last %d exchanges — use for context):\n%s\n\n---\n\n"
+            % (len(done), "\n".join(lines)))
+
+
+def _ai_mark(item_id, **fields):
+    with _ai_req_lock:
+        arr = _ai_req_read()
+        for it in arr:
+            if it.get("id") == item_id:
+                it.update(fields)
+                break
+        _ai_req_write(arr)
+
+
+def _process_ai_request(item):
+    """Run the Claude Code CLI for one pending request and write the reply back."""
+    item_id = item.get("id")
+    exe = _resolve_claude_cli()
+    if not exe:
+        _ai_mark(item_id, status="processed", processor="error",
+                 model="error", processedAt=_iso_now(),
+                 response="**AI unavailable** — could not locate the Claude Code CLI. "
+                          "Set the `CLAUDE_CLI` environment variable to its full path.")
+        return
+
+    with _ai_req_lock:
+        arr = _ai_req_read()
+    prompt = _ai_history_prefix(arr, item_id) + (item.get("text") or "")
+
+    cmd = [
+        exe, "-p", prompt,
+        "--permission-mode", _AI_PERMISSION,
+        "--append-system-prompt", _AI_SYSTEM_PROMPT,
+    ]
+    try:
+        proc = subprocess.run(
+            cmd, cwd=_REPO_ROOT,
+            stdin=subprocess.DEVNULL,
+            capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+            timeout=_AI_TIMEOUT_SEC,
+        )
+        resp = (proc.stdout or "").strip()
+        if not resp:
+            err = (proc.stderr or "").strip()
+            resp = ("**No response from Claude Code.**\n\n```\n" + err + "\n```") if err \
+                else "**No response from Claude Code** (empty output)."
+    except subprocess.TimeoutExpired:
+        resp = f"**Timed out** after {_AI_TIMEOUT_SEC}s. Try a smaller request."
+    except Exception as ex:  # pragma: no cover - defensive
+        resp = f"**Error running Claude Code:** {ex}"
+
+    _ai_mark(item_id, status="processed", processor="claude-code-cli",
+             model="Claude Code (subscription)", processedAt=_iso_now(), response=resp)
+
+
+def _iso_now():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+@app.route("/api/ai-requests", methods=["GET"])
+def ai_requests_get():
+    with _ai_req_lock:
+        return jsonify(_ai_req_read())
+
+
+@app.route("/api/ai-requests", methods=["POST"])
+def ai_requests_put():
+    body = request.get_json(silent=True)
+    if not isinstance(body, list):
+        return jsonify({"error": "body must be a JSON array"}), 400
+    with _ai_req_lock:
+        _ai_req_write(body)
+    return jsonify({"ok": True, "count": len(body)})
+
+
+@app.route("/api/ai-requests/add", methods=["POST"])
+def ai_requests_add():
+    item = request.get_json(silent=True)
+    if not isinstance(item, dict) or not item.get("text"):
+        return jsonify({"error": "expected {text:...}"}), 400
+    now_ms = int(time.time() * 1000)
+    item.setdefault("id", f"req-{now_ms}")
+    item.setdefault("status", "pending")
+    item.setdefault("createdAt", now_ms)
+    with _ai_req_lock:
+        arr = _ai_req_read()
+        arr.append(item)
+        _ai_req_write(arr)
+    # Process server-side via the Claude Code CLI (no VS Code / Copilot involved).
+    threading.Thread(target=_process_ai_request, args=(item,), daemon=True).start()
+    return jsonify({"ok": True, "item": item})
 
 
 def _warm_factors():

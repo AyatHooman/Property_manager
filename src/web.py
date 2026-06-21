@@ -13,8 +13,32 @@ import sqlite3
 import datetime
 import threading
 import subprocess
+import urllib.request
+import urllib.error
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from src import scraper
+
+
+def _load_dotenv():
+    """Load KEY=VALUE pairs from the gitignored .env into os.environ so API keys
+    and tokens (AUTH_TOKEN, ORS_API_KEY, GROQ_API_KEY, Domain creds) stay out of
+    git. Does not override values already present in the real environment."""
+    path = os.path.join(os.path.dirname(__file__), "..", ".env")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for raw in f:
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key, val = key.strip(), val.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = val
+    except FileNotFoundError:
+        pass
+
+
+_load_dotenv()
 
 # Cache for /api/nearby-sales results. Repeat searches return instantly instead
 # of re-scraping Domain (50–85s fresh because of anti-bot delays). Persists to
@@ -93,6 +117,13 @@ app = Flask(
     template_folder=os.path.join(os.path.dirname(__file__), "..", "templates"),
     static_folder=os.path.join(os.path.dirname(__file__), "..", "static"),
 )
+
+# Re-read templates from disk when they change, even though we run with
+# debug=False. Without this, Jinja caches the compiled template in memory at
+# startup, so edits to index.html (e.g. new chat buttons) only appear after a
+# full server restart.
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.jinja_env.auto_reload = True
 
 
 @app.after_request
@@ -255,6 +286,59 @@ def api_property_factors():
         return jsonify(value_factors.compute_factors(lat, lng))
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
+
+
+# ── Routing: nearest train station + walk/bike/drive/transit directions ───────
+# Street routing uses OpenRouteService (set ORS_API_KEY) with a keyless OSRM
+# driving fallback; public transport needs an OpenTripPlanner server (OTP_URL).
+# See src/routing.py for setup.
+def _parse_ll(s):
+    a, b = (s or "").split(",")
+    return (float(a), float(b))
+
+
+@app.route("/api/nearest-station")
+def api_nearest_station():
+    try:
+        lat = float(request.args.get("lat"))
+        lng = float(request.args.get("lng"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "lat,lng required"}), 400
+    from src import routing
+    return jsonify(routing.nearest_station(lat, lng) or {"error": "no_station"})
+
+
+@app.route("/api/station-trip")
+def api_station_trip():
+    """Nearest train station + walk/drive/bike durations — used by property popups."""
+    try:
+        lat = float(request.args.get("lat"))
+        lng = float(request.args.get("lng"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "lat,lng required"}), 400
+    from src import routing
+    try:
+        return jsonify(routing.station_trip(lat, lng))
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
+@app.route("/api/route")
+def api_route():
+    """Directions between two points. from/to as 'lat,lng'; mode walk|bike|drive|transit."""
+    try:
+        frm = _parse_ll(request.args.get("from"))
+        to = _parse_ll(request.args.get("to"))
+    except Exception:
+        return jsonify({"error": "from,to required as lat,lng"}), 400
+    mode = (request.args.get("mode") or "walk").lower()
+    if mode not in ("walk", "bike", "drive", "transit"):
+        return jsonify({"error": "bad mode"}), 400
+    from src import routing
+    try:
+        return jsonify(routing.route(frm, to, mode))
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 502
 
 
 # Per-parcel rich detail (lot number, plan, LGA) fetched on click from the
@@ -685,6 +769,59 @@ def api_similar_listings():
 
 _FORSALE_DB = os.path.join(os.path.dirname(__file__), "..", "data", "for_sale.db")
 
+# ── Unified per-property store ───────────────────────────────────────────────
+# One row per physical house. The same address coming through the "for sale"
+# scrape and through the "sold" scrape is merged into a single record (the sold
+# block fills in, on_market clears) instead of being stored twice.
+_PROPERTIES_DB = os.path.join(os.path.dirname(__file__), "..", "data", "properties.db")
+
+
+def _ps_con():
+    from src import property_store as ps
+    return ps.init_db(_PROPERTIES_DB)
+
+
+def _ps_record_for_sale(listings):
+    from src import property_store as ps
+    con = _ps_con()
+    try:
+        ins, upd = ps.record_for_sale(con, listings)
+        print(f"[propstore] for-sale: +{ins} new, {upd} merged", flush=True)
+    finally:
+        con.close()
+
+
+def _ps_record_sold(items):
+    from src import property_store as ps
+    con = _ps_con()
+    try:
+        ins, upd = ps.record_sold(con, items)
+        print(f"[propstore] sold: +{ins} new, {upd} merged", flush=True)
+    finally:
+        con.close()
+
+
+@app.route("/api/property", methods=["GET"])
+def api_property():
+    """Return the single unified record for one address — combines the
+    for-sale and sold history of that physical house. Used by the map popup to
+    show e.g. 'on market now, sold $X in 2021'."""
+    from src import property_store as ps
+    address = (request.args.get("address") or "").strip()
+    if not address:
+        return jsonify({"error": "address required"}), 400
+    suburb = (request.args.get("suburb") or "").strip()
+    state = (request.args.get("state") or "").strip()
+    postcode = (request.args.get("postcode") or "").strip()
+    con = _ps_con()
+    try:
+        rec = ps.get(con, address, suburb, state, postcode)
+    finally:
+        con.close()
+    if not rec:
+        return jsonify({"found": False}), 404
+    return jsonify({"found": True, "property": rec})
+
 
 def _forsale_to_geojson(items):
     feats = []
@@ -712,7 +849,7 @@ def api_for_sale_load():
             sds.fill_risk_counts(con, limit=60)
         except Exception:
             pass
-        items = sds.load_listings(con)
+        items = sds.load_listings(con, include_removed=True)  # show all (sold/withdrawn too)
     finally:
         con.close()
     return jsonify(_forsale_to_geojson(items))
@@ -754,6 +891,12 @@ def api_for_sale_refresh():
         return jsonify({"error": f"scrape failed: {ex}"}), 502
     con = sds.init_db(_FORSALE_DB)
     now_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    # Mirror into the unified per-property store (one row per physical house,
+    # merged with any sold record for the same address). Non-fatal.
+    try:
+        _ps_record_for_sale(listings)
+    except Exception as e:
+        print(f"[propstore] for-sale ingest failed: {e}", flush=True)
     try:
         ins, upd = sds.save_listings(con, listings)
         # Listings not seen this scrape went sold/under-offer/withdrawn. Two
@@ -767,7 +910,7 @@ def api_for_sale_refresh():
             sds.fill_risk_counts(con)
         except Exception:
             pass
-        items = sds.load_listings(con)
+        items = sds.load_listings(con, include_removed=True)  # show all (sold/withdrawn too)
     finally:
         con.close()
     fc = _forsale_to_geojson(items)
@@ -891,6 +1034,10 @@ def api_nearby_sales():
             print(f"[cache] HIT for {cache_key[:3]} (age {age_min}m, {len(hit['items'])} items)", flush=True)
             if hit.get('ref'):
                 yield f"data: {json.dumps({'status': 'ref_specs', 'ref': hit['ref']})}\n\n"
+            try:
+                _ps_record_sold(hit['items'])
+            except Exception as e:
+                print(f"[propstore] sold ingest (cache hit) failed: {e}", flush=True)
             _attach_factor_tiers(hit['items'])
             yield f"data: {json.dumps({'status': 'done', 'results': hit['items'], 'ref_address': address_label, 'lat': lat, 'lng': lng, 'cached': True, 'cache_age_min': age_min, 'ref_factors': _ref_factors()})}\n\n"
             return
@@ -929,6 +1076,10 @@ def api_nearby_sales():
         with _cache_lock:
             _sales_cache[cache_key] = {'ts': time.time(), 'ref': ref, 'items': items}
         _cache_save_one(cache_key, ref, items)
+        try:
+            _ps_record_sold(items)
+        except Exception as e:
+            print(f"[propstore] sold ingest failed: {e}", flush=True)
         print(f"[cache] STORE for {cache_key[:3]} ({len(items)} items) -> disk", flush=True)
         _attach_factor_tiers(items)
         yield f"data: {json.dumps({'status': 'done', 'results': items, 'ref_address': address_label, 'lat': lat, 'lng': lng, 'ref_factors': _ref_factors()})}\n\n"
@@ -1055,15 +1206,31 @@ _ai_req_lock = threading.Lock()
 # token-gated, but do not expose it more widely without reconsidering this.
 _AI_TIMEOUT_SEC = int(os.environ.get("AI_CHAT_TIMEOUT", "900"))
 _AI_PERMISSION = os.environ.get("AI_CHAT_PERMISSION", "bypassPermissions")
+# Thinking-token budget for the AI chat. >0 turns on extended thinking so the CLI
+# streams `thinking` blocks that feed the collapsible "💭 Thinking" panel.
+_AI_THINKING_TOKENS = int(os.environ.get("AI_CHAT_THINKING_TOKENS", "10000"))
 _AI_MAX_HISTORY = 6
 
 _AI_SYSTEM_PROMPT = (
-    "You are the in-app AI assistant for the Property Manager web app (a Flask + "
-    "Leaflet property-analysis tool). Answer the user's request directly. If the "
-    "request asks for a code or UI change, implement it fully in this repository. "
-    "Format your reply as clean Markdown (use '- ' bullets, '## ' headings, "
-    "**bold**, and `code` / fenced code blocks where helpful) because the app "
-    "renders your reply as Markdown in a chat bubble."
+    "You are the in-app AI assistant for the Property Manager web app, a Flask + "
+    "Leaflet property-analysis tool (the server is src/web.py, the single-page "
+    "front-end is templates/index.html). Answer the user's request directly. If it "
+    "asks for a code or UI change, implement it fully in this repository. If it is a "
+    "question (including about the app's data or behaviour), answer it using the code "
+    "and data in this repo. Reply in clean Markdown (use '- ' bullets, '## ' "
+    "headings, **bold**, and `code` / fenced code blocks) because the app renders the "
+    "reply as Markdown in a chat bubble. If you change src/web.py or other files the "
+    "Flask server loads at startup, do NOT restart or kill the server yourself (that "
+    "would drop this reply before it is saved) — instead end your reply by telling "
+    "the user to restart it. "
+    "As you work, narrate your progress: before each step write one short sentence "
+    "saying what you're about to check or change and why (e.g. \"Let me read "
+    "index.html to find the input box…\", \"Now I'll update the send handler…\"). "
+    "These running notes are streamed live to the user as a 'thinking' trail so they "
+    "can follow along, so keep them frequent, plain-language, and brief — they are "
+    "separate from your final Markdown answer. Always write both your progress "
+    "narration and your final answer in English, even when the user writes in "
+    "Persian or another language — never put non-English text in the thinking trail."
 )
 
 
@@ -1105,6 +1272,31 @@ def _ai_req_write(arr):
     os.replace(tmp, _AI_REQ_PATH)
 
 
+def _ai_sweep_stale(arr):
+    """Resolve orphaned 'pending' items so the chat never shows a 'processing'
+    bubble that spins forever. A request is processed by a background thread with
+    a hard timeout of _AI_TIMEOUT_SEC; if it is still 'pending' well past that, the
+    thread is dead (server restarted mid-flight, crash, etc.) and will never write
+    a reply. Mark those as processed with a short notice. Returns True if anything
+    changed."""
+    cutoff_ms = (time.time() - (_AI_TIMEOUT_SEC + 60)) * 1000
+    changed = False
+    for it in arr:
+        if it.get("status") != "pending":
+            continue
+        created = it.get("createdAt")
+        # Items with no/garbage timestamp are also treated as stale.
+        if not isinstance(created, (int, float)) or created <= cutoff_ms:
+            it["status"] = "processed"
+            it["processor"] = "error"
+            it["model"] = "error"
+            it["processedAt"] = _iso_now()
+            it["response"] = ("**Request didn't finish** — the server was likely "
+                              "restarted while it was running. Please send it again.")
+            changed = True
+    return changed
+
+
 def _ai_history_prefix(arr, exclude_id):
     """Build a short conversation-history preamble from recent processed items so
     the assistant has context (mirrors the old extension's behaviour)."""
@@ -1121,6 +1313,84 @@ def _ai_history_prefix(arr, exclude_id):
         lines.append(f"[{idx}] User: {(it.get('text') or '').strip()}\n    Assistant: {resp}")
     return ("CONVERSATION HISTORY (last %d exchanges — use for context):\n%s\n\n---\n\n"
             % (len(done), "\n".join(lines)))
+
+
+def _tool_brief(name, inp):
+    """One-line, safe summary of a tool call's key argument for the verbose log."""
+    if not isinstance(inp, dict):
+        return ""
+    for k in ("command", "file_path", "path", "pattern", "url", "query", "prompt", "description"):
+        v = inp.get(k)
+        if isinstance(v, str) and v.strip():
+            v = v.strip().replace("\n", " ")
+            return "`" + (v[:120] + "…" if len(v) > 120 else v) + "`"
+    return ""
+
+
+def _tool_log(name, inp):
+    """Human-friendly one-liner describing a tool action (Task-Manager style)."""
+    inp = inp if isinstance(inp, dict) else {}
+    if name == "Bash":
+        return "Running: " + (inp.get("command") or "").replace("\n", " ").strip()[:100]
+    if name in ("Edit", "Write", "NotebookEdit"):
+        return "Editing " + (inp.get("file_path") or inp.get("path") or "a file")
+    if name == "Read":
+        return "Reading " + (inp.get("file_path") or inp.get("path") or "a file")
+    if name == "Grep":
+        return "Searching for: " + (inp.get("pattern") or "")
+    if name == "Glob":
+        return "Finding files: " + (inp.get("pattern") or "")
+    if name == "TodoWrite":
+        return "Updating its task list"
+    if name in ("Task", "Agent"):
+        return "Delegating a subtask"
+    if name in ("WebFetch", "WebSearch"):
+        return name + " " + (inp.get("url") or inp.get("query") or "")
+    return "Using " + (name or "tool")
+
+
+def _log_ts():
+    """Timestamp like Task-Manager's log: '07:16:20 pm'."""
+    return datetime.datetime.now().strftime("%I:%M:%S %p").lower()
+
+
+def _parse_claude_stream(stdout):
+    """Parse `claude -p --output-format stream-json --verbose` (newline-delimited
+    JSON). Returns (final_response, verbose_trace). verbose_trace is a Markdown
+    log of the assistant's thinking and the tool actions it took, in order — this
+    is the "verbose / thinking mode" shown collapsibly in the chat."""
+    final = ""
+    text_parts = []
+    trace = []
+    for line in (stdout or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        t = obj.get("type")
+        if t == "assistant":
+            msg = obj.get("message") or {}
+            for blk in (msg.get("content") or []):
+                bt = blk.get("type")
+                if bt == "text":
+                    text_parts.append(blk.get("text") or "")
+                elif bt == "thinking":
+                    th = (blk.get("thinking") or "").strip()
+                    if th:
+                        trace.append("💭 " + th)
+                elif bt == "tool_use":
+                    trace.append("🔧 **%s** %s"
+                                 % (blk.get("name") or "tool", _tool_brief(blk.get("name"), blk.get("input"))))
+        elif t == "result":
+            final = (obj.get("result") or "").strip()
+    resp = final or "\n".join(p for p in text_parts if p).strip()
+    verbose = "\n\n".join(trace).strip()
+    if len(verbose) > 12000:           # keep the JSON store / localStorage sane
+        verbose = verbose[:12000] + "\n\n… (truncated)"
+    return resp, verbose
 
 
 def _ai_mark(item_id, **fields):
@@ -1148,31 +1418,130 @@ def _process_ai_request(item):
         arr = _ai_req_read()
     prompt = _ai_history_prefix(arr, item_id) + (item.get("text") or "")
 
+    # stream-json + verbose makes the CLI emit one JSON event per line, including
+    # the model's thinking blocks and every tool call — that is what powers the
+    # collapsible "verbose / thinking" view in the chat. We still capture the
+    # whole run at once (poll-based UI), then parse it below.
     cmd = [
         exe, "-p", prompt,
         "--permission-mode", _AI_PERMISSION,
         "--append-system-prompt", _AI_SYSTEM_PROMPT,
+        "--output-format", "stream-json", "--verbose",
     ]
+    # Extended thinking is OFF by default in headless `claude -p`, so the stream
+    # carries no `thinking` blocks and the collapsible "💭 Thinking" panel stays
+    # empty. Giving the CLI a thinking-token budget turns it on, so the model
+    # streams its reasoning — that is what makes the verbose view actually verbose.
+    env = dict(os.environ)
+    env.setdefault("MAX_THINKING_TOKENS", str(_AI_THINKING_TOKENS))
+
+    # Stream events as they arrive (Popen + line-by-line) and keep a LIVE,
+    # timestamped activity log on the pending item — "[07:16:20 pm] 🔧 Running:
+    # git remote -v" — so the chat shows each step as it happens (Task-Manager
+    # style) instead of a static "Thinking…". A watchdog enforces the timeout
+    # even with no output; stderr is drained in a thread to avoid pipe locks.
+    logs = []           # timestamped activity lines (the live "Thinking:" trail)
+    text_parts = []     # assistant narration text blocks (fallback for the answer)
+
+    def _push(line):
+        logs.append("[%s] %s" % (_log_ts(), line))
+        if len(logs) > 60:
+            del logs[:-60]
+
+    def _vb():
+        v = "\n".join(logs)
+        return (v[:12000] + "\n… (truncated)") if len(v) > 12000 else v
+
+    verbose = ""
+    resp = ""
+    final = ""
+    stderr_chunks = []
+    timed_out = {"v": False}
+
+    _push("🚀 Sent to Claude…")
+    _ai_mark(item_id, verbose=_vb())   # immediate feedback before the CLI warms up
     try:
-        proc = subprocess.run(
-            cmd, cwd=_REPO_ROOT,
+        proc = subprocess.Popen(
+            cmd, cwd=_REPO_ROOT, env=env,
             stdin=subprocess.DEVNULL,
-            capture_output=True, text=True,
-            encoding="utf-8", errors="replace",
-            timeout=_AI_TIMEOUT_SEC,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, encoding="utf-8", errors="replace", bufsize=1,
         )
-        resp = (proc.stdout or "").strip()
-        if not resp:
-            err = (proc.stderr or "").strip()
-            resp = ("**No response from Claude Code.**\n\n```\n" + err + "\n```") if err \
-                else "**No response from Claude Code** (empty output)."
-    except subprocess.TimeoutExpired:
-        resp = f"**Timed out** after {_AI_TIMEOUT_SEC}s. Try a smaller request."
+
+        def _kill():
+            timed_out["v"] = True
+            try:
+                proc.kill()
+            except Exception:
+                pass
+        killer = threading.Timer(_AI_TIMEOUT_SEC, _kill)
+        killer.start()
+        drainer = threading.Thread(
+            target=lambda: stderr_chunks.extend(proc.stderr) if proc.stderr else None,
+            daemon=True)
+        drainer.start()
+
+        last_write = 0.0
+        try:
+            for line in proc.stdout:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except Exception:
+                    continue
+                t = obj.get("type")
+                changed = False
+                if t == "system" and obj.get("subtype") == "init":
+                    mdl = obj.get("model") or ""
+                    _push("🚀 Started" + (" (%s)" % mdl if mdl else "")); changed = True
+                elif t == "assistant":
+                    for blk in ((obj.get("message") or {}).get("content") or []):
+                        bt = blk.get("type")
+                        if bt == "text":
+                            text_parts.append(blk.get("text") or "")
+                            # Each running-narration text block ("Let me read…",
+                            # "Now I'll edit…") is streamed live as a 💭 line so the
+                            # user can follow along (Task-Manager style).
+                            txt = (blk.get("text") or "").strip()
+                            if txt:
+                                _push("💭 " + " ".join(txt.split())[:600]); changed = True
+                        elif bt == "thinking":
+                            th = (blk.get("thinking") or "").strip()
+                            if th:
+                                _push("🧠 " + th.replace("\n", " ")[:600]); changed = True
+                        elif bt == "tool_use":
+                            _push("🔧 " + _tool_log(blk.get("name"), blk.get("input"))); changed = True
+                elif t == "result":
+                    final = (obj.get("result") or "").strip()
+                # Live-publish the growing log (throttled) while still pending.
+                if changed and (time.time() - last_write) > 0.8:
+                    _ai_mark(item_id, verbose=_vb())
+                    last_write = time.time()
+        finally:
+            killer.cancel()
+            proc.wait()
+            drainer.join(timeout=2)
+
+        verbose = _vb()
+        if timed_out["v"]:
+            resp = f"**Timed out** after {_AI_TIMEOUT_SEC}s. Try a smaller request."
+        else:
+            # The final consolidated answer comes from the result event; the live
+            # 💭 / 🧠 / 🔧 narration above is the separate "thinking" trail.
+            resp = (final or "".join(text_parts)).strip()
+            if not resp:
+                err = "".join(stderr_chunks).strip()
+                resp = ("**No response from Claude Code.**\n\n```\n" + err + "\n```") if err \
+                    else "**No response from Claude Code** (empty output)."
     except Exception as ex:  # pragma: no cover - defensive
         resp = f"**Error running Claude Code:** {ex}"
+        verbose = _vb()
 
     _ai_mark(item_id, status="processed", processor="claude-code-cli",
-             model="Claude Code (subscription)", processedAt=_iso_now(), response=resp)
+             model="Claude Code (subscription)", processedAt=_iso_now(),
+             response=resp, verbose=verbose)
 
 
 def _iso_now():
@@ -1182,7 +1551,10 @@ def _iso_now():
 @app.route("/api/ai-requests", methods=["GET"])
 def ai_requests_get():
     with _ai_req_lock:
-        return jsonify(_ai_req_read())
+        arr = _ai_req_read()
+        if _ai_sweep_stale(arr):
+            _ai_req_write(arr)
+        return jsonify(arr)
 
 
 @app.route("/api/ai-requests", methods=["POST"])
@@ -1211,6 +1583,69 @@ def ai_requests_add():
     # Process server-side via the Claude Code CLI (no VS Code / Copilot involved).
     threading.Thread(target=_process_ai_request, args=(item,), daemon=True).start()
     return jsonify({"ok": True, "item": item})
+
+
+# ── Voice transcription (Groq-hosted Whisper) ────────────────────────────────
+# The chat mic records a WAV in the browser and POSTs it here; we relay it to
+# Groq's OpenAI-compatible Whisper endpoint (whisper-large-v3 — fast + accurate,
+# incl. Persian) and return the text. Key lives in .env as GROQ_API_KEY.
+_GROQ_WHISPER_MODEL = os.environ.get("GROQ_WHISPER_MODEL", "whisper-large-v3-turbo")
+
+
+def _groq_transcribe(audio_bytes, filename="audio.wav", content_type="audio/wav", language=""):
+    key = os.environ.get("GROQ_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError("GROQ_API_KEY not set")
+    boundary = "----PMVoice" + os.urandom(16).hex()
+    crlf = "\r\n"
+
+    def field(name, value):
+        return (("--%s%sContent-Disposition: form-data; name=\"%s\"%s%s%s%s"
+                 % (boundary, crlf, name, crlf, crlf, value, crlf)).encode("utf-8"))
+
+    body = ("--%s%sContent-Disposition: form-data; name=\"file\"; filename=\"%s\"%s"
+            "Content-Type: %s%s%s" % (boundary, crlf, filename, crlf, content_type, crlf, crlf)).encode("utf-8")
+    body += audio_bytes + crlf.encode("utf-8")
+    body += field("model", _GROQ_WHISPER_MODEL)
+    body += field("response_format", "json")
+    body += field("temperature", "0")
+    if language:
+        body += field("language", language)
+    body += ("--%s--%s" % (boundary, crlf)).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.groq.com/openai/v1/audio/transcriptions",
+        data=body, method="POST",
+        # A real User-Agent is required — Groq's Cloudflare edge returns 403
+        # (error 1010) for the default "Python-urllib" agent.
+        headers={"Authorization": "Bearer " + key,
+                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PropertyManager/1.0",
+                 "Accept": "application/json",
+                 "Content-Type": "multipart/form-data; boundary=" + boundary})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        data = json.loads(r.read().decode("utf-8"))
+    return (data.get("text") or "").strip()
+
+
+@app.route("/api/transcribe", methods=["POST"])
+def api_transcribe():
+    """Accept recorded audio (raw body or multipart 'file') and return its
+    transcript via Groq Whisper. Optional ?language=fa|en (else auto-detect)."""
+    language = (request.args.get("language") or "").strip()[:2].lower()
+    if request.files.get("file"):
+        f = request.files["file"]
+        audio, fname, ct = f.read(), (f.filename or "audio.wav"), (f.mimetype or "audio/wav")
+    else:
+        audio, fname, ct = request.get_data(), "audio.wav", (request.content_type or "audio/wav")
+    if not audio:
+        return jsonify({"error": "no audio received"}), 400
+    try:
+        return jsonify({"transcript": _groq_transcribe(audio, fname, ct, language)})
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:300]
+        return jsonify({"error": "Groq HTTP %d: %s" % (e.code, detail)}), 502
+    except Exception as e:  # pragma: no cover - defensive
+        return jsonify({"error": str(e)}), 502
 
 
 def _warm_factors():

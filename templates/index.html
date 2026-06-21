@@ -844,9 +844,9 @@
     /* Compact action chips: Domain link / Save / Risk — small, wrap, mobile-ok */
     .fs-popup .fs-actions, .fs-popup { }
     .fs-popup a.fs-link, .fs-popup .fs-fav, .pf-btn {
-      display: inline-block; margin-top: 6px; margin-right: 5px;
-      padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
-      line-height: 1.5; cursor: pointer; user-select: none; text-decoration: none;
+      display: inline-block; margin-top: 5px; margin-right: 4px;
+      padding: 2px 7px; border-radius: 4px; font-size: 9px; font-weight: 600;
+      line-height: 1.45; cursor: pointer; user-select: none; text-decoration: none;
       vertical-align: middle;
     }
     .fs-popup a.fs-link { background: #047857; color: #fff; }
@@ -860,8 +860,8 @@
     .pf-btn.clean { background: #064e3b; color: #6ee7b7; border-color: #047857; }
     .pf-btn.medium { background: #78350f; color: #fde68a; border-color: #b45309; }
     .fs-popup .fs-offmarket {
-      display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 4px;
-      font-size: 10px; font-weight: 700; background: #4c1d95; color: #ddd6fe;
+      display: inline-block; margin-top: 5px; padding: 2px 7px; border-radius: 4px;
+      font-size: 9px; font-weight: 700; background: #4c1d95; color: #ddd6fe;
       border: 1px solid #7c3aed;
     }
     .fs-popup .fs-adjval { font-size: 11px; color: #fbbf24; margin-top: 4px; }
@@ -886,6 +886,79 @@
     .pf-panel .pf-item b { color: #fff; font-weight: 600; }
     .pf-panel .pf-item .pf-d { color: #9fb0c7; font-size: 10px; }
     .pf-loading { font-size: 11px; color: #9fb0c7; font-style: italic; margin-top: 4px; }
+    /* Nearest-station: compact inline line — "🚉 To nearest station (X): 🚶 12m …"
+       The mode pills stay clickable to draw the route on the map. */
+    .st-line {
+      margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center;
+      gap: 4px; font-size: 10px; line-height: 1.5;
+    }
+    .st-line .st-lbl { color: #7dd3fc; font-weight: 600; }
+    .st-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; font-weight: 600; color: #e5e9f0; cursor: pointer;
+      padding: 1px 6px; border-radius: 999px; user-select: none;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--c, #475569); border-left: 3px solid var(--c, #475569);
+    }
+    .st-chip:hover { background: rgba(255,255,255,.12); }
+    .st-chip[data-err] { opacity: .45; cursor: default; }
+    .st-note { flex-basis: 100%; font-size: 9px; color: #9fb0c7; margin-top: 3px; line-height: 1.3; }
+    .st-loading { font-size: 10px; color: #9fb0c7; font-style: italic; margin-top: 6px; }
+    /* Two-point directions FAB — sits just above the measure FAB, same look */
+    .map-route-wrap {
+      position: absolute; bottom: 50px; right: 10px; z-index: 600;
+      display: flex; flex-direction: row-reverse; align-items: center;
+      gap: 4px; pointer-events: auto;
+    }
+    .map-route-fab {
+      width: 30px; height: 30px;
+      background: rgba(20,23,32,.92); border: 1px solid var(--border-strong);
+      border-radius: 6px; color: var(--text); font-size: 14px;
+      padding: 0; cursor: pointer; box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px); user-select: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .map-route-fab:hover  { border-color: #38bdf8; }
+    .map-route-fab.active { background: #38bdf8; color: #0c1117; border-color: #0369a1; }
+    .map-route-row {
+      display: none; align-items: center; gap: 3px;
+      background: rgba(20,23,32,.95); border: 1px solid var(--border-strong);
+      border-radius: 6px; padding: 2px; box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+    }
+    .map-route-row.visible { display: flex; }
+    .map-route-row .rt-icon {
+      width: 26px; height: 26px; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; cursor: pointer; user-select: none;
+      color: var(--text-2); border-radius: 4px;
+    }
+    .map-route-row .rt-icon:hover  { color: #38bdf8; background: rgba(56,189,248,.10); }
+    .map-route-row .rt-icon.active { color: #0c1117; background: #38bdf8; }
+    .map-route-row .rt-hint {
+      color: #7dd3fc; font-weight: 700; font-size: 11px;
+      padding: 0 6px; min-width: 44px; white-space: nowrap;
+    }
+    /* Floating route result bar (bottom-centre) */
+    .route-readout {
+      position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+      z-index: 650; display: none; align-items: center; gap: 8px;
+      background: rgba(20,23,32,.95); border: 1px solid var(--border-strong);
+      border-radius: 999px; padding: 5px 8px 5px 12px;
+      box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
+      font-size: 12px; font-weight: 600; color: #e5e9f0; max-width: 90vw;
+    }
+    .route-readout.visible { display: flex; }
+    .route-readout .rr-x {
+      cursor: pointer; color: var(--text-3); font-size: 14px; line-height: 1;
+      padding: 0 2px; user-select: none;
+    }
+    .route-readout .rr-x:hover { color: #f87171; }
+    @media (max-width: 600px) {
+      .map-route-wrap { bottom: 44px; right: 6px; gap: 3px; }
+      .map-route-fab  { width: 28px; height: 28px; font-size: 13px; }
+      .map-route-row .rt-icon { width: 24px; height: 24px; font-size: 12px; }
+    }
     @media (max-width: 600px) {
       .fs-popup { min-width: 200px; max-width: 260px; }
       .fs-popup .fs-img-wrap { height: 120px; }
@@ -1483,13 +1556,17 @@
     /* When the investment tab is active, hide all search-mode panels */
     .app.invest-mode .app__search, .app.invest-mode .app__config, .app.invest-mode .app__map, .app.invest-mode .app__estimate, .app.invest-mode .app__results,
     .app.owner-mode  .app__search, .app.owner-mode  .app__config, .app.owner-mode  .app__map, .app.owner-mode  .app__estimate, .app.owner-mode  .app__results,
+    .app.home-mode   .app__search, .app.home-mode   .app__config, .app.home-mode   .app__map, .app.home-mode   .app__estimate, .app.home-mode   .app__results,
+    .app.swap-mode   .app__search, .app.swap-mode   .app__config, .app.swap-mode   .app__map, .app.swap-mode   .app__estimate, .app.swap-mode   .app__results,
     .app.capital-mode .app__search, .app.capital-mode .app__config, .app.capital-mode .app__map, .app.capital-mode .app__estimate, .app.capital-mode .app__results { display: none !important; }
-    .app__invest, .app__owner, .app__capital { display: none; }
+    .app__invest, .app__owner, .app__capital, .app__home, .app__swap { display: none; }
     .app.invest-mode  .app__invest  { display: block; }
     .app.owner-mode   .app__owner   { display: block; }
+    .app.home-mode    .app__home    { display: block; }
+    .app.swap-mode    .app__swap    { display: block; }
     .app.capital-mode .app__capital { display: block; }
-    .app__owner, .app__capital { grid-column: 1 / -1; padding: var(--s-6); max-width: var(--content-max-w); }
-    @media (max-width: 640px) { .app__owner, .app__capital { padding: var(--s-3); } }
+    .app__owner, .app__capital, .app__home, .app__swap { grid-column: 1 / -1; padding: var(--s-6); max-width: var(--content-max-w); }
+    @media (max-width: 640px) { .app__owner, .app__capital, .app__home, .app__swap { padding: var(--s-3); } }
 
     .app__invest {
       grid-column: 1 / -1;
@@ -1853,8 +1930,10 @@
       box-shadow: 0 4px 14px rgba(79,70,229,.4);
       display: flex; align-items: center; justify-content: center;
       font-size: 22px; transition: transform .15s ease;
+      touch-action: none; /* allow dragging on touch without scrolling the page */
     }
     .ai-fab:hover { transform: scale(1.05); }
+    .ai-fab.dragging { cursor: grabbing; transition: none; }
     .ai-fab__dot {
       position: absolute; top: 6px; right: 6px;
       width: 10px; height: 10px; border-radius: 50%;
@@ -1873,10 +1952,10 @@
       position: fixed; right: 14px; bottom: 68px; z-index: 10003;
       width: 380px; max-width: calc(100vw - 28px);
       height: 70vh; max-height: 640px;
-      background: var(--bg-1, #fff); color: var(--text-1, #111);
-      border-radius: 14px; border: 1px solid var(--border, #e5e7eb);
-      box-shadow: 0 12px 40px rgba(0,0,0,.25);
-      display: flex; flex-direction: column;
+      background: #1e293b; color: #e2e8f0;
+      border-radius: 14px; border: 1px solid #334155;
+      box-shadow: 0 12px 40px rgba(0,0,0,.45);
+      display: flex; flex-direction: column; overflow: hidden;
       transform: translateY(20px) scale(.96); opacity: 0;
       pointer-events: none;
       transition: transform .2s ease, opacity .2s ease;
@@ -1900,13 +1979,13 @@
       font-size: 11px;
     }
     .ai-msgs {
-      flex: 1; overflow-y: auto; padding: 12px;
+      flex: 1; min-height: 0; overflow-y: auto; padding: 12px;
       display: flex; flex-direction: column; gap: 10px;
-      background: var(--bg-2, #f8fafc);
+      background: #1e293b;
     }
     .ai-msgs:empty::before {
-      content: "Ask anything — request goes to Copilot Chat in VS Code.";
-      color: var(--text-3, #6b7280); font-size: 12px; text-align: center;
+      content: "No messages yet. Ask me anything below!";
+      color: #94a3b8; font-size: 12px; text-align: center;
       margin: auto; padding: 0 20px;
     }
     .ai-bubble {
@@ -1914,23 +1993,84 @@
       font-size: 13px; line-height: 1.45; word-wrap: break-word;
       white-space: pre-wrap;
     }
+    /* Chat bubbles — Task-Manager scheme: purple user, green response, slate thinking */
     .ai-bubble--user {
       align-self: flex-end;
-      background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff;
-      border-bottom-right-radius: 4px;
+      background: #4c1d95; color: #ede9fe;
+      border-radius: 14px 14px 4px 14px;
     }
     .ai-bubble--bot {
       align-self: flex-start;
-      background: #ecfdf5; color: #065f46;
-      border: 1px solid #a7f3d0; border-bottom-left-radius: 4px;
+      background: #064e3b; color: #a7f3d0;
+      border-left: 3px solid #059669;
+      border-radius: 14px 14px 14px 4px;
     }
-    .ai-bubble--pending {
-      align-self: flex-start;
-      background: #fff; color: var(--text-3, #6b7280);
-      border: 1px dashed #cbd5e1; font-style: italic;
+    .ai-bubble--bot { white-space: normal; }
+    .ai-bubble--bot strong { color: #d1fae5; }
+    .ai-bubble--bot em { font-style: italic; }
+    .ai-bubble--bot a { color: #6ee7b7; }
+    .ai-md-h1 { font-size: 1rem;  font-weight: 700; color: #6ee7b7; margin: 8px 0 4px; }
+    .ai-md-h2 { font-size: .92rem; font-weight: 700; color: #6ee7b7; margin: 6px 0 3px; }
+    .ai-md-h3 { font-size: .88rem; font-weight: 700; color: #6ee7b7; margin: 5px 0 2px; }
+    .ai-md-h1:first-child, .ai-md-h2:first-child, .ai-md-h3:first-child { margin-top: 0; }
+    .ai-md-hr { border: none; border-top: 1px solid #1e4d3a; margin: 8px 0; }
+    .ai-md-ul { margin: 4px 0 4px 18px; padding: 0; }
+    .ai-md-ul li { margin: 2px 0; }
+    /* Live "Thinking:" trail shown while a request is pending.
+       Sticky-pinned to the bottom of the scroll area so it always stays visible
+       just above the composer — it can never be scrolled out of view or hidden
+       behind the "type to chat" box. */
+    .ai-thinking {
+      align-self: stretch; max-width: 100%;
+      position: sticky; bottom: 2px; z-index: 2;
+      background: #1e293b; color: #94a3b8;
+      border: 1px solid #334155; border-left: 3px solid #7c3aed;
+      box-shadow: 0 -6px 14px rgba(15,23,42,.55);
+      border-radius: 14px 14px 14px 4px;
+      padding: 9px 13px; font-size: 12.5px; font-style: italic;
+      word-break: break-word;
+      min-height: 120px; max-height: 320px; overflow-y: auto;
+      animation: ai-think-pulse 1.6s ease-in-out infinite;
     }
+    .ai-thinking b { color: #cbd5e1; font-style: normal; }
+    .ai-think-line { display: block; opacity: .85; font-size: 11.5px; margin-top: 3px; white-space: pre-wrap; }
+    @keyframes ai-think-pulse { 0%,100% { opacity: 1; } 50% { opacity: .62; } }
+    /* Response footer — copy button + model tag */
+    .ai-resp-meta {
+      align-self: flex-start; display: flex; align-items: center;
+      gap: 6px; flex-wrap: wrap; margin-top: -4px;
+    }
+    .ai-copy-btn {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 10px; color: #6ee7b7; background: #022c22;
+      border: 1px solid #065f46; border-radius: 6px; padding: 1px 7px;
+      cursor: pointer; font-family: ui-monospace, Menlo, Consolas, monospace; opacity: .85;
+    }
+    .ai-copy-btn:hover { background: #065f46; opacity: 1; }
+    .ai-copy-btn.copied { color: #fff; background: #065f46; border-color: #34d399; }
+    .ai-model-tag {
+      display: inline-flex; align-items: center; font-size: 10px; color: #34d399;
+      background: #022c22; border: 1px solid #065f46; border-radius: 6px;
+      padding: 1px 6px; font-family: ui-monospace, Menlo, Consolas, monospace; opacity: .85;
+    }
+    /* Timestamp + delete row under each user bubble (Task-Manager .sg-msg-meta) */
+    .ai-user-meta {
+      align-self: flex-end; display: flex; align-items: center; gap: 4px; margin-top: -4px;
+    }
+    .ai-user-time { font-size: 10px; color: #475569; }
+    .ai-user-del {
+      background: none; border: none; color: #475569; cursor: pointer;
+      font-size: 11px; padding: 1px 4px; line-height: 1;
+    }
+    .ai-user-del:hover { color: #ef4444; }
+    .ai-pending-x {
+      flex: 0 0 auto; border: none; background: transparent; cursor: pointer;
+      color: #7c3aed; font-size: 13px; line-height: 1; padding: 2px 4px;
+      border-radius: 4px; font-style: normal; opacity: .6;
+    }
+    .ai-pending-x:hover { opacity: 1; background: rgba(124,58,237,.12); }
     .ai-bubble--bot code {
-      background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px;
+      background: #022c22; color: #a7f3d0; padding: 1px 5px; border-radius: 3px;
       font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
     }
     .ai-bubble--bot pre {
@@ -1939,22 +2079,76 @@
       font-size: 11.5px;
     }
     .ai-bubble--bot pre code { background: none; padding: 0; color: inherit; }
+    /* RTL bubbles (Persian/Arabic): right-align text, but keep code LTR */
+    .ai-bubble[dir="rtl"] { text-align: right; }
+    .ai-bubble[dir="rtl"] pre,
+    .ai-bubble[dir="rtl"] code { direction: ltr; text-align: left; unicode-bidi: embed; }
     .ai-compose {
-      display: flex; gap: 6px; padding: 8px;
-      border-top: 1px solid var(--border, #e5e7eb);
+      display: flex; gap: 8px; padding: 10px 12px; align-items: flex-end;
+      border-top: 1px solid #334155; background: #1e293b;
     }
     .ai-compose textarea {
-      flex: 1; resize: none; min-height: 36px; max-height: 100px;
-      padding: 7px 10px; border-radius: 8px;
-      border: 1px solid var(--border, #d1d5db);
-      font-size: 13px; font-family: inherit;
+      flex: 1; resize: none; min-height: 44px; max-height: 140px;
+      padding: 11px 16px; border-radius: 22px;
+      background: #0f172a; color: #e2e8f0;
+      border: 1px solid #475569;
+      font-size: 13px; font-family: inherit; line-height: 1.4;
+      box-sizing: border-box; overflow-y: auto;
+      unicode-bidi: plaintext; direction: auto;
+      scrollbar-width: none; /* Firefox: hide scrollbar (still scrollable) */
     }
-    .ai-compose button {
-      background: linear-gradient(135deg, #7c3aed, #4f46e5);
-      color: #fff; border: none; padding: 0 14px; border-radius: 8px;
-      cursor: pointer; font-weight: 600; font-size: 13px;
+    .ai-compose textarea::-webkit-scrollbar { width: 0; height: 0; display: none; } /* WebKit */
+    .ai-compose textarea::placeholder { color: #64748b; }
+    .ai-compose textarea:focus { outline: none; border-color: #a78bfa; }
+    /* Circular mic + send buttons (Task-Manager style) */
+    .ai-voicebtn, .ai-sendbtn {
+      width: 44px; height: 44px; border-radius: 50%; border: none; flex: 0 0 auto;
+      padding: 0; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; align-self: flex-end;
+      transition: transform .15s ease, background .2s ease, color .2s ease, box-shadow .2s ease;
     }
-    .ai-compose button:disabled { opacity: .5; cursor: not-allowed; }
+    .ai-voicebtn { background: #2a2342; color: #c4b5fd; border: 1px solid #4c3a6b; }
+    .ai-voicebtn:hover {
+      background: linear-gradient(145deg, #a78bfa, #7c3aed); color: #fff; border-color: transparent;
+      transform: translateY(-1px); box-shadow: 0 6px 16px rgba(124,58,237,.4);
+    }
+    .ai-voicebtn:active { transform: scale(.94); }
+    .ai-voicebtn:disabled { opacity: .6; cursor: default; transform: none; box-shadow: none; }
+    .ai-voicebtn.recording { background: #ef4444; color: #fff; border-color: transparent; animation: ai-mic-pulse 1s infinite; }
+    .ai-voicebtn svg, .ai-sendbtn svg { width: 19px; height: 19px; display: block; }
+    .ai-sendbtn { background: linear-gradient(145deg, #8b5cf6, #7c3aed); color: #fff; box-shadow: 0 4px 12px rgba(124,58,237,.35); }
+    .ai-sendbtn:hover { transform: translateY(-1px) scale(1.03); box-shadow: 0 6px 16px rgba(124,58,237,.45); }
+    .ai-sendbtn:active { transform: scale(.95); }
+    @keyframes ai-mic-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+      50%     { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
+    }
+    /* Recording bar — animated waveform + timer, shown while recording */
+    .ai-voicebar { display: none; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #334155; background: #1e293b; }
+    .ai-voicebar.active { display: flex; }
+    .ai-voicebar .vb-btn {
+      width: 40px; height: 40px; border-radius: 50%; border: none; flex: 0 0 auto; color: #fff;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .ai-voicebar .vb-cancel { background: #64748b; }
+    .ai-voicebar .vb-cancel:hover { background: #475569; }
+    .ai-voicebar .vb-send { background: linear-gradient(145deg, #8b5cf6, #7c3aed); box-shadow: 0 6px 16px rgba(124,58,237,.4); }
+    .ai-voicebar .vb-btn svg { width: 18px; height: 18px; }
+    .ai-voicebar .vb-stage { flex: 1; display: flex; align-items: center; gap: 8px; }
+    .ai-voicebar .vb-dot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; flex: 0 0 auto; animation: ai-mic-pulse 1s infinite; }
+    .ai-wave { flex: 1; display: flex; align-items: center; gap: 2px; height: 28px; }
+    .ai-wave span { flex: 1; min-width: 2px; height: 10%; border-radius: 2px; background: linear-gradient(180deg, #c4b5fd, #7c3aed); transition: height .07s linear; }
+    .ai-vb-timer { font-size: 12px; font-weight: 700; color: #7c3aed; min-width: 38px; text-align: right; }
+    /* Read-aloud button tucked into each bot bubble */
+    .ai-bubble--bot { position: relative; padding-right: 30px; }
+    .ai-tts {
+      position: absolute; top: 4px; right: 4px;
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; line-height: 1; padding: 2px; opacity: .55;
+    }
+    .ai-tts:hover { opacity: 1; }
+    .ai-bubble[dir="rtl"].ai-bubble--bot { padding-right: 12px; padding-left: 30px; }
+    .ai-bubble[dir="rtl"] .ai-tts { right: auto; left: 4px; }
 
     @media (max-width: 640px) {
       .ai-fab { width: 44px; height: 44px; right: 10px; bottom: 58px; font-size: 20px; }
@@ -1992,6 +2186,8 @@
       <button class="tab-btn active" data-tab="search" type="button">📍 Search</button>
       <button class="tab-btn"        data-tab="invest" type="button">💰 Investment</button>
       <button class="tab-btn"        data-tab="owner"  type="button">🏡 Owner-occupied</button>
+      <button class="tab-btn"        data-tab="home"   type="button">🏠 Current home</button>
+      <button class="tab-btn"        data-tab="swap"   type="button">🔄 Swap</button>
       <button class="tab-btn"        data-tab="capital" type="button">💎 Capital</button>
       <button class="scen-btn" id="scen-btn" type="button" title="Save / Load scenarios">💾 Scenarios</button>
     </nav>
@@ -2774,10 +2970,13 @@
             </div>
 
             <!-- STEP 4 — tax on the gain -->
-            <div class="cgt-step">Step 4 · Tax on the gain (added to your salary)</div>
-            <div class="invest-row"><span class="invest-label">Gain added per earner (50/50)</span><span class="invest-out" id="o-cgt-share">—</span></div>
-            <div class="invest-row"><span class="invest-label">Earner 1 — tax before → after</span><span class="invest-out" id="o-cgt-p1">—</span></div>
-            <div class="invest-row"><span class="invest-label">Earner 2 — tax before → after</span><span class="invest-out" id="o-cgt-p2">—</span></div>
+            <div class="cgt-step" id="o-cgt-step4-head">Step 4 · Tax on the gain (added to your salary)</div>
+            <div id="cgt-marginal-block">
+              <div class="invest-row"><span class="invest-label">Gain added per earner (50/50)</span><span class="invest-out" id="o-cgt-share">—</span></div>
+              <div class="invest-row"><span class="invest-label">Earner 1 — tax before → after</span><span class="invest-out" id="o-cgt-p1">—</span></div>
+              <div class="invest-row"><span class="invest-label">Earner 2 — tax before → after</span><span class="invest-out" id="o-cgt-p2">—</span></div>
+            </div>
+            <div class="invest-row" id="cgt-flat-row" style="display:none"><span class="invest-label">Taxable gain × 30% (indexed flat rate)</span><span class="invest-out" id="o-cgt-flat">—</span><div class="invest-hint">Indexed method is taxed at a flat 30% of the taxable gain (not added to salary at marginal rates).</div></div>
             <div class="invest-row"><span class="invest-label" style="font-weight:700">= Total capital gains tax</span><span class="invest-out bad" id="o-cgt-total" style="border-style:solid;border-color:var(--brand);">—</span></div>
 
             <!-- STEP 5 — net -->
@@ -3040,51 +3239,18 @@
         <span class="invest-summary__label">C · Keep home, no new buy</span>
         <span class="invest-summary__val" id="cap-c-total">—</span>
       </div>
+      <div class="invest-summary__item">
+        <span class="invest-summary__label">D · Move in + rent old home</span>
+        <span class="invest-summary__val" id="cap-d-total">—</span>
+      </div>
       <div class="invest-summary__item invest-summary__item--hero">
         <span class="invest-summary__label" id="cap-verdict-label">Best pathway</span>
         <span class="invest-summary__val" id="cap-verdict">—</span>
       </div>
     </div>
 
-    <div class="invest-grid">
-
-      <!-- ┌─ INPUTS ─────────────────────────────────────────────────────┐ -->
-      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
-        <div class="invest-card">
-          <div class="invest-card__head">📍 Today: current home + savings</div>
-          <div class="invest-card__body">
-            <div class="invest-row"><span class="invest-label">Current home value</span><input class="invest-input" id="cap-home-value" type="number" step="1000" value="900000" /></div>
-            <div class="invest-row"><span class="invest-label">Agent fee to sell</span><input class="invest-input" id="cap-agent" type="number" step="0.1" value="2" /><div class="invest-hint">%</div></div>
-            <div class="invest-row"><span class="invest-label">Current home loan</span><input class="invest-input" id="cap-cur-loan" type="number" step="1000" value="700000" /></div>
-            <div class="invest-row"><span class="invest-label">Current home loan rate</span><input class="invest-input" id="cap-cur-rate" type="number" step="0.01" value="6.05" /><div class="invest-hint">% — P&amp;I over the loan term.</div></div>
-            <div class="invest-row"><span class="invest-label">Equity if sold today</span><span class="invest-out" id="cap-equity-now">—</span><div class="invest-hint">value × (1 − agent) − loan.</div></div>
-            <div class="invest-row"><span class="invest-label">Cash savings now</span><input class="invest-input" id="cap-savings" type="number" step="1000" value="120000" /></div>
-            <div class="invest-row"><span class="invest-label" style="font-weight:700">Total capital today</span><span class="invest-out" id="cap-total-now">—</span></div>
-          </div>
-        </div>
-
-        <div class="invest-card">
-          <div class="invest-card__head">👥 Income, living &amp; growth</div>
-          <div class="invest-card__body">
-            <div class="invest-row"><span class="invest-label">Earner 1 income</span><input class="invest-input" id="cap-p1" type="number" step="1000" value="115000" /></div>
-            <div class="invest-row"><span class="invest-label">Earner 2 income</span><input class="invest-input" id="cap-p2" type="number" step="1000" value="88700" /></div>
-            <div class="invest-row"><span class="invest-label">After-tax income (per yr)</span><span class="invest-out" id="cap-aftertax">—</span></div>
-            <div class="invest-row"><span class="invest-label">Monthly living expenses</span><input class="invest-input" id="cap-living" type="number" step="100" value="6000" /><div class="invest-hint">EXCLUDES all property costs.</div></div>
-            <div class="invest-row"><span class="invest-label">Current home growth</span><input class="invest-input" id="cap-home-growth" type="number" step="0.1" value="3" /><div class="invest-hint">% per year (Scenario A &amp; C keep this home).</div></div>
-            <div class="invest-row"><span class="invest-label">Loan term</span><input class="invest-input" id="cap-term" type="number" step="1" value="30" /><div class="invest-hint">Years (for loan repayment maths).</div></div>
-            <div class="invest-row"><span class="invest-label">Scenario C holding years</span><input class="invest-input" id="cap-c-years" type="number" step="1" value="10" /><div class="invest-hint">How many years before selling in Scenario C (no new purchase).</div></div>
-            <div class="invest-hint" style="line-height:1.6;margin-top:4px">
-              Scenario A is read from the <b>Investment tab</b> (the IP you buy) — you keep the current home too.<br>
-              Scenario B is read from the <b>Owner-occupied tab</b> (the new home you buy after selling).<br>
-              <b>Offset interest savings are NOT modelled yet</b> — surplus just accumulates as plain savings.
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- └─ /INPUTS ───────────────────────────────────────────────────┘ -->
-
-      <!-- ┌─ SCENARIO BREAKDOWNS ───────────────────────────────────────┐ -->
-      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+    <!-- ┌─ SCENARIO BREAKDOWNS ───────────────────────────────────────┐ -->
+    <div class="cap-scenarios" style="display:flex;flex-direction:column;gap:var(--s-4);">
 
         <div class="invest-card invest-card--capital">
           <div class="invest-card__head">🅰 Keep home + buy investment</div>
@@ -3153,9 +3319,196 @@
           </div>
         </div>
 
+        <div class="invest-card invest-card--capital">
+          <div class="invest-card__head">🇩 Move in to new place + rent out old home</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Monthly cash flow → savings</div>
+            <div class="invest-row"><span class="invest-label">After-tax income</span><span class="invest-out" id="cd-income">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Living expenses</span><span class="invest-out bad" id="cd-living">—</span></div>
+            <div class="invest-row"><span class="invest-label">− New home cash cost (you live here)</span><span class="invest-out bad" id="cd-oocost">—</span><div class="invest-hint">New-home (ex-IP) P&amp;I at the owner-occupier rate + running costs. No rent. Configured on the Swap tab.</div></div>
+            <div class="invest-row"><span class="invest-label">− Old home cash cost (now rented)</span><span class="invest-out bad" id="cd-ipcost">—</span><div class="invest-hint">Old-home P&amp;I at the investment rate + running − rent − NG refund. Configured on the Swap tab.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly savings</span><span class="invest-out" id="cd-surplus">—</span></div>
+            <div class="cgt-step">After holding years (sell both)</div>
+            <div class="invest-row"><span class="invest-label">Holding years (from Swap tab)</span><span class="invest-out muted" id="cd-years">—</span></div>
+            <div class="invest-row"><span class="invest-label">− New home buy cost (deposit + upfront + LMI)</span><span class="invest-out bad" id="cd-buycost">—</span><div class="invest-hint">One-off cash at settlement: deposit + stamp + legal + buyer's agent + the owner-occupier LMI (from the Swap tab).</div></div>
+            <div class="invest-row"><span class="invest-label">+ Cash in offset at end</span><span class="invest-out" id="cd-off-end">—</span><div class="invest-hint">Monthly surplus feeds the offset against the new home loan (non-deductible) every month.</div></div>
+            <div class="invest-row"><span class="invest-label">+ New home equity at sale (no CGT — main residence)</span><span class="invest-out good" id="cd-off-eq">—</span><div class="invest-hint">Grown value × (1 − agent) − remaining new-home loan (paid down faster thanks to offset).</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ new home loan: start → end (with offset)</span><span class="invest-out muted" style="font-size:11px" id="cd-off-loan">—</span></div>
+            <div class="invest-row" id="cd-phase-row" style="display:none"><span class="invest-label" style="font-size:11px;color:var(--brand-strong);font-weight:600">↳ Offset ≥ loan from</span><span class="invest-out" style="font-size:11px;color:var(--brand-strong);font-weight:600" id="cd-phase-info">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Old home gross equity at sale</span><span class="invest-out good" id="cd-ip-eq">—</span><div class="invest-hint">grown value × (1 − agent) − remaining old-home loan.</div></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ old home loan: start → end (principal paid)</span><span class="invest-out muted" style="font-size:11px" id="cd-ip-loan-detail">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Capital gains tax on old home (now an IP)</span><span class="invest-out bad" id="cd-cgt">—</span><div class="invest-hint">Cost base reset to today's value (home first used to produce income). Taxed via the Investment tab's CGT method.</div></div>
+            <div class="invest-row"><span class="invest-label">+ Current cash savings (untouched)</span><span class="invest-out good" id="cd-cash-end">—</span><div class="invest-hint">Your savings stay in a standard account, added at the end.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (D)</span><span class="invest-out good" id="cd-off-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <details class="cap-workings"><summary>📐 Show calculation workings (D)</summary><div class="cap-workings__body" id="cd-work-offset">—</div></details>
+          </div>
+        </div>
+
       </div>
       <!-- └─ /SCENARIO BREAKDOWNS ─────────────────────────────────────┘ -->
+  </div>
 
+  <!-- ══════════════════ CURRENT HOME TAB (inputs) ══════════════════ -->
+  <div class="app__home">
+    <div style="display:flex;flex-direction:column;gap:var(--s-4);max-width:560px;">
+      <div class="invest-card">
+        <div class="invest-card__head">📍 Today: current home + savings</div>
+        <div class="invest-card__body">
+          <div class="invest-row"><span class="invest-label">Current home value</span><input class="invest-input" id="cap-home-value" type="number" step="1000" value="900000" /></div>
+          <div class="invest-row"><span class="invest-label">Agent fee to sell</span><input class="invest-input" id="cap-agent" type="number" step="0.1" value="2" /><div class="invest-hint">%</div></div>
+          <div class="invest-row"><span class="invest-label">Current home loan</span><input class="invest-input" id="cap-cur-loan" type="number" step="1000" value="700000" /></div>
+          <div class="invest-row"><span class="invest-label">Current home loan rate</span><input class="invest-input" id="cap-cur-rate" type="number" step="0.01" value="6.05" /><div class="invest-hint">% — P&amp;I over the loan term.</div></div>
+          <div class="invest-row"><span class="invest-label">Equity if sold today</span><span class="invest-out" id="cap-equity-now">—</span><div class="invest-hint">value × (1 − agent) − loan.</div></div>
+          <div class="invest-row"><span class="invest-label">Cash savings now</span><input class="invest-input" id="cap-savings" type="number" step="1000" value="120000" /></div>
+          <div class="invest-row"><span class="invest-label" style="font-weight:700">Total capital today</span><span class="invest-out" id="cap-total-now">—</span></div>
+        </div>
+      </div>
+
+      <div class="invest-card">
+        <div class="invest-card__head">👥 Income, living &amp; growth</div>
+        <div class="invest-card__body">
+          <div class="invest-row"><span class="invest-label">Earner 1 income</span><input class="invest-input" id="cap-p1" type="number" step="1000" value="115000" /></div>
+          <div class="invest-row"><span class="invest-label">Earner 2 income</span><input class="invest-input" id="cap-p2" type="number" step="1000" value="88700" /></div>
+          <div class="invest-row"><span class="invest-label">After-tax income (per yr)</span><span class="invest-out" id="cap-aftertax">—</span></div>
+          <div class="invest-row"><span class="invest-label">Monthly living expenses</span><input class="invest-input" id="cap-living" type="number" step="100" value="6000" /><div class="invest-hint">EXCLUDES all property costs.</div></div>
+          <div class="invest-row"><span class="invest-label">Current home growth</span><input class="invest-input" id="cap-home-growth" type="number" step="0.1" value="3" /><div class="invest-hint">% per year (Scenarios A, C &amp; D keep this home).</div></div>
+          <div class="invest-row"><span class="invest-label">Loan term</span><input class="invest-input" id="cap-term" type="number" step="1" value="30" /><div class="invest-hint">Years (for loan repayment maths).</div></div>
+          <div class="invest-row"><span class="invest-label">Scenario C holding years</span><input class="invest-input" id="cap-c-years" type="number" step="1" value="10" /><div class="invest-hint">How many years before selling in Scenario C (no new purchase).</div></div>
+          <div class="invest-hint" style="line-height:1.6;margin-top:4px">
+            <b>A</b> keeps this home + buys the <b>Investment</b>-tab property as an IP.<br>
+            <b>B</b> sells this home + buys the <b>Owner-occupied</b>-tab home.<br>
+            <b>C</b> keeps this home, no new purchase.<br>
+            <b>D</b> (<b>Swap</b> tab) moves you into the Investment-tab property and rents out this home.<br>
+            Results show on the <b>💎 Capital</b> tab. Offset savings are modelled on each scenario's non-deductible loan.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SWAP TAB (Scenario D overrides) ══════════════════ -->
+  <div class="app__swap">
+    <div class="invest-grid">
+      <!-- ── LEFT: Scenario D overrides ── -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+      <div class="invest-hint" style="line-height:1.6">
+        <b>Scenario D — role swap.</b> You move <i>into</i> the property modelled on the
+        <b>Investment</b> tab (now your home, owner-occupied) and keep + <i>rent out</i> your
+        current home (now an investment). Set the overrides below; the result appears as
+        <b>Scenario D</b> on the <b>💎 Capital</b> tab.
+      </div>
+
+      <div class="invest-card">
+        <div class="invest-card__head">🏚️ Rent out current home (now an investment)</div>
+        <div class="invest-card__body">
+          <div class="invest-row"><span class="invest-label">Investment loan rate</span><input class="invest-input" id="swap-home-rate" type="number" step="0.01" value="6.05" /><div class="invest-hint">% — your current home loan, refinanced to an investment rate. Interest becomes tax-deductible.</div></div>
+          <div class="invest-row"><span class="invest-label">Weekly rent</span><input class="invest-input" id="swap-home-rent" type="number" step="10" value="650" /><div class="invest-hint">$/week you'd collect renting out the old home.</div></div>
+          <div class="invest-row"><span class="invest-label">Annual running costs</span><input class="invest-input" id="swap-home-running" type="number" step="100" value="3500" /><div class="invest-hint">$/yr rates + insurance + repairs (deductible).</div></div>
+          <div class="invest-row"><span class="invest-label">Holding years</span><input class="invest-input" id="swap-years" type="number" step="1" value="10" /><div class="invest-hint">Years before selling both properties in Scenario D.</div></div>
+          <div class="invest-row"><span class="invest-label">Inflation rate (CGT indexing)</span><input class="invest-input" id="swap-infl" type="number" step="0.1" value="2.5" /><div class="invest-hint">% per year. Indexes the old home's CGT cost base up by inflation (used only when the <b>indexed</b> CGT method is selected). ~2.5% is typical.</div></div>
+          <label class="ng-toggle" style="margin-top:6px">
+            <input type="checkbox" id="swap-ng-on" />
+            <span class="ng-label">Apply negative-gearing tax benefit</span>
+          </label>
+          <div class="invest-hint">When ON, the old home's net rental loss (interest + running − rent) reduces your taxable income at your marginal rate.</div>
+        </div>
+      </div>
+
+      <div class="invest-card">
+        <div class="invest-card__head">🔑 Live in the new property (now your home)</div>
+        <div class="invest-card__body">
+          <div class="invest-row"><span class="invest-label">Owner-occupier loan rate</span><input class="invest-input" id="swap-new-rate" type="number" step="0.01" value="6.5" /><div class="invest-hint">% — owner-occupier rate on the property's loan (interest NOT deductible; offset applies here).</div></div>
+          <div class="invest-row"><span class="invest-label">Lender's Mortgage Insurance (LMI)</span><input class="invest-input" id="swap-new-lmi" type="number" step="500" value="23000" /><div class="invest-hint">$ — owner-occupier LMI for the new home (replaces the Investment-tab LMI).</div></div>
+          <div class="invest-hint" style="line-height:1.6;margin-top:4px">
+            Rent = <b>$0</b> (you live here). Price, growth, deposit, stamp duty and the loan amount
+            come from the <b>💰 Investment</b> tab — only the rate &amp; LMI change here.
+          </div>
+        </div>
+      </div>
+      </div>
+      <!-- ── /LEFT ── -->
+
+      <!-- ── RIGHT: step-by-step Scenario D workings ── -->
+      <div style="display:flex;flex-direction:column;gap:var(--s-4);">
+
+        <div class="invest-card">
+          <div class="invest-card__head">🏚️ Old home as investment — workings</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Deductible rental loss (negative-gearing base)</div>
+            <div class="invest-row"><span class="invest-label">Old-home loan → P&amp;I payment</span><span class="invest-out" id="sw-ip-pmt">—</span></div>
+            <div class="invest-row muted" style="padding-left:1rem"><span class="invest-label" style="font-size:11px">↳ less principal (not deductible)</span><span class="invest-out muted" style="font-size:11px" id="sw-ip-principal">—</span></div>
+            <div class="invest-row"><span class="invest-label">= Avg monthly interest (deductible)</span><span class="invest-out" id="sw-ip-avgint">—</span><div class="invest-hint">P&amp;I − principal. <b>Only this interest portion is tax-deductible</b> — the principal is your own equity, so the negative-gearing loss below is built from interest, not the full P&amp;I.</div></div>
+            <div class="invest-row"><span class="invest-label">− Rent (weekly → monthly)</span><span class="invest-out good" id="sw-ip-rent">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Net rental loss (interest − rent)</span><span class="invest-out" id="sw-ip-loss">—</span><div class="invest-hint">= interest − rent. Running costs are <b>excluded</b> from the negative-gearing base for the swap scenario (they're still counted as a cash expense below).</div></div>
+            <div class="cgt-step">Negative gearing</div>
+            <div class="invest-row"><span class="invest-label">Annual rental loss</span><span class="invest-out" id="sw-ip-annualloss">—</span></div>
+            <div class="invest-row"><span class="invest-label">Taxable-income reduction</span><span class="invest-out" id="sw-ip-ngpct">—</span></div>
+            <div class="invest-row"><span class="invest-label">Earner 1 tax: before → after</span><span class="invest-out" id="sw-ip-ngp1">—</span></div>
+            <div class="invest-row"><span class="invest-label">Earner 2 tax: before → after</span><span class="invest-out" id="sw-ip-ngp2">—</span></div>
+            <div class="invest-row"><span class="invest-label">= NG benefit / yr</span><span class="invest-out good" id="sw-ip-ngyr">—</span></div>
+            <div class="invest-row"><span class="invest-label">NG refund / mo</span><span class="invest-out good" id="sw-ip-ngmo">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Running costs (cash expense)</span><span class="invest-out bad" id="sw-ip-run">—</span><div class="invest-hint">Still paid in cash even though it's excluded from the NG base above.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Net monthly cash cost</span><span class="invest-out" id="sw-ip-netmo">—</span><div class="invest-hint">Full P&amp;I + running − rent − NG refund. This is what feeds Scenario D's monthly maths.</div></div>
+            <div class="cgt-step">At sale (after holding years)</div>
+            <div class="invest-row"><span class="invest-label">Old-home value (grown)</span><span class="invest-out" id="sw-ip-valend">—</span></div>
+            <div class="invest-row"><span class="invest-label">Net sale × (1 − agent)</span><span class="invest-out" id="sw-ip-netsale">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Remaining loan</span><span class="invest-out bad" id="sw-ip-loanend">—</span></div>
+            <div class="invest-row"><span class="invest-label">= Gross equity</span><span class="invest-out good" id="sw-ip-grosseq">—</span></div>
+            <div class="cgt-step">CGT (cost base reset to today)</div>
+            <div class="invest-row"><span class="invest-label">Net proceeds</span><span class="invest-out" id="sw-ip-proceeds">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Cost base</span><span class="invest-out" id="sw-ip-costbase">—</span><div class="invest-hint">Reset to today's market value — ATO "home first used to produce income" rule. Only the gain during the rental period is taxed.</div></div>
+            <div class="invest-row"><span class="invest-label">= Capital gain</span><span class="invest-out" id="sw-ip-gain">—</span></div>
+            <div class="invest-row"><span class="invest-label">Taxable gain</span><span class="invest-out" id="sw-ip-taxable">—</span></div>
+            <div class="invest-row"><span class="invest-label">− CGT payable</span><span class="invest-out bad" id="sw-ip-cgt">—</span><div class="invest-hint">Under the <b>indexed</b> method the gain is taxed at a <b>flat 30%</b>; under the <b>discount</b> method it's added to your salary at marginal rates.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Net equity after CGT</span><span class="invest-out good" id="sw-ip-neteq">—</span></div>
+          </div>
+        </div>
+
+        <div class="invest-card">
+          <div class="invest-card__head">🔑 New home as owner-occupied — workings</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Buy cost (one-off at settlement)</div>
+            <div class="invest-row"><span class="invest-label">Price (from Investment tab)</span><span class="invest-out" id="sw-oo-price">—</span></div>
+            <div class="invest-row"><span class="invest-label">Deposit</span><span class="invest-out" id="sw-oo-deposit">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Upfront (stamp / legal / agent)</span><span class="invest-out bad" id="sw-oo-upfront">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Owner-occupier LMI</span><span class="invest-out bad" id="sw-oo-lmi">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Cash at settlement</span><span class="invest-out" id="sw-oo-buycost">—</span></div>
+            <div class="cgt-step">Monthly cost (you live here — no rent)</div>
+            <div class="invest-row"><span class="invest-label">OO loan → P&amp;I payment</span><span class="invest-out" id="sw-oo-pmt">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Running costs</span><span class="invest-out bad" id="sw-oo-run">—</span><div class="invest-hint">Reuses the Investment tab's running figure as a proxy for the new home.</div></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly cost</span><span class="invest-out" id="sw-oo-netmo">—</span></div>
+            <div class="cgt-step">Offset + at sale (after holding years)</div>
+            <div class="invest-row"><span class="invest-label">Monthly surplus → offset</span><span class="invest-out" id="sw-oo-surplus">—</span><div class="invest-hint">Scenario D's whole monthly surplus feeds the offset against this (non-deductible) loan.</div></div>
+            <div class="invest-row"><span class="invest-label">Loan: start → end (with offset)</span><span class="invest-out" id="sw-oo-loan">—</span></div>
+            <div class="invest-row"><span class="invest-label">Offset balance at end</span><span class="invest-out good" id="sw-oo-offend">—</span></div>
+            <div class="invest-row"><span class="invest-label">New-home value (grown)</span><span class="invest-out" id="sw-oo-valend">—</span></div>
+            <div class="invest-row"><span class="invest-label">Net sale × (1 − agent)</span><span class="invest-out" id="sw-oo-netsale">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Equity at sale (no CGT — main residence)</span><span class="invest-out good" id="sw-oo-eq">—</span></div>
+          </div>
+        </div>
+
+        <div class="invest-card invest-card--capital">
+          <div class="invest-card__head">🇩 Scenario D — combined total</div>
+          <div class="invest-card__body">
+            <div class="cgt-step">Monthly cash flow → savings</div>
+            <div class="invest-row"><span class="invest-label">After-tax income</span><span class="invest-out" id="sw-d-income">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Living expenses</span><span class="invest-out bad" id="sw-d-living">—</span></div>
+            <div class="invest-row"><span class="invest-label">− New home cost (you live here)</span><span class="invest-out bad" id="sw-d-oocost">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Old home cost (now rented)</span><span class="invest-out bad" id="sw-d-ipcost">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:700">= Monthly surplus</span><span class="invest-out" id="sw-d-surplus">—</span></div>
+            <div class="cgt-step">After holding years (sell both)</div>
+            <div class="invest-row"><span class="invest-label">Offset balance at end</span><span class="invest-out good" id="sw-d-offend">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ New home equity (no CGT)</span><span class="invest-out good" id="sw-d-newhomeeq">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Old home net equity (after CGT)</span><span class="invest-out good" id="sw-d-oldhomeeq">—</span></div>
+            <div class="invest-row"><span class="invest-label">+ Cash savings (untouched)</span><span class="invest-out good" id="sw-d-cash">—</span></div>
+            <div class="invest-row"><span class="invest-label">− Cash spent on new home</span><span class="invest-out bad" id="sw-d-buycost">—</span></div>
+            <div class="invest-row"><span class="invest-label" style="font-weight:800">= TOTAL CAPITAL (D)</span><span class="invest-out good" id="sw-d-total" style="border-style:solid;border-color:var(--brand);border-width:2px;">—</span></div>
+            <div class="invest-hint">Same figure as Scenario D on the 💎 Capital tab.</div>
+          </div>
+        </div>
+
+      </div>
+      <!-- ── /RIGHT ── -->
     </div>
   </div>
 
@@ -4168,6 +4521,88 @@ function _initMap() {
       _map.on('mousemove', _mmOnMove);
     }
   };
+
+  // ── Two-point directions tool (🧭) — tap A then B, draws a real road/path
+  //    route via /api/route. Mode toggles walk/drive/bike/transit. Shares the
+  //    measure tool's scope so the two never listen for clicks at once. ───────
+  const rtWrap = document.createElement('div');
+  rtWrap.className = 'map-route-wrap';
+  rtWrap.innerHTML = `
+    <button class="map-route-fab" id="rt-fab" title="Directions between two points">🧭</button>
+    <div class="map-route-row" id="rt-row">
+      <span class="rt-hint" id="rt-hint">tap A</span>
+      <span class="rt-icon active" data-rtmode="walk"    title="Walk">🚶</span>
+      <span class="rt-icon"        data-rtmode="drive"   title="Drive">🚗</span>
+      <span class="rt-icon"        data-rtmode="bike"    title="Bike">🚴</span>
+      <span class="rt-icon"        data-rtmode="transit" title="Public transport (needs OTP)">🚆</span>
+      <span class="rt-icon" id="rt-clear" title="Clear">↻</span>
+    </div>`;
+  L.DomEvent.disableClickPropagation(rtWrap);
+  L.DomEvent.disableScrollPropagation(rtWrap);
+  _map.getContainer().appendChild(rtWrap);
+  const rtFab  = document.getElementById('rt-fab');
+  const rtRow  = document.getElementById('rt-row');
+  const rtHint = document.getElementById('rt-hint');
+
+  const RT = { active: false, mode: 'walk', a: null, aMarker: null, lastA: null, lastB: null };
+
+  function _rtReset() {
+    RT.a = null;
+    if (RT.aMarker) { _map.removeLayer(RT.aMarker); RT.aMarker = null; }
+    rtHint.textContent = 'tap A';
+  }
+  function _rtStart() {
+    if (MM.active) _mmStop();          // never run both click tools at once
+    RT.active = true;
+    rtFab.classList.add('active');
+    rtRow.classList.add('visible');
+    _map.getContainer().style.cursor = 'crosshair';
+    _map.on('click', _rtOnClick);
+    _rtReset();
+  }
+  function _rtStop() {
+    RT.active = false;
+    rtFab.classList.remove('active');
+    rtRow.classList.remove('visible');
+    _map.getContainer().style.cursor = '';
+    _map.off('click', _rtOnClick);
+    if (RT.aMarker) { _map.removeLayer(RT.aMarker); RT.aMarker = null; }
+    RT.a = null;
+  }
+  function _rtOnClick(e) {
+    if (!RT.a) {
+      RT.a = e.latlng;
+      RT.aMarker = L.circleMarker(e.latlng, {
+        radius: 6, color: '#fff', weight: 2, fillColor: '#22c55e', fillOpacity: 1,
+      }).addTo(_map);
+      rtHint.textContent = 'tap B';
+    } else {
+      const a = RT.a, b = e.latlng;
+      RT.lastA = a; RT.lastB = b;
+      if (RT.aMarker) { _map.removeLayer(RT.aMarker); RT.aMarker = null; }
+      _drawRoute([a.lat, a.lng], [b.lat, b.lng], RT.mode, null);
+      RT.a = null;
+      rtHint.textContent = 'tap A';     // ready for the next A→B
+    }
+  }
+  rtFab.onclick = () => { if (RT.active) _rtStop(); else _rtStart(); };
+  rtRow.querySelectorAll('.rt-icon[data-rtmode]').forEach(el => {
+    el.onclick = () => {
+      rtRow.querySelectorAll('.rt-icon[data-rtmode]').forEach(x => x.classList.remove('active'));
+      el.classList.add('active');
+      RT.mode = el.dataset.rtmode;
+      // Re-route the current A→B in the new mode, if one is drawn.
+      if (RT.lastA && RT.lastB) {
+        _drawRoute([RT.lastA.lat, RT.lastA.lng], [RT.lastB.lat, RT.lastB.lng], RT.mode, null);
+      }
+    };
+  });
+  document.getElementById('rt-clear').onclick = () => { _routeClear(); _rtReset(); RT.lastA = RT.lastB = null; };
+
+  // Starting the measure tool must also stop the directions tool.
+  const _mmStartOrig = _mmStart;
+  _mmStart = function () { if (RT.active) _rtStop(); _mmStartOrig(); };
+  mmFab.onclick = () => { if (MM.active) _mmStop(); else _mmStart(); };
 }
 
 // ─── State persistence via localStorage ─────────────────────────────────────
@@ -4348,11 +4783,15 @@ function pinRefOnMap(lat, lng, address) {
        <div class="addr">📍 ${address || 'Reference property'}</div>
        <div style="font-size:11px;color:#94a3b8">Searched property</div>
        ${_factorsButtonHtml(rf.risk_count, rf.medium_count)}
+       ${_stationButtonHtml()}
      </div>`;
   _refMarker.bindPopup(html, { maxWidth: 300, minWidth: 220 });
   _refMarker.on('popupopen', (e) => {
     const root = e.popup.getElement();
-    if (root) _wireFactors(root, (+lat).toFixed(6), (+lng).toFixed(6));
+    if (root) {
+      _wireFactors(root, (+lat).toFixed(6), (+lng).toFixed(6));
+      _wireStation(root, (+lat).toFixed(6), (+lng).toFixed(6));
+    }
   });
   _map.setView([lat, lng], 15);
   setTimeout(() => _map.invalidateSize(), 100);
@@ -4401,11 +4840,15 @@ function renderMap(results, refLat, refLng, refAddress, rates) {
         ${dims ? `<div style="font-size:11px;color:#cbd5e1;margin-top:2px">${dims}</div>` : ''}
         ${soldUrl ? `<a class="fs-link" href="${soldUrl}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
         ${_factorsButtonHtml(r.risk_count, r.medium_count)}
+        ${_stationButtonHtml()}
       </div>`
     );
     circle.on('popupopen', (e) => {
       const root = e.popup.getElement();
-      if (root) _wireFactors(root, (+r.lat).toFixed(6), (+r.lng).toFixed(6));
+      if (root) {
+        _wireFactors(root, (+r.lat).toFixed(6), (+r.lng).toFixed(6));
+        _wireStation(root, (+r.lat).toFixed(6), (+r.lng).toFixed(6));
+      }
     });
   });
 
@@ -5363,6 +5806,125 @@ function _wireFactors(root, lat, lng) {
   };
 }
 
+// ─── Routing: nearest-station chips + on-map route drawing ───────────────────
+// Backed by /api/station-trip, /api/route (see src/routing.py). Walk/bike need
+// an ORS key; drive works keyless via OSRM; transit needs an OTP server.
+const _MODE_META = {
+  walk:    { icon: '🚶', label: 'Walk',    color: '#22c55e' },
+  drive:   { icon: '🚗', label: 'Drive',   color: '#3b82f6' },
+  bike:    { icon: '🚴', label: 'Bike',    color: '#f59e0b' },
+  transit: { icon: '🚆', label: 'Transit', color: '#a855f7' },
+};
+function _fmtDur(s) {
+  if (s == null) return '—';
+  const m = Math.round(s / 60);
+  if (m < 1) return '<1 min';
+  return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`;
+}
+function _fmtDist(m) {
+  if (m == null) return '';
+  return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+}
+
+// Compact inline "🚉 To nearest station (X): 🚶 12 min  🚗 4 min  🚴 8 min" line,
+// injected into every property popup. Auto-loads on popup open; each mode pill
+// stays clickable to draw that route on the map.
+function _stationButtonHtml() {
+  return `<div class="st-line" data-st-line><span class="st-loading">Finding nearest station…</span></div>`;
+}
+function _wireStation(root, lat, lng) {
+  if (!root) return;
+  const line = root.querySelector('[data-st-line]');
+  if (!line) return;
+  (async () => {
+    try {
+      const r = await fetch(`/api/station-trip?lat=${lat}&lng=${lng}`);
+      const d = await r.json();
+      if (d.error || !d.station) {
+        line.innerHTML = `<span class="st-loading">No train station found nearby.</span>`;
+        return;
+      }
+      const order = ['walk', 'drive', 'bike'];
+      const chips = order.map(m => {
+        const mm = _MODE_META[m];
+        const md = (d.modes || {})[m] || {};
+        const err = md.error ? ' data-err="1"' : '';
+        const dur = md.error ? '—' : _fmtDur(md.duration_s);
+        return `<span class="st-chip" data-mode="${m}"${err} style="--c:${mm.color}" title="${mm.label} to ${d.station.name}">${mm.icon} ${dur}</span>`;
+      }).join('');
+      const note = d.has_key ? '' :
+        `<div class="st-note">Drive shown. Add a free OpenRouteService key (ORS_API_KEY) for walk &amp; bike.</div>`;
+      line.innerHTML =
+        `<span class="st-lbl">🚉 To nearest train station (${d.station.name}):</span>${chips}${note}`;
+      line.querySelectorAll('.st-chip').forEach(c => {
+        if (c.dataset.err) return;
+        c.onclick = (e) => {
+          e.stopPropagation();
+          _drawRoute([+lat, +lng], [d.station.lat, d.station.lng], c.dataset.mode, d.station.name);
+        };
+      });
+    } catch (e) {
+      line.innerHTML = `<span class="st-loading">Could not load station (${e.message}).</span>`;
+    }
+  })();
+}
+
+// On-map route rendering — one shared layer + a floating result bar. Used by
+// both the popup station chips and the two-point directions tool.
+let _routeLayer = null;
+function _routeReadoutEl() {
+  let el = document.getElementById('route-readout');
+  if (!el && _map) {
+    el = document.createElement('div');
+    el.id = 'route-readout';
+    el.className = 'route-readout';
+    el.innerHTML = `<span class="rr-text"></span><span class="rr-x" title="Clear route">✕</span>`;
+    L.DomEvent.disableClickPropagation(el);
+    _map.getContainer().appendChild(el);
+    el.querySelector('.rr-x').onclick = () => _routeClear();
+  }
+  return el;
+}
+function _routeShowReadout(text) {
+  const el = _routeReadoutEl();
+  if (!el) return;
+  el.querySelector('.rr-text').innerHTML = text;
+  el.classList.add('visible');
+}
+function _routeClear() {
+  if (_routeLayer) { _map.removeLayer(_routeLayer); _routeLayer = null; }
+  const el = document.getElementById('route-readout');
+  if (el) el.classList.remove('visible');
+}
+async function _drawRoute(from, to, mode, label) {
+  if (!_map) return;
+  const mm = _MODE_META[mode] || _MODE_META.walk;
+  _routeClear();
+  _routeShowReadout(`${mm.icon} routing…`);
+  try {
+    const r = await fetch(`/api/route?from=${from[0]},${from[1]}&to=${to[0]},${to[1]}&mode=${mode}`);
+    const d = await r.json();
+    if (d.error || !d.geometry || !d.geometry.length) {
+      const why = d.error === 'no_key' ? ' — needs an ORS key'
+                : d.error === 'no_otp' ? ' — needs an OTP server'
+                : '';
+      _routeShowReadout(`${mm.icon} no ${mm.label.toLowerCase()} route${why}`);
+      return;
+    }
+    _routeLayer = L.layerGroup().addTo(_map);
+    L.polyline(d.geometry, { color: '#0f172a', weight: 8, opacity: 0.45 }).addTo(_routeLayer);
+    L.polyline(d.geometry, { color: mm.color, weight: 4, opacity: 0.95 }).addTo(_routeLayer);
+    L.circleMarker(from, { radius: 6, color: '#fff', weight: 2, fillColor: mm.color, fillOpacity: 1 }).addTo(_routeLayer);
+    L.circleMarker(to, { radius: 6, color: '#fff', weight: 2, fillColor: '#dc2626', fillOpacity: 1 })
+      .addTo(_routeLayer).bindTooltip(label || 'Destination', { direction: 'top' });
+    _map.fitBounds(L.polyline(d.geometry).getBounds(), { padding: [45, 45] });
+    const dist = d.distance_m != null ? ` · ${_fmtDist(d.distance_m)}` : '';
+    _routeShowReadout(`${mm.icon} ${_fmtDur(d.duration_s)}${dist}${label ? ' → ' + label : ''}`);
+  } catch (e) {
+    _routeShowReadout(`${mm.icon} route failed`);
+  }
+}
+
 // Rough risk-adjusted indicative value: discount the asking RANGE for the
 // listed risks — uses the same per-factor rates as the sold-comps CMA
 // (adj-risk-high/med/cap), so this and the sold table speak the same language.
@@ -5422,13 +5984,17 @@ function _forSaleBindPopup(feature, layer) {
       ${p.url ? `<a class="fs-link" href="${p.url}" target="_blank" rel="noopener">Open on Domain ↗</a>` : ''}
       <span class="fs-fav ${p.favourite ? 'on' : ''}" data-fs-fav title="Save to favourites">${p.favourite ? '★ Saved' : '☆ Save'}</span>
       ${_factorsButtonHtml(p.risk_count, p.medium_count)}
+      ${_stationButtonHtml()}
     </div>`;
   layer.bindPopup(html, { maxWidth: 300, minWidth: 220 });
   const ll = layer.getLatLng ? layer.getLatLng() : null;
   layer.on('popupopen', (e) => {
     const root = e.popup.getElement();
     if (!root) return;
-    if (ll) _wireFactors(root, ll.lat.toFixed(6), ll.lng.toFixed(6));
+    if (ll) {
+      _wireFactors(root, ll.lat.toFixed(6), ll.lng.toFixed(6));
+      _wireStation(root, ll.lat.toFixed(6), ll.lng.toFixed(6));
+    }
     const favBtn = root.querySelector('[data-fs-fav]');
     if (favBtn) favBtn.onclick = (ev) => {
       ev.stopPropagation();
@@ -6674,10 +7240,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const app = document.querySelector('.app');
     app.classList.toggle('invest-mode',  tab === 'invest');
     app.classList.toggle('owner-mode',   tab === 'owner');
+    app.classList.toggle('home-mode',    tab === 'home');
+    app.classList.toggle('swap-mode',    tab === 'swap');
     app.classList.toggle('capital-mode', tab === 'capital');
     if (tab === 'invest')  recalcInvest();
     if (tab === 'owner')   recalcOwner();
-    if (tab === 'capital') recalcCapital();
+    // Current-home + Swap inputs feed the Capital engine; recalc so their live
+    // outputs (equity, after-tax, total capital, Scenario D) stay current.
+    if (tab === 'home' || tab === 'swap' || tab === 'capital') recalcCapital();
   });
 });
 
@@ -6907,7 +7477,12 @@ function recalcInvest() {
   const p2after   = p2inc > 0 ? ato_tax_2024(p2inc + gainShare) : 0;
   const p1cgt     = p1inc > 0 ? p1after - p1taxGross : 0;
   const p2cgt     = p2inc > 0 ? p2after - p2taxGross : 0;
-  const cgtTotal  = p1cgt + p2cgt;
+  // Indexed method: tax the gain at a FLAT 30% (by request) instead of adding it to
+  // salary at marginal rates (which balloons to ~45% on a large gain). The discount
+  // method keeps the marginal "added to salary" treatment.
+  const cgtTotal  = cgtMethod === 'index'
+    ? 0.30 * taxableGain
+    : p1cgt + p2cgt;
 
   // Step 5 — net
   const netAfterCgt = profit - cgtTotal;
@@ -6922,6 +7497,14 @@ function recalcInvest() {
     _$('lbl-cgt-gain').textContent  = 'Capital gain (net proceeds − cost base)';
     _$('hint-cgt-gain').textContent = `${fmtMoney(proceeds)} − ${fmtMoney(costBase)}.`;
   }
+  // Step 4 presentation: indexed → flat 30% line; discount → marginal "added to salary".
+  const _isIndex = cgtMethod === 'index';
+  _$('cgt-marginal-block').style.display = _isIndex ? 'none' : '';
+  _$('cgt-flat-row').style.display       = _isIndex ? '' : 'none';
+  _$('o-cgt-step4-head').textContent     = _isIndex
+    ? 'Step 4 · Tax on the gain (flat 30% — indexed method)'
+    : 'Step 4 · Tax on the gain (added to your salary)';
+  _$('o-cgt-flat').textContent = `${fmtMoney(taxableGain)} × 30% = ${fmtMoney(0.30 * taxableGain)}`;
 
   // Render
   _$('o-cgt-saleprice').textContent = fmtMoney(salePrice);
@@ -6984,7 +7567,7 @@ function recalcInvest() {
     ? loan * (Math.pow(1+rateM, nper) - Math.pow(1+rateM, holdMonths)) / (Math.pow(1+rateM, nper) - 1)
     : loan;
   window._INV = {
-    years, price, loan, rate: rateA,
+    years, price, loan, rate: rateA, lmi, growth: growthA,  // lmi/growth used by Capital Scenario D
     deposit, upfront: stamp + lmi + legal + buyerAgent,  // cash paid at purchase
     reno,                                         // capital improvements (cash out + part of CGT cost base)
     monthlyPmt,                                   // IP P&I payment
@@ -7847,14 +8430,256 @@ function recalcCapital() {
     const el = _$('cc-work-offset'); if (el) el.textContent = w;
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // SCENARIO D — move into the Investment-tab property (owner-occupied) and rent
+  // out the current home (now an investment). Mirror of Scenario A with the roles
+  // swapped: the offset runs on the NEW home loan (non-deductible); the former
+  // home is the IP (interest deductible, no offset). Overrides come from the Swap
+  // tab. (Confirmed: new-home deposit = cash outflow; new home is a CGT-exempt
+  // main residence; former home is CGT-taxed with its cost base reset to today's
+  // value — ATO s118-192 "home first used to produce income".)
+  // ──────────────────────────────────────────────────────────────────────────
+  let dTotal = NaN;
+  if (inv) {
+    const dYears  = +_$('swap-years').value || 0;
+    const dMonths = dYears * 12;
+
+    // ── Leg 1: former home, now rented out (IP — interest deductible, no offset)
+    const rHome      = (+_$('swap-home-rate').value || 0) / 100;
+    const ipPmt      = loanPaymentMo(curLoan, rHome, term);
+    const ipRunMo    = (+_$('swap-home-running').value || 0) / 12;
+    const rentMo     = (+_$('swap-home-rent').value || 0) * 52 / 12;
+    // Average monthly interest over the hold = the deductible portion (principal excluded).
+    const avgIntHome = (curLoan > 0 && dMonths > 0)
+      ? cumipmt(rHome / 12, term * 12, curLoan, 1, dMonths) / dMonths : 0;
+    // Negative gearing: the net rental loss reduces taxable income at the marginal
+    // rate (same method as the Investment tab), using the household incomes.
+    const swapNgOn       = _$('swap-ng-on').checked;
+    // Swap scenario: NG loss base = interest − rent only (running costs are
+    // EXCLUDED from the negative-gearing base by request; they remain a cash
+    // expense in the net monthly cash cost below).
+    const lossMoHome     = avgIntHome - rentMo;
+    const annualLossHome = lossMoHome * 12;
+    // Per-earner before/after tax kept for the Swap-tab step-by-step workings.
+    const p1taxOldH = ato_tax_2024(p1), p2taxOldH = ato_tax_2024(p2);
+    let ngPctH = 0, p1taxNewH = p1taxOldH, p2taxNewH = p2taxOldH, ngAnnualHome = 0;
+    if (swapNgOn && (p1 + p2) > 0) {
+      ngPctH    = annualLossHome / (p1 + p2);
+      p1taxNewH = ato_tax_2024(p1 * (1 - ngPctH));
+      p2taxNewH = ato_tax_2024(p2 * (1 - ngPctH));
+      ngAnnualHome = (p1taxOldH - p1taxNewH) + (p2taxOldH - p2taxNewH);
+    }
+    const ngRefundMoHome = ngAnnualHome / 12;
+    const ipCashMo = ipPmt + ipRunMo - rentMo - ngRefundMoHome;  // actual monthly cash (full P&I)
+
+    // ── Leg 2: new property, now lived in (OO — offset here, non-deductible)
+    const rNew    = (+_$('swap-new-rate').value || 0) / 100;
+    const swapLMI = +_$('swap-new-lmi').value || 0;
+    const ooPmt   = loanPaymentMo(inv.loan, rNew, term);
+    const ooRunMo = inv.runningMo;                               // proxy for the new home's running costs
+    const ooCashMo = ooPmt + ooRunMo;
+    const cashSpentNew = inv.deposit + (inv.upfront - inv.lmi + swapLMI);  // one-off cash outflow at t=0
+
+    // ── Monthly surplus → fed into the new-home offset
+    const surplusD = afterTaxMo - livingMo - ooCashMo - ipCashMo;
+    const simD     = simOffsetLog(inv.loan, rNew, term, dMonths, 0, surplusD);
+
+    // ── End values (after dYears)
+    const newHomeValEnd = inv.price * Math.pow(1 + inv.growth, dYears);
+    const newHomeEq     = newHomeValEnd * (1 - agentPct) - simD.remainingLoan;   // CGT-exempt PPOR
+    const formerValEnd  = homeVal * Math.pow(1 + homeGrow, dYears);
+    const formerLoanEnd = loanBalanceAfter(curLoan, rHome, term, dMonths);
+    const formerGrossEq = formerValEnd * (1 - agentPct) - formerLoanEnd;
+
+    // ── CGT on the former home (now an IP): cost base reset to today's value.
+    const cgtMethodElD = document.querySelector('input[name="cgt-method"]:checked');
+    const cgtMethodD   = cgtMethodElD ? cgtMethodElD.value : 'discount';
+    const inflA        = (+_$('swap-infl').value || 0) / 100;   // Swap-tab inflation (old-home indexing)
+    const proceedsH    = formerValEnd * (1 - agentPct);     // net of selling cost
+    const costBaseH    = homeVal;                            // s118-192 reset to today's market value
+    let taxableH;
+    if (cgtMethodD === 'index') {
+      taxableH = Math.max(0, proceedsH - costBaseH * Math.pow(1 + inflA, dYears));
+    } else {
+      const rawH = Math.max(0, proceedsH - costBaseH);
+      taxableH = rawH * (dYears >= 1 ? 0.5 : 1);
+    }
+    const earnersD   = ((p1 > 0 ? 1 : 0) + (p2 > 0 ? 1 : 0)) || 1;
+    const gainShareD = taxableH / earnersD;
+    const formerCGTmarginal = (p1 > 0 ? ato_tax_2024(p1 + gainShareD) - ato_tax_2024(p1) : 0)
+                            + (p2 > 0 ? ato_tax_2024(p2 + gainShareD) - ato_tax_2024(p2) : 0);
+    // Indexed method: tax the gain at a FLAT 30% (by request) instead of the marginal
+    // "added to salary" rate. Discount method keeps the marginal treatment.
+    const formerCGT  = (cgtMethodD === 'index')
+      ? 0.30 * taxableH
+      : formerCGTmarginal;
+    const formerNetEq = formerGrossEq - formerCGT;
+
+    dTotal = simD.finalOffset + newHomeEq + formerNetEq + cashNow - cashSpentNew;
+
+    // ── Render Scenario D
+    _$('cd-income').textContent   = fmtMoney(afterTaxMo) + '/mo';
+    _$('cd-living').textContent   = '−' + fmtMoney(livingMo) + '/mo';
+    _$('cd-oocost').textContent   = '−' + fmtMoney(ooCashMo) + '/mo';
+    _$('cd-ipcost').textContent   = '−' + fmtMoney(ipCashMo) + '/mo';
+    _$('cd-surplus').textContent  = fmtMoney(surplusD) + '/mo';
+    _$('cd-surplus').classList.toggle('good', surplusD >= 0);
+    _$('cd-surplus').classList.toggle('bad',  surplusD < 0);
+    _$('cd-years').textContent    = dYears + ' yrs';
+    _$('cd-buycost').textContent  = '−' + fmtMoney(cashSpentNew);
+    _$('cd-off-end').textContent  = '+' + fmtMoney(simD.finalOffset);
+    _$('cd-off-eq').textContent   = '+' + fmtMoney(newHomeEq);
+    _$('cd-off-loan').textContent =
+      `${fmtMoney(inv.loan)} → ${fmtMoney(simD.remainingLoan)}  (paid off ${fmtMoney(inv.loan - simD.remainingLoan)})`;
+    _$('cd-ip-eq').textContent    = '+' + fmtMoney(formerGrossEq);
+    _$('cd-ip-loan-detail').textContent =
+      `${fmtMoney(curLoan)} → ${fmtMoney(formerLoanEnd)}  (paid off ${fmtMoney(curLoan - formerLoanEnd)})`;
+    _$('cd-cgt').textContent      = '−' + fmtMoney(formerCGT);
+    _$('cd-cash-end').textContent = '+' + fmtMoney(cashNow);
+    _$('cd-off-total').textContent = fmtMoney(dTotal);
+    _$('cd-off-total').classList.toggle('good', dTotal >= 0);
+    _$('cd-off-total').classList.toggle('bad',  dTotal < 0);
+    _showPhaseRow('cd-phase-row', 'cd-phase-info', simD);
+
+    // ── Swap-tab step-by-step workings (same numbers, broken out like the
+    //    Investment / Owner-occupied tabs so you can see how D is built up).
+    const S = (id, v) => { const e = _$(id); if (e) e.textContent = v; };
+    const costBaseDispH = (cgtMethodD === 'index') ? costBaseH * Math.pow(1 + inflA, dYears) : costBaseH;
+    const rawGainDispH  = Math.max(0, proceedsH - costBaseDispH);
+    // Leg 1 — old home as IP
+    S('sw-ip-pmt', fmtMoney(ipPmt) + '/mo');
+    S('sw-ip-principal', '−' + fmtMoney(ipPmt - avgIntHome) + '/mo');
+    S('sw-ip-avgint', fmtMoney(avgIntHome) + '/mo');
+    S('sw-ip-run', '+' + fmtMoney(ipRunMo) + '/mo');
+    S('sw-ip-rent', '−' + fmtMoney(rentMo) + '/mo');
+    S('sw-ip-loss', fmtMoney(lossMoHome) + '/mo');
+    S('sw-ip-annualloss', fmtMoney(annualLossHome) + '/yr');
+    S('sw-ip-ngpct', swapNgOn ? (ngPctH * 100).toFixed(2) + '% of income' : 'NG off');
+    S('sw-ip-ngp1', swapNgOn ? (fmtMoney(p1taxOldH) + ' → ' + fmtMoney(p1taxNewH)) : '— / —');
+    S('sw-ip-ngp2', swapNgOn ? (fmtMoney(p2taxOldH) + ' → ' + fmtMoney(p2taxNewH)) : '— / —');
+    S('sw-ip-ngyr', fmtMoney(ngAnnualHome) + '/yr');
+    S('sw-ip-ngmo', '+' + fmtMoney(ngRefundMoHome) + '/mo');
+    S('sw-ip-netmo', fmtMoney(ipCashMo) + '/mo');
+    S('sw-ip-valend', fmtMoney(formerValEnd));
+    S('sw-ip-netsale', fmtMoney(proceedsH));
+    S('sw-ip-loanend', '−' + fmtMoney(formerLoanEnd));
+    S('sw-ip-grosseq', fmtMoney(formerGrossEq));
+    S('sw-ip-proceeds', fmtMoney(proceedsH));
+    S('sw-ip-costbase', '−' + fmtMoney(costBaseDispH) + (cgtMethodD === 'index' ? '  (indexed)' : '  (today)'));
+    S('sw-ip-gain', fmtMoney(rawGainDispH));
+    S('sw-ip-taxable', fmtMoney(taxableH) + (cgtMethodD === 'index' ? '  (no discount)' : '  (after 50% discount)'));
+    S('sw-ip-cgt', '−' + fmtMoney(formerCGT));
+    S('sw-ip-neteq', fmtMoney(formerNetEq));
+    // Leg 2 — new home as OO
+    S('sw-oo-price', fmtMoney(inv.price));
+    S('sw-oo-deposit', fmtMoney(inv.deposit));
+    S('sw-oo-upfront', '+' + fmtMoney(inv.upfront - inv.lmi));
+    S('sw-oo-lmi', '+' + fmtMoney(swapLMI));
+    S('sw-oo-buycost', fmtMoney(cashSpentNew));
+    S('sw-oo-pmt', fmtMoney(ooPmt) + '/mo');
+    S('sw-oo-run', '+' + fmtMoney(ooRunMo) + '/mo');
+    S('sw-oo-netmo', fmtMoney(ooCashMo) + '/mo');
+    S('sw-oo-surplus', fmtMoney(surplusD) + '/mo');
+    S('sw-oo-loan', fmtMoney(inv.loan) + ' → ' + fmtMoney(simD.remainingLoan));
+    S('sw-oo-offend', fmtMoney(simD.finalOffset));
+    S('sw-oo-valend', fmtMoney(newHomeValEnd));
+    S('sw-oo-netsale', fmtMoney(newHomeValEnd * (1 - agentPct)));
+    S('sw-oo-eq', fmtMoney(newHomeEq));
+    // Combined D
+    S('sw-d-income', fmtMoney(afterTaxMo) + '/mo');
+    S('sw-d-living', '−' + fmtMoney(livingMo) + '/mo');
+    S('sw-d-oocost', '−' + fmtMoney(ooCashMo) + '/mo');
+    S('sw-d-ipcost', '−' + fmtMoney(ipCashMo) + '/mo');
+    S('sw-d-surplus', fmtMoney(surplusD) + '/mo');
+    S('sw-d-offend', '+' + fmtMoney(simD.finalOffset));
+    S('sw-d-newhomeeq', '+' + fmtMoney(newHomeEq));
+    S('sw-d-oldhomeeq', '+' + fmtMoney(formerNetEq));
+    S('sw-d-cash', '+' + fmtMoney(cashNow));
+    S('sw-d-buycost', '−' + fmtMoney(cashSpentNew));
+    S('sw-d-total', fmtMoney(dTotal));
+
+    // ── Workings (D)
+    {
+      const DL = '─'.repeat(78);
+      const TH = '  ' + ' Mth'.padStart(4) + '  │' + 'Loan(off)'.padStart(15) +
+                 '  │' + 'Loan(no-off)'.padStart(15) + '  │' + 'Offset bal'.padStart(13) +
+                 '  │' + 'Eff. balance'.padStart(15) + '  │' + 'Interest'.padStart(11) +
+                 '  │' + 'Principal'.padStart(12);
+      const TS = '  ' + '─'.repeat(TH.length - 2);
+      let w = DL + '\n';
+      w += '  SCENARIO D · Move into new place (OO) + rent out old home (IP)\n';
+      w += DL + '\n';
+      w += 'MONTHLY CASH FLOW\n';
+      w += _wLine('After-tax income', afterTaxMo, '/mo') + '\n';
+      w += _wLine('  − Living expenses', -livingMo, '/mo') + '\n';
+      w += _wLine('  − New home cost (OO P&I + running)', -ooCashMo, '/mo') + '\n';
+      w += _wLine('  − Old home cost (IP P&I + running − rent − NG)', -ipCashMo, '/mo') + '\n';
+      w += _wLine('  = Monthly surplus → offset', surplusD, '/mo') + '\n';
+      w += '\n';
+      w += 'OLD HOME AS IP  (negative gearing ' + (swapNgOn ? 'ON' : 'OFF') + ')\n';
+      w += _wLine('Avg monthly interest (deductible)', avgIntHome) + '\n';
+      w += _wLine('  − rent', -rentMo) + '\n';
+      w += _wLine('  = net rental loss (NG base = interest − rent)', lossMoHome) + '\n';
+      w += _wLine('NG refund / mo', ngRefundMoHome, swapNgOn ? 'marginal-rate benefit' : 'NG off') + '\n';
+      w += _wLine('Running costs (cash only, NOT in NG base)', ipRunMo) + '\n';
+      w += '\n';
+      w += 'NEW HOME BUY COST  (one-off cash at settlement)\n';
+      w += _wLine('Deposit', inv.deposit) + '\n';
+      w += _wLine('  + upfront (stamp/legal/agent)', inv.upfront - inv.lmi) + '\n';
+      w += _wLine('  + owner-occupier LMI', swapLMI) + '\n';
+      w += _wLine('  = Cash spent on new home', cashSpentNew) + '\n';
+      w += '\n';
+      w += 'OFFSET ON NEW HOME LOAN  (' + dYears + ' yrs)\n';
+      w += TH + '\n' + TS + '\n';
+      simD.rows.forEach(r => { w += _wRow(r) + '\n'; });
+      w += '\n';
+      w += 'END VALUES  (after ' + dYears + ' yrs)\n';
+      w += _wLine('New home value (grown)', newHomeValEnd) + '\n';
+      w += _wLine('  net sale × (1 − ' + (agentPct*100).toFixed(1) + '%)', newHomeValEnd*(1-agentPct)) + '\n';
+      w += _wLine('  − remaining new-home loan (offset)', -simD.remainingLoan) + '\n';
+      w += _wLine('  = New home equity (no CGT — main residence)', newHomeEq) + '\n';
+      w += _wLine('Old home value (grown)', formerValEnd) + '\n';
+      w += _wLine('  net sale − remaining old-home loan', formerGrossEq) + '\n';
+      w += _wLine('  − CGT (cost base reset to today)', -formerCGT) + '\n';
+      w += _wLine('  = Old home net equity', formerNetEq) + '\n';
+      w += '\n';
+      w += 'TOTAL  (with offset)\n';
+      w += _wLine('  Offset balance (= accumulated savings)', simD.finalOffset) + '\n';
+      w += _wLine('  + New home equity', newHomeEq) + '\n';
+      w += _wLine('  + Old home net equity', formerNetEq) + '\n';
+      w += _wLine('  + Current cash savings (untouched)', cashNow) + '\n';
+      w += _wLine('  − Cash spent on new home', -cashSpentNew) + '\n';
+      w += '  ' + '═'.repeat(64) + '\n';
+      w += _wLine('  = TOTAL CAPITAL (D)', dTotal) + '\n';
+      const el = _$('cd-work-offset'); if (el) el.textContent = w;
+    }
+  } else {
+    // No Investment-tab data yet — blank Scenario D so it shows no stale numbers.
+    ['cd-income','cd-living','cd-oocost','cd-ipcost','cd-surplus','cd-years','cd-buycost',
+     'cd-off-end','cd-off-eq','cd-off-loan','cd-ip-eq','cd-ip-loan-detail','cd-cgt',
+     'cd-cash-end','cd-off-total',
+     // Swap-tab workings
+     'sw-ip-pmt','sw-ip-principal','sw-ip-avgint','sw-ip-run','sw-ip-rent','sw-ip-loss','sw-ip-annualloss',
+     'sw-ip-ngpct','sw-ip-ngp1','sw-ip-ngp2','sw-ip-ngyr','sw-ip-ngmo','sw-ip-netmo',
+     'sw-ip-valend','sw-ip-netsale','sw-ip-loanend','sw-ip-grosseq','sw-ip-proceeds',
+     'sw-ip-costbase','sw-ip-gain','sw-ip-taxable','sw-ip-cgt','sw-ip-neteq',
+     'sw-oo-price','sw-oo-deposit','sw-oo-upfront','sw-oo-lmi','sw-oo-buycost','sw-oo-pmt',
+     'sw-oo-run','sw-oo-netmo','sw-oo-surplus','sw-oo-loan','sw-oo-offend','sw-oo-valend',
+     'sw-oo-netsale','sw-oo-eq','sw-d-income','sw-d-living','sw-d-oocost','sw-d-ipcost',
+     'sw-d-surplus','sw-d-offend','sw-d-newhomeeq','sw-d-oldhomeeq','sw-d-cash',
+     'sw-d-buycost','sw-d-total'].forEach(id => { const el = _$(id); if (el) el.textContent = '—'; });
+  }
+
   // Top-of-tab verdict (uses offset-aware totals)
   _$('cap-a-total').textContent = isFinite(aTotal) ? fmtMoney(aTotal) : '—';
   _$('cap-b-total').textContent = isFinite(bTotal) ? fmtMoney(bTotal) : '—';
   _$('cap-c-total').textContent = fmtMoney(cTotalForVerdict);
+  _$('cap-d-total').textContent = isFinite(dTotal) ? fmtMoney(dTotal) : '—';
   const scores = [
-    { label: 'A (keep home + invest)', val: isFinite(aTotal) ? aTotal : -Infinity },
-    { label: 'B (sell + upgrade)',     val: isFinite(bTotal) ? bTotal : -Infinity },
-    { label: 'C (keep, no buy)',       val: cTotalForVerdict },
+    { label: 'A (keep home + invest)',  val: isFinite(aTotal) ? aTotal : -Infinity },
+    { label: 'B (sell + upgrade)',      val: isFinite(bTotal) ? bTotal : -Infinity },
+    { label: 'C (keep, no buy)',        val: cTotalForVerdict },
+    { label: 'D (move in + rent old)',  val: isFinite(dTotal) ? dTotal : -Infinity },
   ];
   const best = scores.reduce((a, b) => b.val > a.val ? b : a);
   _$('cap-verdict-label').textContent = '🏆 Best: ' + best.label;
@@ -7862,9 +8687,13 @@ function recalcCapital() {
 }
 
 ['cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
- 'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years'].forEach(id => {
+ 'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years',
+ // Swap-tab overrides that drive Scenario D
+ 'swap-home-rate','swap-home-rent','swap-home-running','swap-years','swap-infl',
+ 'swap-new-rate','swap-new-lmi'].forEach(id => {
   const el = _$(id); if (el) el.addEventListener('input', recalcCapital);
 });
+{ const swapNg = _$('swap-ng-on'); if (swapNg) swapNg.addEventListener('change', recalcCapital); }
 
 // ── Scenario save / load (server-side — works across all devices) ────────────
 const SCEN_INPUT_IDS = [
@@ -7880,8 +8709,11 @@ const SCEN_INPUT_IDS = [
   // Capital tab
   'cap-home-value','cap-agent','cap-cur-loan','cap-cur-rate','cap-savings',
   'cap-p1','cap-p2','cap-living','cap-home-growth','cap-term','cap-c-years',
+  // Swap tab (Scenario D overrides)
+  'swap-home-rate','swap-home-rent','swap-home-running','swap-years','swap-infl',
+  'swap-new-rate','swap-new-lmi',
 ];
-const SCEN_CHECK_IDS = ['i-ng-on'];
+const SCEN_CHECK_IDS = ['i-ng-on','swap-ng-on'];
 
 async function scenSave(name) {
   if (!name) return;
@@ -7986,39 +8818,154 @@ function _aiLoad() {
 function _aiSave() {
   try { localStorage.setItem(AI_LS_KEY, JSON.stringify(_aiItems.slice(-100))); } catch {}
 }
+// Server allows up to 15 min per request; anything still "pending" well past that
+// is an orphan (server restarted mid-run, or the send never reached the server)
+// and would otherwise spin "processing…" forever. Drop those. Returns true if any
+// were removed.
+const _AI_PENDING_TTL_MS = 16 * 60 * 1000;
+function _aiPrunePending() {
+  const now = Date.now();
+  const before = _aiItems.length;
+  _aiItems = _aiItems.filter(it =>
+    it.status !== 'pending' || (typeof it.createdAt === 'number' && now - it.createdAt < _AI_PENDING_TTL_MS));
+  return _aiItems.length !== before;
+}
 function _aiEscape(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function _aiMarkdown(s) {
-  let h = _aiEscape(s);
-  h = h.replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
-  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-  h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-  h = h.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-  h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  return h;
+  // Pull out fenced code blocks first so inline rules don't touch their contents.
+  const blocks = [];
+  const src = String(s).replace(/```([\s\S]*?)```/g, (_, code) => {
+    blocks.push('<pre><code>' + _aiEscape(code.replace(/^\n+|\n+$/g, '')) + '</code></pre>');
+    return ' ' + (blocks.length - 1) + ' ';
+  });
+  const inline = (line) => {
+    let h = _aiEscape(line);
+    h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    h = h.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return h;
+  };
+  const out = [];
+  let listOpen = false;
+  const closeList = () => { if (listOpen) { out.push('</ul>'); listOpen = false; } };
+  for (const raw of src.split('\n')) {
+    const ph = raw.match(/^ (\d+) $/);
+    if (ph) { closeList(); out.push(blocks[+ph[1]]); continue; }
+    const line = raw.replace(/\s+$/, '');
+    if (!line.trim()) { closeList(); continue; }
+    let m;
+    if ((m = line.match(/^(#{1,3})\s+(.*)$/))) {
+      closeList(); out.push('<div class="ai-md-h' + m[1].length + '">' + inline(m[2]) + '</div>');
+    } else if (/^([-*_])\1{2,}$/.test(line.trim())) {
+      closeList(); out.push('<hr class="ai-md-hr">');
+    } else if ((m = line.match(/^\s*(?:[-*]|\d+\.)\s+(.*)$/))) {
+      if (!listOpen) { out.push('<ul class="ai-md-ul">'); listOpen = true; }
+      out.push('<li>' + inline(m[1]) + '</li>');
+    } else {
+      closeList(); out.push('<div>' + inline(line) + '</div>');
+    }
+  }
+  closeList();
+  return out.join('');
 }
+function _aiDir(s) {
+  // Detect predominantly right-to-left text (Persian/Arabic/Hebrew) so the
+  // bubble renders RTL; otherwise let the browser auto-detect.
+  const str = String(s || '');
+  const rtl = (str.match(/[֐-׿؀-ۿݐ-ݿࢠ-ࣿיִ-﷿ﹰ-﻿]/g) || []).length;
+  const ltr = (str.match(/[A-Za-z]/g) || []).length;
+  return rtl > ltr ? 'rtl' : 'auto';
+}
+// Sparkle icon reused for the Thinking trail and the model tag (Task-Manager style).
+const _AI_SPARK = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"'
+  + ' width="14" height="14" style="vertical-align:middle;margin-right:5px">'
+  + '<path d="M12 2L13.9 8.6L20.5 10L13.9 11.4L12 18L10.1 11.4L3.5 10L10.1 8.6L12 2Z" fill="#94a3b8"/></svg>';
+// Green sparkle for the model tag — matches the Task-Manager .sg-model-tag icon.
+const _AI_SPARK_GREEN = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"'
+  + ' width="10" height="10" style="vertical-align:middle;margin-right:3px">'
+  + '<path d="M12 2L13.9 8.6L20.5 10L13.9 11.4L12 18L10.1 11.4L3.5 10L10.1 8.6L12 2Z" fill="#34d399"/></svg>';
 function _aiRender() {
   const box = _$('ai-msgs'); if (!box) return;
   box.innerHTML = '';
   for (const it of _aiItems) {
+    // ── User bubble ──
     const u = document.createElement('div');
     u.className = 'ai-bubble ai-bubble--user';
+    u.dir = _aiDir(it.text);
     u.textContent = it.text;
     box.appendChild(u);
-    if (it.status === 'processed' && it.response) {
+    // ── User-bubble meta: timestamp + 🗑 delete (Task-Manager .sg-msg-meta) ──
+    const um = document.createElement('div');
+    um.className = 'ai-user-meta';
+    const utime = document.createElement('span');
+    utime.className = 'ai-user-time';
+    const ud = new Date(typeof it.createdAt === 'number' ? it.createdAt : (Date.parse(it.createdAt) || Date.now()));
+    utime.textContent = ud.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const udel = document.createElement('button');
+    udel.className = 'ai-user-del';
+    udel.textContent = '🗑';
+    udel.title = 'Delete';
+    udel.addEventListener('click', () => _aiDelete(it.id));
+    um.appendChild(utime);
+    um.appendChild(udel);
+    box.appendChild(um);
+
+    if (it.status === 'pending') {
+      // ── Live "Thinking:" trail — the model's running narration, streamed in ──
+      const t = document.createElement('div');
+      t.className = 'ai-thinking';
+      const lines = String(it.verbose || '').split('\n').map(s => s.trim()).filter(Boolean);
+      if (lines.length) {
+        // Newest at the bottom; keep the bubble readable by showing the last few.
+        t.innerHTML = _AI_SPARK + '<b>Thinking:</b>'
+          + lines.slice(-14).map(l => '<span class="ai-think-line">' + _aiEscape(l) + '</span>').join('');
+        t.dir = _aiDir(it.verbose);
+      } else {
+        t.innerHTML = _AI_SPARK + 'Thinking…';
+      }
+      box.appendChild(t);
+    } else if (it.status === 'processed' && it.response) {
+      // ── Response bubble (green), with 💬 prefix + read-aloud ──
       const b = document.createElement('div');
       b.className = 'ai-bubble ai-bubble--bot';
-      b.innerHTML = _aiMarkdown(it.response);
+      b.dir = _aiDir(it.response);
+      b.innerHTML = '<span style="margin-right:4px">💬</span>' + _aiMarkdown(it.response);
+      const spk = document.createElement('button');
+      spk.className = 'ai-tts';
+      spk.title = 'Read aloud';
+      spk.textContent = '🔊';
+      spk.addEventListener('click', e => { e.stopPropagation(); _aiSpeak(it.response, spk); });
+      b.appendChild(spk);
       box.appendChild(b);
-    } else if (it.status === 'pending') {
-      const p = document.createElement('div');
-      p.className = 'ai-bubble ai-bubble--pending';
-      p.textContent = 'Thinking… (Copilot Chat in VS Code is processing)';
-      box.appendChild(p);
+
+      // ── Footer: copy button + model tag ──
+      const meta = document.createElement('div');
+      meta.className = 'ai-resp-meta';
+      const copy = document.createElement('button');
+      copy.className = 'ai-copy-btn';
+      copy.textContent = '📋 Copy';
+      copy.addEventListener('click', () => {
+        navigator.clipboard.writeText(it.response).then(() => {
+          copy.textContent = '✓ Copied'; copy.classList.add('copied');
+          setTimeout(() => { copy.textContent = '📋 Copy'; copy.classList.remove('copied'); }, 1800);
+        }).catch(() => {});
+      });
+      meta.appendChild(copy);
+      if (it.model || it.processor) {
+        const tag = document.createElement('span');
+        tag.className = 'ai-model-tag';
+        tag.innerHTML = _AI_SPARK_GREEN + _aiEscape(it.model || it.processor);
+        meta.appendChild(tag);
+      }
+      box.appendChild(meta);
     }
   }
-  box.scrollTop = box.scrollHeight;
+  // Scroll to the bottom after layout so the (sticky) Thinking trail and newest
+  // bubble are fully in view, not flush under the composer.
+  requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
   const pending = _aiItems.some(x => x.status === 'pending');
   const dot = document.querySelector('.ai-fab__dot');
   if (dot) dot.classList.toggle('on', pending);
@@ -8029,23 +8976,164 @@ async function _aiSyncFromServer() {
     if (!r.ok) return;
     const remote = await r.json();
     if (!Array.isArray(remote)) return;
-    const byId = new Map(remote.map(x => [x.id, x]));
-    let changed = false;
-    for (let i = 0; i < _aiItems.length; i++) {
-      const r2 = byId.get(_aiItems[i].id);
-      if (r2 && (r2.status !== _aiItems[i].status || r2.response !== _aiItems[i].response)) {
-        _aiItems[i] = { ..._aiItems[i], ...r2 };
-        changed = true;
-      }
+    // The server file is the source of truth for the full conversation history.
+    // Merge it in (in server order) so previous chats appear even on a fresh
+    // browser with empty localStorage — without waiting for the user to send a
+    // message first. Existing local items are updated with the server copy.
+    const localById = new Map(_aiItems.map(x => [x.id, x]));
+    const remoteIds = new Set(remote.map(x => x.id));
+    const merged = remote.map(r2 => {
+      const loc = localById.get(r2.id);
+      return loc ? { ...loc, ...r2 } : r2;
+    });
+    // Keep any local-only items (e.g. a just-sent request not yet persisted),
+    // but drop ghost "pending" items the server no longer has after ~60s — these
+    // are stuck requests (server cleared them or never registered them) and
+    // would otherwise show "Thinking…" forever.
+    const _now = Date.now();
+    for (const it of _aiItems) {
+      if (remoteIds.has(it.id)) continue;
+      const created = typeof it.createdAt === 'number' ? it.createdAt : (Date.parse(it.createdAt) || _now);
+      if (it.status === 'pending' && (_now - created) > 60000) continue;
+      merged.push(it);
     }
-    if (changed) { _aiSave(); _aiRender(); }
+    const sig = a => a.map(x => `${x.id}${x.status || ''}${x.response || ''}${(x.verbose || '').length}`).join('');
+    // Re-render when the data changed, OR when the on-screen list is still empty
+    // while we now have items — this covers the first page load, where the very
+    // first render raced ahead of the chat panel being added to the DOM.
+    const box = _$('ai-msgs');
+    const boxEmpty = box && box.children.length === 0;
+    if (sig(merged) !== sig(_aiItems)) { _aiItems = merged; _aiSave(); _aiRender(); }
+    else if (boxEmpty && _aiItems.length) { _aiRender(); }
     const stillPending = _aiItems.some(x => x.status === 'pending');
     if (!stillPending && _aiPollTimer) { clearInterval(_aiPollTimer); _aiPollTimer = null; }
   } catch {}
 }
 function _aiStartPoll() {
   if (_aiPollTimer) return;
-  _aiPollTimer = setInterval(_aiSyncFromServer, 4000);
+  _aiPollTimer = setInterval(_aiSyncFromServer, 2000);  // 2s for a live "thinking" feel
+}
+// ── Voice input (record → Groq Whisper transcription) ──
+// Records mic audio, encodes a 16-bit PCM WAV, uploads to /api/transcribe
+// (Groq-hosted whisper-large-v3), then drops the text into the compose box for
+// editing — never auto-sends. Far more accurate than browser SpeechRecognition
+// (and no word repetition). FA/EN toggle is just a language hint for Whisper.
+let _aiVoice = null;
+let _aiVoiceTimer = null, _aiWaveTimer = null, _aiWaveLevels = [];
+const _AI_WAVE_BARS = 36;
+function _aiEncodeWAV(chunks, sampleRate) {
+  let total = 0; for (const c of chunks) total += c.length;
+  const merged = new Float32Array(total); let o = 0;
+  for (const c of chunks) { merged.set(c, o); o += c.length; }
+  const pcm = new Int16Array(merged.length);
+  for (let i = 0; i < merged.length; i++) { const s = Math.max(-1, Math.min(1, merged[i])); pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF; }
+  const dataLen = pcm.length * 2, buf = new ArrayBuffer(44 + dataLen), v = new DataView(buf);
+  const ws = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4, 36+dataLen, true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sampleRate,true); v.setUint32(28,sampleRate*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true); ws(36,'data'); v.setUint32(40,dataLen,true);
+  let p = 44; for (let i = 0; i < pcm.length; i++) { v.setInt16(p, pcm[i], true); p += 2; }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+function _aiWaveFrame() {
+  const wave = _$('ai-wave'); if (!wave || !_aiVoice) return;
+  const bars = wave.children;
+  const level = Math.min(1, (_aiVoice.level || 0) * 12);
+  _aiWaveLevels.push(level);
+  while (_aiWaveLevels.length > bars.length) _aiWaveLevels.shift();
+  const offset = bars.length - _aiWaveLevels.length;
+  for (let i = 0; i < bars.length; i++) {
+    const idx = i - offset;
+    const lv = (idx >= 0 && idx < _aiWaveLevels.length) ? _aiWaveLevels[idx] : 0;
+    bars[i].style.height = (10 + lv * 90) + '%';
+  }
+}
+function _aiVoiceTimerTick() {
+  if (!_aiVoice) return;
+  const s = Math.floor((Date.now() - _aiVoice.start) / 1000);
+  const el = _$('ai-vb-timer'); if (el) el.textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+function _aiStartVoice() {
+  if (_aiVoice) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('Voice recording not supported in this browser.'); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(4096, 1, 1);
+    const samples = [];
+    proc.onaudioprocess = (e) => {
+      const d = e.inputBuffer.getChannelData(0);
+      samples.push(new Float32Array(d));
+      let sum = 0; for (let i = 0; i < d.length; i++) sum += d[i]*d[i];
+      if (_aiVoice) _aiVoice.level = Math.sqrt(sum / d.length);
+    };
+    source.connect(proc); proc.connect(ctx.destination);
+    _aiVoice = { ctx, stream, proc, source, samples, sampleRate: ctx.sampleRate, start: Date.now(), level: 0 };
+    _$('ai-compose').style.display = 'none';
+    _$('ai-voicebar').classList.add('active');
+    const wave = _$('ai-wave'); if (wave) { wave.innerHTML = ''; for (let i=0;i<_AI_WAVE_BARS;i++) wave.appendChild(document.createElement('span')); }
+    _aiWaveLevels = [];
+    _$('ai-vb-timer').textContent = '0:00';
+    _aiVoiceTimer = setInterval(_aiVoiceTimerTick, 500);
+    _aiWaveTimer = setInterval(_aiWaveFrame, 70);
+  }).catch(() => alert('Microphone access denied.'));
+}
+function _aiStopVoiceUI() {
+  if (_aiVoiceTimer) { clearInterval(_aiVoiceTimer); _aiVoiceTimer = null; }
+  if (_aiWaveTimer) { clearInterval(_aiWaveTimer); _aiWaveTimer = null; }
+  _aiWaveLevels = [];
+  _$('ai-voicebar').classList.remove('active');
+  _$('ai-compose').style.display = 'flex';
+  if (_aiVoice && _aiVoice.ctx) { try { _aiVoice.ctx.close(); } catch {} _aiVoice.stream.getTracks().forEach(t => t.stop()); }
+}
+function _aiCancelVoice() { _aiStopVoiceUI(); _aiVoice = null; }
+function _aiStopSendVoice() {
+  if (!_aiVoice) return;
+  const blob = _aiEncodeWAV(_aiVoice.samples, _aiVoice.sampleRate);
+  _aiStopVoiceUI(); _aiVoice = null;
+  _aiTranscribe(blob);
+}
+async function _aiTranscribe(blob) {
+  const ta = _$('ai-input'), mic = _$('ai-mic');
+  const prev = ta.getAttribute('placeholder');
+  ta.setAttribute('placeholder', '🎤 Transcribing…');
+  if (mic) { mic.disabled = true; mic.classList.add('recording'); }
+  try {
+    // No language hint — Whisper auto-detects (Persian, English, etc.).
+    const r = await fetch('/api/transcribe', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'audio/wav' }, body: blob,
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    const text = (d.transcript || '').trim();
+    const existing = (ta.value || '').trim();
+    ta.value = existing ? (existing + ' ' + text) : text;
+    ta.dispatchEvent(new Event('input'));
+    ta.focus();
+    try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch {}
+  } catch (e) {
+    alert('Transcription failed: ' + e.message);
+  } finally {
+    ta.setAttribute('placeholder', prev || 'Ask or speak…');
+    if (mic) { mic.disabled = false; mic.classList.remove('recording'); }
+  }
+}
+// ── Read aloud (text-to-speech, browser-native) ──
+function _aiSpeak(text, btn) {
+  const synth = window.speechSynthesis;
+  if (!synth) { alert('تبدیل متن به گفتار در این مرورگر پشتیبانی نمی‌شود.'); return; }
+  const wasOn = btn && btn.dataset.on === '1';
+  synth.cancel();                                  // stop anything already speaking
+  document.querySelectorAll('.ai-tts').forEach(x => { x.dataset.on = '0'; x.textContent = '🔊'; });
+  if (wasOn) return;                               // second click = just stop
+  const plain = String(text).replace(/```[\s\S]*?```/g, ' ').replace(/[#*`_>]/g, ' ');
+  const u = new SpeechSynthesisUtterance(plain);
+  u.lang = _aiDir(text) === 'rtl' ? 'fa-IR' : 'en-US';
+  u.onend = () => { if (btn) { btn.dataset.on = '0'; btn.textContent = '🔊'; } };
+  if (btn) { btn.dataset.on = '1'; btn.textContent = '⏹'; }
+  synth.speak(u);
 }
 async function sendAIRequest() {
   const ta = _$('ai-input');
@@ -8069,7 +9157,8 @@ function openAIChat() {
   _$('ai-overlay').classList.add('open');
   _$('ai-panel').classList.add('open');
   setTimeout(() => _$('ai-input')?.focus(), 100);
-  _aiSyncFromServer();
+  _aiRender();          // show whatever we already have (localStorage / prior sync) instantly
+  _aiSyncFromServer();  // then refresh from the server (full history) in the background
 }
 function closeAIChat() {
   _$('ai-overlay').classList.remove('open');
@@ -8085,32 +9174,120 @@ function clearAIChat() {
     body: '[]',
   }).catch(() => {});
 }
-(function _aiInit() {
-  _aiLoad(); _aiRender();
+// Delete a single message (user bubble + its reply), Task-Manager style. Persists
+// by writing the trimmed array back through the same /api/ai-requests endpoint.
+function _aiDelete(id) {
+  if (!confirm('Delete this message?')) return;
+  _aiItems = _aiItems.filter(x => x.id !== id);
+  _aiSave(); _aiRender();
+  fetch('/api/ai-requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(_aiItems),
+  }).catch(() => {});
+}
+function _aiInit() {
+  _aiLoad();
+  _aiPrunePending();   // clear orphaned "processing…" bubbles left from a prior session
+  _aiSave(); _aiRender();
   const ta = _$('ai-input');
   if (ta) ta.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAIRequest(); }
   });
   if (_aiItems.some(x => x.status === 'pending')) _aiStartPoll();
   _aiSyncFromServer();
-})();
+}
+// Wait for the chat panel (which lives *after* this script in the document) to
+// exist before the first render/sync, so the full history shows on first load
+// without needing to send a message first.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _aiInit);
+} else {
+  _aiInit();
+}
 
 </script>
 <!-- ── AI Chat (Copilot bridge) ─────────────────────────────────────── -->
-<button class="ai-fab" onclick="openAIChat()" title="AI Chat (Copilot)">
+<button class="ai-fab" id="ai-fab" title="AI Chat (Copilot) — drag to move">
   <span>💬</span><span class="ai-fab__dot"></span>
 </button>
+<script>
+/* Make the AI chat button draggable (touch + mouse) so it can be moved off
+   other controls. A small movement threshold distinguishes a tap (open chat)
+   from a drag (reposition). */
+(function initAiFabDrag(){
+  const fab = document.getElementById('ai-fab');
+  if (!fab) return;
+  const THRESH = 5;                  // px before a press counts as a drag
+  let dragging = false, moved = false;
+  let startX = 0, startY = 0, origX = 0, origY = 0, pid = null;
+
+  fab.addEventListener('pointerdown', e => {
+    pid = e.pointerId; dragging = true; moved = false;
+    const r = fab.getBoundingClientRect();
+    origX = r.left; origY = r.top;
+    startX = e.clientX; startY = e.clientY;
+    try { fab.setPointerCapture(pid); } catch (_) {}
+  });
+
+  fab.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (!moved && Math.hypot(dx, dy) < THRESH) return;
+    if (!moved) { moved = true; fab.classList.add('dragging'); }
+    const w = fab.offsetWidth, h = fab.offsetHeight, pad = 4;
+    let nx = Math.max(pad, Math.min(window.innerWidth  - w - pad, origX + dx));
+    let ny = Math.max(pad, Math.min(window.innerHeight - h - pad, origY + dy));
+    fab.style.left = nx + 'px';  fab.style.top = ny + 'px';
+    fab.style.right = 'auto';    fab.style.bottom = 'auto';
+  });
+
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    fab.classList.remove('dragging');
+    try { fab.releasePointerCapture(pid); } catch (_) {}
+  };
+  fab.addEventListener('pointerup', end);
+  fab.addEventListener('pointercancel', end);
+
+  // Open chat only on a genuine tap (not at the end of a drag).
+  fab.addEventListener('click', e => {
+    if (moved) { e.preventDefault(); e.stopImmediatePropagation(); moved = false; return; }
+    openAIChat();
+  });
+})();
+</script>
 <div class="ai-overlay" id="ai-overlay" onclick="closeAIChat()"></div>
 <div class="ai-panel" id="ai-panel" role="dialog" aria-label="AI Chat">
   <div class="ai-panel__hdr">
-    <h3>AI Chat · Copilot</h3>
+    <h3>AI Chat · Claude</h3>
     <button class="ai-panel__clear" onclick="clearAIChat()" title="Clear history">Clear</button>
     <button class="ai-panel__close" onclick="closeAIChat()" aria-label="Close">×</button>
   </div>
   <div class="ai-msgs" id="ai-msgs"></div>
-  <div class="ai-compose">
-    <textarea id="ai-input" placeholder="Ask anything… (Enter to send, Shift+Enter for newline)" rows="1"></textarea>
-    <button onclick="sendAIRequest()">Send</button>
+  <div class="ai-compose" id="ai-compose">
+    <button id="ai-mic" class="ai-voicebtn" onclick="_aiStartVoice()" title="Record voice (Whisper)" aria-label="Record voice">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 15.2c2.18 0 3.95-1.78 3.95-3.96V6.95A3.95 3.95 0 0 0 12 3a3.95 3.95 0 0 0-3.95 3.95v4.29A3.95 3.95 0 0 0 12 15.2Zm6.45-4.44a.95.95 0 0 0-1.9 0A4.56 4.56 0 0 1 12 15.31a4.56 4.56 0 0 1-4.55-4.55.95.95 0 0 0-1.9 0 6.42 6.42 0 0 0 5.5 6.34v2.05H8.86a.95.95 0 1 0 0 1.9h6.28a.95.95 0 1 0 0-1.9h-2.19V17.1a6.42 6.42 0 0 0 5.5-6.34Z"/></svg>
+    </button>
+    <textarea id="ai-input" dir="auto" placeholder="Ask or speak… (Enter to send, Shift+Enter for newline)" rows="1"></textarea>
+    <button class="ai-sendbtn" onclick="sendAIRequest()" title="Send" aria-label="Send">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.5 20.6 21 12 3.5 3.4 3 10.1l11 1.9-11 1.9.5 6.7Z"/></svg>
+    </button>
+  </div>
+  <div class="ai-voicebar" id="ai-voicebar">
+    <button class="vb-btn vb-cancel" onclick="_aiCancelVoice()" title="Cancel" aria-label="Cancel recording">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.42 1.42L10.59 13.4 4.3 19.7 2.88 18.29 9.17 12 2.88 5.71 4.3 4.29l6.29 6.3 6.29-6.3z"/></svg>
+    </button>
+    <div class="vb-stage">
+      <span class="vb-dot"></span>
+      <div class="ai-wave" id="ai-wave" aria-hidden="true"></div>
+      <span class="ai-vb-timer" id="ai-vb-timer">0:00</span>
+    </div>
+    <button class="vb-btn vb-send" onclick="_aiStopSendVoice()" title="Transcribe &amp; insert" aria-label="Transcribe">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.5 20.6 21 12 3.5 3.4 3 10.1l11 1.9-11 1.9.5 6.7Z"/></svg>
+    </button>
   </div>
 </div>
 </body>

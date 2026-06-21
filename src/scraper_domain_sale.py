@@ -201,21 +201,26 @@ def save_listings(con: sqlite3.Connection, listings: List[Dict[str, Any]]) -> Tu
     return inserted, updated
 
 
-def load_listings(con: sqlite3.Connection) -> List[Dict[str, Any]]:
+def load_listings(con: sqlite3.Connection, include_removed: bool = False) -> List[Dict[str, Any]]:
     # The latest scrape stamped all listings it saw with the same last_seen.
     # Relative to that timestamp: NEW = first appeared this scrape; UPDATED =
     # existed before but a field changed this scrape. Anything highlighted in a
     # previous refresh but unchanged now is neither.
+    #
+    # include_removed=True shows EVERY listing on the map regardless of whether
+    # it has gone off-market / sold / withdrawn (removed=1). Default keeps the
+    # historical behaviour of only showing live listings.
     row = con.execute("SELECT MAX(last_seen) FROM listings WHERE removed=0").fetchone()
     latest_ts = row[0] if row else None
-    cur = con.execute("""
+    removed_clause = "" if include_removed else "removed=0 AND "
+    cur = con.execute(f"""
         SELECT listing_id, address, suburb, state, postcode, lat, lng,
                price_text, price_low, price_high,
                beds, baths, carspaces, land_m2,
                prop_type, sale_type, agency, url, image_urls,
                risk_count, medium_count, favourite, status,
                first_seen, last_seen, last_changed
-        FROM listings WHERE removed=0 AND lat IS NOT NULL AND lng IS NOT NULL
+        FROM listings WHERE {removed_clause}lat IS NOT NULL AND lng IS NOT NULL
     """)
     cols = [d[0] for d in cur.description]
     out = []

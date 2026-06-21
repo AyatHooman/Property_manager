@@ -5,3 +5,8 @@ typer>=0.6.0
 SQLAlchemy>=1.4.0
 beautifulsoup4>=4.9.0
 lxml>=4.6.0
+# Web server (src/web.py) + geometry used by value-factor analysis
+Flask>=2.0.0
+shapely>=2.0.0
+# Optional: faster spatial lookups (code falls back gracefully if missing)
+rtree>=1.0.0

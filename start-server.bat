@@ -12,8 +12,17 @@ REM which proxies localhost — so we never expose the port on 0.0.0.0 / the LAN
 set HOST=127.0.0.1
 set PORT=5005
 
+REM Pick a Python interpreter portably (works on any machine):
+REM   1. local virtualenv (.venv) if present  2. py launcher  3. python on PATH
+if exist "%~dp0.venv\Scripts\python.exe" (
+    set "PY=%~dp0.venv\Scripts\python.exe"
+) else (
+    where py >nul 2>&1 && (set "PY=py") || set "PY=python"
+)
+
 echo Starting Property Manager on http://%HOST%:%PORT%
+echo Using interpreter: %PY%
 echo.
 
-C:\Users\z5194283\.conda\envs\geo_env\python.exe -m src.web
+"%PY%" -m src.web
 pause
